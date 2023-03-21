@@ -46,12 +46,14 @@ And support `yaw command [deg]` input for both frames.
 - [x] Mode Change
 - [x] Set Command 
 - [x] Send Command to PX4
+- [x] Support Video Recieving
 
 ## Required Packages
 ```
 PX4-Autopilot
 Mavros
 ```
+You can follow the instructions on the [Wiki page](https://github.com/Lovely-XPP/PX4_cmd/wiki).
 
 ## Installation
 ```bash
