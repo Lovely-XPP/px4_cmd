@@ -5,3 +5,4 @@ gnome-terminal --window -e 'bash -c "roscore; exec bash"' \
 --tab -e 'bash -c "sleep 2; rosrun px4_cmd set_command; exec bash"' \
 --tab -e 'bash -c "sleep 2; rosrun px4_cmd set_mode; exec bash"' \
 --tab -e 'bash -c "sleep 2; rosrun px4_cmd send_command; exec bash"' \
+--tab -e 'bash -c "sleep 2; rosrun px4_cmd recieve_video /iris/usb_cam/image_raw; exec bash"' \

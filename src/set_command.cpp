@@ -44,8 +44,8 @@ std::vector<string> frame_list = {
 // 指令方式
 std::vector<string> move_list = {
     "Position (XYZ)",            //三位置
-    "Velocity (XY) + Height (Z)", //定高两速度
-    "Velocity (XYZ)",            //定高两速度
+    "Velocity (XY) + Height (Z)",//定高两速度
+    "Velocity (XYZ)",            //三速度
     "Relative Position (XYZ)"    //三相对位置
 };
 
@@ -80,7 +80,7 @@ int main(int argc, char **argv)
     int switch_trajectory_mode = 0;
 
     // 轨迹模式专用
-    //判断是否继续增加航点
+    // 判断是否继续增加航点
     bool trajectory_next = false;
     char next_point = '0';
     char confirm_trajectory = '0';

@@ -10,6 +10,7 @@ set(CMAKE_CXX_FLAGS "-std=c++11")
 
 # find package
 find_package(catkin REQUIRED COMPONENTS
+    cv_bridge
     roscpp
     std_msgs
     mavros_msgs
@@ -50,4 +51,9 @@ target_link_libraries(set_command ${catkin_LIBRARIES})
 add_executable(send_command src/send_command.cpp)
 add_dependencies(send_command ${${PROJECT_NAME}_EXPORTED_TARGETS})
 target_link_libraries(send_command ${catkin_LIBRARIES})
+
+# recieve camera image
+add_executable(recieve_video src/recieve_video.cpp)
+add_dependencies(recieve_video ${${PROJECT_NAME}_EXPORTED_TARGETS})
+target_link_libraries(recieve_video ${catkin_LIBRARIES})
 

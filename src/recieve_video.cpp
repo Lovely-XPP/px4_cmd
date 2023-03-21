@@ -1,0 +1,92 @@
+#include <ros/ros.h>
+
+#include <sensor_msgs/Image.h>
+
+#include <ros/ros.h>
+#include <opencv2/highgui/highgui.hpp>
+#include <cv_bridge/cv_bridge.h>
+#include <iostream>
+#include <ctime>
+
+#include <utility/printf_utility.h>
+
+
+// declare subscribe function
+void image_raw_sub(const sensor_msgs::Image::ConstPtr &msg);
+
+// Vedio setting
+static const std::string OPENCV_WINDOW = "Camera Image";
+cv::VideoWriter video_w;
+int encode_type = cv::VideoWriter::fourcc('M', 'J', 'P', 'G');
+double fps = 30.0;
+std::string filename = "";
+bool first = true;
+bool save_video = true;
+
+// Save path with time
+char s[30];
+time_t now = time(NULL);
+auto tim = *(localtime(&now));
+auto tmp = std::strftime(s, 30, "Fly_%Y_%b_%d_%H_%M_%S.avi", localtime(&now));
+char *cwd = get_current_dir_name();
+string save_path = string(cwd) + string("/") + string(s);
+
+int main(int argc, char **argv)
+{
+    ros::init(argc, argv, "recieve_video");
+    ros::NodeHandle nh("~");
+
+    std::string topic_name = "";
+    nh.param("camera_topic", topic_name);
+    if (argv[1] == "")
+    {
+        Error("Not Camera Topic Input!");
+        return 1;
+    }
+    topic_name = argv[1];
+
+    ros::Subscriber img_sub;
+
+    img_sub = nh.subscribe<sensor_msgs::Image>(topic_name, 30, image_raw_sub);
+
+    cout << GREEN << "[Info] Video Recieve Programme is Running, Image Topic: [ " << YELLOW << topic_name << GREEN << " ]" << endl;
+
+    while (ros::ok())
+    {
+        ros::spinOnce();
+        if (!save_video)
+        {
+            break;
+        }
+    }
+
+    return 0;
+}
+
+// 订阅回调返回图像信息
+void image_raw_sub(const sensor_msgs::Image::ConstPtr &msg)
+{
+    // 第一次则建立writer
+    if (first)
+    {
+        first = false;
+        video_w.open(save_path, encode_type, fps, cv::Size(msg->width, msg->height), true);
+    }
+    // 一旦结束则不
+    if (!save_video)
+    {
+        return;
+    }
+    cv_bridge::CvImagePtr cv_ptr;
+    sensor_msgs::Image current_state = *msg;
+    cv_ptr = cv_bridge::toCvCopy(msg, msg->encoding);
+    cv::imshow(OPENCV_WINDOW, cv_ptr->image);
+    if (cv::waitKey(1) == 27)
+    {
+        video_w.release();
+        save_video = false;
+        Warning("Video Reciever has been terminated!");
+        cv::destroyWindow(OPENCV_WINDOW);
+    }
+    video_w.write(cv_ptr->image);
+}
