@@ -113,5 +113,5 @@ If you don't want to connet a RC controller for simulation, you can delete the c
 
 
 ## Credits
-- PX4_command
-- [PX4_Guide](https://docs.px4.io/main)
+- [PX4-Autopilot](https://github.com/PX4/PX4-Autopilot)
+- [PX4 Guide](https://docs.px4.io/main)
