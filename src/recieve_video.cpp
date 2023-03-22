@@ -28,7 +28,7 @@ char s[30];
 time_t now = time(NULL);
 auto tim = *(localtime(&now));
 auto tmp = std::strftime(s, 30, "Fly_%Y_%b_%d_%H_%M_%S.avi", localtime(&now));
-char *cwd = get_current_dir_name();
+char *cwd = getenv("HOME");
 string save_path = string(cwd) + string("/") + string(s);
 
 // Parameters init
@@ -56,6 +56,9 @@ int main(int argc, char **argv)
 
     img_sub = nh.subscribe<sensor_msgs::Image>(topic_name, 30, image_raw_sub);
     ROS_WARN("Video Recieve Programme is Running, Image Topic: [ %s ]", topic_name.c_str());
+    ROS_WARN("Video save to: %s", save_path.c_str());
+
+    bool first_recieve = false;
 
     while (ros::ok())
     {
@@ -63,7 +66,16 @@ int main(int argc, char **argv)
         if (img_sub.getNumPublishers() < 1)
         {
             ROS_WARN("Recive_Camera: Can not Connet to Camera Topic, Retrying ...");
+            first_recieve = false;
             sleep(1);
+        }
+        else
+        {
+            if (!first_recieve)
+            {
+                ROS_WARN("Recive_Camera: Connet to Camera Topic Successfully!");
+                first_recieve = true;
+            }
         }
         if (!save_video)
         {
