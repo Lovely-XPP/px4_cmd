@@ -108,8 +108,8 @@ else if (status.rc_signal_lost && !(param_com_rcl_except & RCLossExceptionBits::
 Therefore, even if we provide stable Offboard Command (publish to `/mavros/setpoints_raw/local`, > 2 Hz), we still can not enable the Offboard Mode if We do not have RC signal.
 
 ### Temporary Solution
-If you don't want to connet a RC controller for simulation, you can delete the code shown above, but it ***ONLY FOR Simulation USE, DO NOT For Real Vehicle USE.***
-
+1. If you don't want to connet a RC controller for simulation, you can delete the code shown above, but it ***ONLY FOR Simulation USE, DO NOT For Real Vehicle USE.***
+2. Downgrade PX4 Version to `V1.12.3` and below.
 
 
 ## Credits
