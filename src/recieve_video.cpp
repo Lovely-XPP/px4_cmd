@@ -31,35 +31,46 @@ auto tmp = std::strftime(s, 30, "Fly_%Y_%b_%d_%H_%M_%S.avi", localtime(&now));
 char *cwd = get_current_dir_name();
 string save_path = string(cwd) + string("/") + string(s);
 
+// Parameters init
+std::string topic_name = "";
+bool show_video = true;
+
 int main(int argc, char **argv)
 {
     ros::init(argc, argv, "recieve_video");
     ros::NodeHandle nh("~");
 
-    std::string topic_name = "";
-    nh.param("camera_topic", topic_name);
-    if (argv[1] == "")
+    bool get_topic = nh.getParam("camera_topic", topic_name);
+    bool get_show = nh.getParam("show_video", show_video);
+    if (!get_topic)
     {
-        Error("Not Camera Topic Input!");
+        ROS_ERROR("Recive_Camera: Not Camera Topic Input!");
         return 1;
     }
-    topic_name = argv[1];
+    if (!get_show)
+    {
+        show_video = true;
+    }
 
     ros::Subscriber img_sub;
 
     img_sub = nh.subscribe<sensor_msgs::Image>(topic_name, 30, image_raw_sub);
-
-    cout << GREEN << "[Info] Video Recieve Programme is Running, Image Topic: [ " << YELLOW << topic_name << GREEN << " ]" << endl;
+    ROS_WARN("Video Recieve Programme is Running, Image Topic: [ %s ]", topic_name.c_str());
 
     while (ros::ok())
     {
         ros::spinOnce();
+        if (img_sub.getNumPublishers() < 1)
+        {
+            ROS_WARN("Recive_Camera: Can not Connet to Camera Topic, Retrying ...");
+            sleep(1);
+        }
         if (!save_video)
         {
             break;
         }
     }
-
+    video_w.release();
     return 0;
 }
 
@@ -80,8 +91,11 @@ void image_raw_sub(const sensor_msgs::Image::ConstPtr &msg)
     cv_bridge::CvImagePtr cv_ptr;
     sensor_msgs::Image current_state = *msg;
     cv_ptr = cv_bridge::toCvCopy(msg, msg->encoding);
-    cv::imshow(OPENCV_WINDOW, cv_ptr->image);
-    if (cv::waitKey(1) == 27)
+    if (show_video)
+    {
+        cv::imshow(OPENCV_WINDOW, cv_ptr->image);
+    }
+    if (cv::waitKey(1) == 27 || !ros::ok())
     {
         video_w.release();
         save_video = false;

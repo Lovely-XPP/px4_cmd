@@ -1,0 +1,4 @@
+<?xml version="1.0"?>
+<launch>
+    <node name="px4_cmd" pkg="px4_cmd" type="set_mode"/>
+</launch>

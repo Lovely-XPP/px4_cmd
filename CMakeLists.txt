@@ -43,14 +43,14 @@ add_executable(set_mode src/set_mode.cpp)
 target_link_libraries(set_mode ${catkin_LIBRARIES})
 
 # set_command
-add_executable(set_command src/set_command.cpp)
-add_dependencies(set_command ${${PROJECT_NAME}_EXPORTED_TARGETS})
-target_link_libraries(set_command ${catkin_LIBRARIES})
+add_executable(set_cmd src/set_command.cpp)
+add_dependencies(set_cmd ${${PROJECT_NAME}_EXPORTED_TARGETS})
+target_link_libraries(set_cmd ${catkin_LIBRARIES})
 
 # send_command
-add_executable(send_command src/send_command.cpp)
-add_dependencies(send_command ${${PROJECT_NAME}_EXPORTED_TARGETS})
-target_link_libraries(send_command ${catkin_LIBRARIES})
+add_executable(send_cmd src/send_command.cpp)
+add_dependencies(send_cmd ${${PROJECT_NAME}_EXPORTED_TARGETS})
+target_link_libraries(send_cmd ${catkin_LIBRARIES})
 
 # recieve camera image
 add_executable(recieve_video src/recieve_video.cpp)
