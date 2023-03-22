@@ -3,6 +3,30 @@
 ## Introduction
 PX4 command sent via terminal (based on mavlink), for whom wants to control vehicle by themselves, e.g. setting points.
 
+## Installation
+```bash
+# Create Catkin Workspace in home
+mkdir -p ~/px4_ws/src 
+cd catkin_ws/src
+catkin_init_workspace
+# Clone this Repo
+git clone https://github.com/Lovely-XPP/PX4_cmd.git
+# make
+cd ..
+catkin_make
+# Add Source for the project
+echo "source ~/px4_ws/devel/setup.bash" >> ~/.bashrc
+# update terminal
+source ~/.bashrc
+```
+
+## Run Simulation
+```bash
+bash $(rospack find px4_cmd)/sh/sim.sh      # Sim without camera
+bash $(rospack find px4_cmd)/sh/sim_cam.sh  # Sim with camera
+```
+More Detailed Information is on [Wiki](https://github.com/Lovely-XPP/PX4_cmd/wiki/Simulation-Usage).
+
 ## Support Command
 
 ### Idle
@@ -55,27 +79,6 @@ Mavros
 ```
 You can follow the instructions on the [Wiki page](https://github.com/Lovely-XPP/PX4_cmd/wiki).
 
-## Installation
-```bash
-# Create Catkin Workspace in home
-mkdir -p ~/px4_ws/src 
-cd catkin_ws/src
-catkin_init_workspace
-# Clone this Repo
-git clone https://github.com/Lovely-XPP/PX4_cmd.git
-# make
-cd ..
-catkin_make
-# Add Source for the project
-echo "source ~/px4_ws/devel/setup.bash" >> ~/.bashrc
-# update terminal
-source ~/.bashrc
-```
-
-## Run Simulation
-```bash
-bash ~/px4_ws/src/px4_cmd/src/sh/sim.sh
-```
 
 ## About Offboard Mode
 If you have problem for changing mode to Offboard Mode, please check the offical instruction:
