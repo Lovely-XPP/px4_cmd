@@ -1,12 +1,11 @@
 #include <ros/ros.h>
 
-#include <sensor_msgs/Image.h>
-
-#include <ros/ros.h>
 #include <opencv2/highgui/highgui.hpp>
 #include <cv_bridge/cv_bridge.h>
 #include <iostream>
 #include <ctime>
+
+#include <sensor_msgs/Image.h>
 
 #include <utility/printf_utility.h>
 
