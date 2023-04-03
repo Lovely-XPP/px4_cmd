@@ -9,6 +9,7 @@
 #include <geometry_msgs/PoseStamped.h>
 
 #include <utility/printf_utility.h>
+#include <utility/handle_cin.h>
 
 using namespace std;
 
@@ -61,7 +62,8 @@ int main(int argc, char **argv)
         "AUTO.LAND",    //自动降落
         "AUTO.RTL",     //自动返航
         "Arm",          //解除锁定
-        "DisArm"        //锁定
+        "DisArm",       //锁定
+        "Exit"          //退出
     };
 
     // 等待节点初始化完成
@@ -102,15 +104,21 @@ int main(int argc, char **argv)
         // 获取输入
         cout << WHITE << "\n" << "Input Mode Number: ";
         cin >> switch_mode;
-        cout << NO_POINTER;
 
         // 判断输入正确性
-        if (switch_mode >= mode_list.size() || switch_mode < 0)
+        if (!handle_cin() || switch_mode >= mode_list.size() || switch_mode < 0)
         {
             cout << "\n" << endl;
+            cout << NO_POINTER;
             Error("Please Input int 0 ~ " + to_string(mode_list.size() - 1));
             sleep(2);
+            cout << POINTER;
             continue;
+        }
+        // 判断退出
+        if (switch_mode == mode_list.size()-1)
+        {
+            return 0;
         }
 
         // 回调函数,更新状态

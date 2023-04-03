@@ -3,12 +3,14 @@
 #include <thread>
 #include <iostream>
 #include <string>
+#include <cstdarg>
 
 #include <mavros_msgs/State.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <px4_cmd/Command.h>
 
 #include <utility/printf_utility.h>
+#include <utility/handle_cin.h>
 
 using namespace std;
 
@@ -28,37 +30,74 @@ px4_cmd::Command cmd;
 
 // 定义列表储存所有模式
 std::vector<string> command_list = {
-    "Idle",      //怠速
-    "Takeoff",   //起飞到指定高度
-    "Move",      //移动
-    "Hover",     //悬停
-    "Trajectory" //航点轨迹控制
+    "Idle",      // 怠速
+    "Takeoff",   // 起飞到指定高度
+    "Move",      // 移动
+    "Hover",     // 悬停
+    "Trajectory",// 航点轨迹控制
+    "Exit"       // 退出
 };
 
 // 坐标系
 std::vector<string> frame_list = {
-    "ENU", //惯性坐标系，东北天
-    "Body" //机体坐标系
+    "ENU",  // 惯性坐标系，东北天
+    "Body", // 机体坐标系
+    "Exit"  // 退出
 };
 
 // 指令方式
 std::vector<string> move_list = {
-    "Position (XYZ)",            //三位置
-    "Velocity (XY) + Height (Z)",//定高两速度
-    "Velocity (XYZ)",            //三速度
-    "Relative Position (XYZ)"    //三相对位置
+    "Position (XYZ)",             // 三位置
+    "Velocity (XY) + Height (Z)", // 定高两速度
+    "Velocity (XYZ)",             // 三速度
+    "Relative Position (XYZ)",    // 三相对位置
+    "Exit"                        // 退出
 };
 
 // 航点输入方式
 std::vector<string> trajectory_list = {
-    "Position (XYZ)",             //三位置
-    "Relative Position (XYZ)"     //三相对位置
+    "Position (XYZ)",          // 三位置
+    "Relative Position (XYZ)", // 三相对位置
+    "Exit"                     // 退出
 };
+
+
+/* 初始化变量 */
+// 用户输入
+int switch_cmd = 0;
+int switch_frame = 0;
+int switch_cmd_mode = 0;
+int switch_trajectory_mode = 0;
+string confirm_exec = "0";
+bool correct = false;
+
+
+// 轨迹模式专用
+// 判断是否继续增加航点
+bool trajectory_next = false;
+char next_point = '0';
+char confirm_trajectory = '0';
+float err_x = 0.0;
+float err_y = 0.0;
+float err_z = 0.0;
+// 当前输入的轨迹航点
+std::vector<float> trajectory_point = {0, 0, 0, 0, 0};
+// 初始化用轨迹航点列表
+std::vector<vector<float>> init_trajectory_points = {trajectory_point};
+// 轨迹航点列表
+std::vector<vector<float>> trajectory_points = {trajectory_point};
+
+// 初始化命令信息
+float desire_cmd_value[3];
+float yaw_value = 0.0;
+
 
 // 子函数声明
 void print_current_cmd(px4_cmd::Command cmd, float cmd_value[3]);
 void pub_thread_fun();
 void print_trajectory_info(int mode, vector<float> point, std::vector<vector<float>> points, int start);
+bool input_cmd(string msg1, string msg2, string msg3, int other_msg, ...);
+
 
 /*     主函数      */
 int main(int argc, char **argv)
@@ -73,30 +112,7 @@ int main(int argc, char **argv)
     // 广播初始化
     cmd_pub = nh.advertise<px4_cmd::Command>("/px4_cmd/control_command", 10);
 
-    // 用户输入
-    int switch_cmd = 0;
-    int switch_frame = 0;
-    int switch_cmd_mode = 0;
-    int switch_trajectory_mode = 0;
-
-    // 轨迹模式专用
-    // 判断是否继续增加航点
-    bool trajectory_next = false;
-    char next_point = '0';
-    char confirm_trajectory = '0';
-    float err_x = 0.0;
-    float err_y = 0.0;
-    float err_z = 0.0;
-    //当前输入的轨迹航点
-    std::vector<float> trajectory_point = {0, 0, 0, 0, 0};
-    //初始化用轨迹航点列表
-    std::vector<vector<float>> init_trajectory_points = {trajectory_point};
-    //轨迹航点列表
-    std::vector<vector<float>> trajectory_points = {trajectory_point};
-
-    // 初始化命令信息
-    float desire_cmd_value[3];
-    float yaw_value = 0.0;
+    // 命令信息
     desire_cmd_value[0] = 0.0;
     desire_cmd_value[1] = 0.0;
     desire_cmd_value[2] = 0.0;
@@ -127,20 +143,27 @@ int main(int argc, char **argv)
         // 获取用户输入
         cout << "\n" << "Input Command Number: ";
         cin >> switch_cmd;
+        correct = handle_cin();
 
         // 判断输入正确性
-        if (switch_cmd >= command_list.size() || switch_cmd < 0)
+        if (!correct || switch_cmd >= command_list.size() || switch_cmd < 0)
         {
-            cout << "\n";
+            cout << "\n" << NO_POINTER;
             Error("Please Input int 0 ~ " + to_string(command_list.size() - 1));
             sleep(2);
+            cout << POINTER;
             continue;
+        }
+
+        if (switch_cmd == (command_list.size() - 1))
+        {
+            return 0;
         }
 
         // 更改模式
         cmd.Mode = switch_cmd;
 
-        switch (cmd.Mode)
+        switch (switch_cmd)
         {
             case px4_cmd::Command::Idle:
             {
@@ -175,17 +198,29 @@ int main(int argc, char **argv)
 
             case px4_cmd::Command::Move:
             {
-                // 输入坐标系
-                system("clear");
-                print_title("PX4 Command Center", frame_list);
-                cout << WHITE << "Input frame id: ";
-                cin >> switch_frame;
-                // 判断输入正确性
-                if (switch_frame >= frame_list.size() || switch_frame < 0)
+                correct = false;
+                while (!correct)
                 {
-                    cout << "\n" << NO_POINTER;
-                    Error("Please Input int 0 ~ " + to_string(frame_list.size() - 1));
-                    sleep(2);
+                    // 输入坐标系
+                    system("clear");
+                    print_title("PX4 Command Center", frame_list);
+                    cout << WHITE << "Input frame id: ";
+                    cin >> switch_frame;
+                    correct = handle_cin();
+                    // 判断输入正确性
+                    if (!correct || switch_frame >= frame_list.size() || switch_frame < 0)
+                    {
+                        cout << "\n" << NO_POINTER;
+                        Error("Please Input int 0 ~ " + to_string(frame_list.size() - 1));
+                        sleep(2);
+                        cout << POINTER;
+                        continue;
+                    }
+                }
+                
+                if (switch_frame == (frame_list.size() - 1))
+                {
+                    cmd.Mode = px4_cmd::Command::Hover;
                     continue;
                 }
 
@@ -194,16 +229,11 @@ int main(int argc, char **argv)
                 {
                     system("clear");
                     print_head("PX4 Command Center");
-                    cout << YELLOW << "Tip: Body Frame Only Support [" << GREEN << "Velocity (XYZ)" << YELLOW << "] Control!" << WHITE << endl;
-                    cout << "\n" << "X Velocity [m/s]: ";
-                    cin >> desire_cmd_value[0];
-                    cout << "\n" << "Y Velocity [m/s]: ";
-                    cin >> desire_cmd_value[1];
-                    cout << "\n" << "Z Velocity [m/s]: ";
-                    cin >> desire_cmd_value[2];
-                    // yaw指令输入
-                    cout << "\n" << "Yaw Command [rad]: ";
-                    cin >> yaw_value;
+                    string msg = string(YELLOW) + "Tip: Body Frame Only Support [" + GREEN + "Velocity (XYZ)" + YELLOW + "] Control!" + WHITE + "\n";
+                    if (!input_cmd("X Velocity [m/s]: ", "Y Velocity [m/s]: ", "Z Velocity [m/s]: ", 1, msg))
+                    {
+                        continue;
+                    }
                     // 修改命令
                     cmd.Move_frame = switch_frame;
                     cmd.Move_mode = px4_cmd::Command::XYZ_VEL;
@@ -219,8 +249,9 @@ int main(int argc, char **argv)
                 print_title("PX4 Command Center", move_list);
                 cout << WHITE << "Input Move Mode Number: ";
                 cin >> switch_cmd_mode;
+                correct = handle_cin();
                 // 判断输入正确性
-                if (switch_cmd_mode >= move_list.size() || switch_cmd_mode < 0)
+                if (!correct || switch_cmd_mode >= move_list.size() || switch_cmd_mode < 0)
                 {
                     cout << "\n" << NO_POINTER;
                     Error("Please Input int 0 ~ " + to_string(move_list.size() - 1));
@@ -233,51 +264,40 @@ int main(int argc, char **argv)
                 {
                     case px4_cmd::Command::XYZ_POS:
                     {
-                        cout << "\n" << "X Position [m]: ";
-                        cin >> desire_cmd_value[0];
-                        cout << "\n" << "Y Position [m]: ";
-                        cin >> desire_cmd_value[1];
-                        cout << "\n" << "Z Position [m]: ";
-                        cin >> desire_cmd_value[2];
+                        if (!input_cmd("X Position [m]: ", "Y Position [m]: ", "Z Position [m]: ", 0))
+                        {
+                            continue;
+                        }
                         break;
                     }
 
                     case px4_cmd::Command::XY_VEL_Z_POS:
                     {
-                        cout << "\n" << "X Velocity [m/s]: ";
-                        cin >> desire_cmd_value[0];
-                        cout << "\n" << "Y Velocity [m/s]: ";
-                        cin >> desire_cmd_value[1];
-                        cout << "\n" << "Z Position [m]: ";
-                        cin >> desire_cmd_value[2];
+                        if (!input_cmd("X Velocity [m/s]: ", "Y Velocity [m/s]: ", "Z Position [m]: ", 0))
+                        {
+                            continue;
+                        }
                         break;
                     }
 
                     case px4_cmd::Command::XYZ_VEL:
                     {
-                        cout << "\n" << "X Velocity [m/s]: ";
-                        cin >> desire_cmd_value[0];
-                        cout << "\n" << "Y Velocity [m/s]: ";
-                        cin >> desire_cmd_value[1];
-                        cout << "\n" << "Z Velocity [m/s]:: ";
-                        cin >> desire_cmd_value[2];
+                        if (!input_cmd("X Velocity [m/s]: ", "Y Velocity [m/s]: ", "Z Velocity [m/s]: ", 0))
+                        {
+                            continue;
+                        }
                         break;
                     }
 
                     case px4_cmd::Command::XYZ_REL_POS:
                     {
-                        cout << "\n" << "X Relative Position [m]: ";
-                        cin >> desire_cmd_value[0];
-                        cout << "\n" << "Y Relative Position [m]: ";
-                        cin >> desire_cmd_value[1];
-                        cout << "\n" << "Z Relative Position [m]: ";
-                        cin >> desire_cmd_value[2];
+                        if (!input_cmd("X Relative Position [m]: ", "Y Relative Position [m]: ", "Z Relative Position [m]: ", 0))
+                        {
+                            continue;
+                        }
                         break;
                     }
                 }
-                // yaw指令输入
-                cout << "\n" << "Yaw Command [deg]: ";
-                cin >> yaw_value;
 
                 // 修改命令
                 cmd.Move_frame = switch_frame;
@@ -325,50 +345,66 @@ int main(int argc, char **argv)
                 cout << YELLOW << "Tip: Trajectory Only Support Frame [" << GREEN << "ENU" << YELLOW << "]" << endl;
                 cout << WHITE << "\n" << "Input Trajectory Mode Number: ";
                 cin >> switch_trajectory_mode;
+                correct = handle_cin();
                 // 判断输入正确性
-                if (switch_trajectory_mode >= trajectory_list.size() || switch_trajectory_mode < 0)
+                if (!correct || switch_trajectory_mode >= trajectory_list.size() || switch_trajectory_mode < 0)
                 {
                     cout << "\n" << NO_POINTER;
                     Error("Please Input int 0 ~ " + to_string(trajectory_list.size() - 1));
                     sleep(2);
+                    cout << POINTER;
                     continue;
                 }
                 // 循环输入航点
                 while (trajectory_next)
                 {
-                    //清空并显示轨迹航点输入模式
-                    system("clear");
-                    print_head("PX4 Trajectory Center");
-                    print_trajectory_info(switch_trajectory_mode, trajectory_point, trajectory_points, 1);
-                    cout << "\n\n"
-                         << "######################### Point " << trajectory_points.size() << " #########################" << endl;
-                    //判断模式对应输入(相对位置/绝对位置)
-                    if (!switch_trajectory_mode)
+                    correct = false;
+                    while (!correct)
                     {
-                        cout << "\n" << "X Position [m]: ";
-                        cin >> trajectory_point[0];
-                        cout << "\n" << "Y Position [m]: ";
-                        cin >> trajectory_point[1];
-                        cout << "\n" << "Z Position [m]: ";
-                        cin >> trajectory_point[2];
-                    }
-                    else
-                    {
-                        cout << "\n" << "X Relative Position [m]: ";
-                        cin >> trajectory_point[0];
-                        cout << "\n" << "Y Relative Position [m]: ";
-                        cin >> trajectory_point[1];
-                        cout << "\n" << "Z Relative Position [m]: ";
-                        cin >> trajectory_point[2];
-                    }
-                    //偏航角指令
-                    cout << "\n" << "Yaw Command [deg]: ";
-                    cin >> trajectory_point[3];
-                    //航点等待时间
-                    cout << "\n" << "Wait Time [s,int]: ";
-                    cin >> trajectory_point[4];
-                    trajectory_point[4] = (int) abs(trajectory_point[4]);
+                        // 清空并显示轨迹航点输入模式
+                        system("clear");
+                        print_head("PX4 Trajectory Center");
+                        print_trajectory_info(switch_trajectory_mode, trajectory_point, trajectory_points, 1);
+                        cout << "\n\n"
+                            << "######################### Point " << trajectory_points.size() << " #########################" << endl;
+                        //判断模式对应输入(相对位置/绝对位置)
+                        if (!switch_trajectory_mode)
+                        {
+                            cout << "\n" << "X Position [m]: ";
+                            cin >> trajectory_point[0];
+                            cout << "\n" << "Y Position [m]: ";
+                            cin >> trajectory_point[1];
+                            cout << "\n" << "Z Position [m]: ";
+                            cin >> trajectory_point[2];
+                        }
+                        else
+                        {
+                            cout << "\n" << "X Relative Position [m]: ";
+                            cin >> trajectory_point[0];
+                            cout << "\n" << "Y Relative Position [m]: ";
+                            cin >> trajectory_point[1];
+                            cout << "\n" << "Z Relative Position [m]: ";
+                            cin >> trajectory_point[2];
+                        }
+                        //偏航角指令
+                        cout << "\n" << "Yaw Command [deg]: ";
+                        cin >> trajectory_point[3];
+                        //航点等待时间
+                        cout << "\n" << "Wait Time [s,int]: ";
+                        cin >> trajectory_point[4];
+                        correct = handle_cin();
+                        if (!correct)
+                        {
+                            cout << "\n" << NO_POINTER;
+                            Error("Input illegal, Please input number!");
+                            sleep(2);
+                            cout << POINTER;
+                            continue;
+                        }
+                        trajectory_point[4] = (int) abs(trajectory_point[4]);
 
+                    }
+                    
                     //存入总向量
                     trajectory_points.push_back(trajectory_point);
 
@@ -451,9 +487,13 @@ void print_current_cmd(px4_cmd::Command cmd, float cmd_value[3])
     cout << WHITE << "Current Command: [" << GREEN << command_list[cmd.Mode] << WHITE << "]    ";
     cout << WHITE << "Frame: [" << GREEN << frame_list[cmd.Move_frame] << WHITE << "]" << endl;
     cout << WHITE << "Mode: [" << GREEN << move_list[cmd.Move_mode] << WHITE << "]" << endl;
-    cout << WHITE << "Value: " << fixed << setprecision(2) << cmd_value[0]
-         << "  " << cmd_value[1] << "  " << cmd_value[2] << "    ";
-    cout << WHITE << "Yaw: " << fixed << setprecision(2) << cmd.yaw_cmd << endl;
+    if (cmd.Mode != px4_cmd::Command::Hover)
+    {
+        cout << WHITE << "Value: " << fixed << setprecision(2) << cmd_value[0]
+             << "  " << cmd_value[1] << "  " << cmd_value[2] << "    ";
+        cout << WHITE << "Yaw: " << fixed << setprecision(2) << cmd.yaw_cmd << endl;
+    }
+        
 }
 
 // 广播线程
@@ -491,4 +531,54 @@ void print_trajectory_info(int mode, vector<float>  point, std::vector<vector<fl
         }
         cout << WHITE << "\t\t " << setprecision(2) << fixed << points[i][point.size()-1];
     }
+}
+
+
+// 输入指令
+bool input_cmd(string msg1, string msg2, string msg3, int other_msg, ...)
+{
+    // 判断是否有其他信息输入，有的话则先输出
+    if (other_msg > 0)
+    {
+        va_list arguments;
+        va_start(arguments, other_msg);
+        for (int x = 0; x < other_msg; x++)
+        {
+            string msg_arg = va_arg(arguments, char*);
+            cout << msg_arg;
+        }
+        va_end(arguments);
+    }
+
+    bool exec = true;
+    bool correct = false;
+    while (!correct)
+    {
+        cout << "\n" << msg1;
+        cin >> desire_cmd_value[0];
+        cout << "\n" << msg2;
+        cin >> desire_cmd_value[1];
+        cout << "\n" << msg3;
+        cin >> desire_cmd_value[2];
+        // yaw指令输入
+        cout << "\n" << "Yaw Command [rad]: ";
+        cin >> yaw_value;
+        correct = handle_cin();
+        if (!correct)
+        {
+            cout << "\n" << NO_POINTER;
+            Error("Input illegal, Please input number!");
+            sleep(2);
+            cout << POINTER;
+        }
+    }
+    // 用户确认
+    cout << "\n\n" << WHITE << "Confirm to Execute? (0 -> exit, else -> exec): ";
+    cin >> confirm_exec;
+    if (confirm_exec.compare("0") == 0)
+    {
+        cmd.Mode = px4_cmd::Command::Hover;
+        exec = false;
+    }
+    return exec;
 }

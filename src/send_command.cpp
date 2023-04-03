@@ -71,13 +71,13 @@ void sub_set_cmd_cb(const px4_cmd::Command::ConstPtr &msg)
     {
         case px4_cmd::Command::ENU:
         {
-            pos_setpoint.coordinate_frame = 1;
+            pos_setpoint.coordinate_frame = mavros_msgs::PositionTarget::FRAME_LOCAL_NED;
             break;
         }
 
         case px4_cmd::Command::BODY:
         {
-            pos_setpoint.coordinate_frame = 8;
+            pos_setpoint.coordinate_frame = mavros_msgs::PositionTarget::FRAME_BODY_NED;
             break;
         }
     }
