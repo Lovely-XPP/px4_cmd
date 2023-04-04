@@ -134,7 +134,7 @@ int main(int argc, char **argv)
         desire_mode = mode_list[switch_mode];
 
         // 解锁
-        if (switch_mode >= (mode_list.size() - 2))
+        if (desire_mode == "Arm" || desire_mode == "DisArm")
         {
             // 如果飞行高度超过20cm则不允许DisArm
             if (abs(current_pos.pose.position.z) > 0.2 && desire_mode == "DisArm")
