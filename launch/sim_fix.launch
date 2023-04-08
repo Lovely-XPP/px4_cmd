@@ -11,10 +11,10 @@
     <arg name="Y" default="0"/>
     <!-- vehicle model and world -->
     <arg name="est" default="ekf2"/>
-    <arg name="vehicle" default="plane"/>
+    <arg name="vehicle" default="plane_catapult"/>
     <arg name="cam" default=""/>
     <arg name="world" default="$(find mavlink_sitl_gazebo)/worlds/empty.world"/>
-    <arg name="sdf" default="$(find mavlink_sitl_gazebo)/models/plane/plane.sdf"/>
+    <arg name="sdf" default="$(find mavlink_sitl_gazebo)/models/plane_catapult/plane_catapult.sdf"/>
     <env name="PX4_SIM_MODEL" value="$(arg vehicle)" />
     <env name="PX4_ESTIMATOR" value="$(arg est)" />
 
