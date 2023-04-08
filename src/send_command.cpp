@@ -86,58 +86,107 @@ void sub_set_cmd_cb(const px4_cmd::Command::ConstPtr &msg)
     // Bitmask toindicate which dimensions should be ignored (1 means ignore,0 means not ignore; Bit 10 must set to 0)
     // Bit 1:x, bit 2:y, bit 3:z, bit 4:vx, bit 5:vy, bit 6:vz, bit 7:ax, bit 8:ay, bit 9:az, bit 10:is_force_sp, bit 11:yaw, bit 12:yaw_rate
     // Bit 10 should set to 0, means is not force sp
-    switch (set_cmd.Move_mode)
+    // 
+    if (set_cmd.Vehicle == px4_cmd::Command::Multicopter)
     {
-        case px4_cmd::Command::XYZ_POS:
+        if (set_cmd.Mode == px4_cmd::Command::Hover)
         {
             pos_setpoint.type_mask = 0b100111111000;
-            if(set_cmd.Mode == px4_cmd::Command::Hover)
+            pos_setpoint.position.x = current_pos.pose.position.x;
+            pos_setpoint.position.y = current_pos.pose.position.y;
+            pos_setpoint.position.z = current_pos.pose.position.z;
+            pos_setpoint.header.frame_id = 1;
+            pos_setpoint.yaw = set_cmd.yaw_cmd;
+            return;
+        }
+
+        switch (set_cmd.Move_mode)
+        {
+            case px4_cmd::Command::XYZ_POS:
             {
-                pos_setpoint.position.x = current_pos.pose.position.x;
-                pos_setpoint.position.y = current_pos.pose.position.y;
-                pos_setpoint.position.z = current_pos.pose.position.z;
-            }
-            else
-            {
+                pos_setpoint.type_mask = 0b100111111000;
                 pos_setpoint.position.x = set_cmd.desire_cmd[0];
                 pos_setpoint.position.y = set_cmd.desire_cmd[1];
                 pos_setpoint.position.z = set_cmd.desire_cmd[2];
+                break;
             }
-            break;
+
+            case px4_cmd::Command::XY_VEL_Z_POS:
+            {
+                pos_setpoint.type_mask = 0b100111100011;
+                pos_setpoint.velocity.x = set_cmd.desire_cmd[0];
+                pos_setpoint.velocity.y = set_cmd.desire_cmd[1];
+                pos_setpoint.position.z = set_cmd.desire_cmd[2];
+                break;
+            }
+
+            case px4_cmd::Command::XYZ_VEL:
+            {
+                pos_setpoint.type_mask = 0b100111000111;
+                pos_setpoint.velocity.x = set_cmd.desire_cmd[0];
+                pos_setpoint.velocity.y = set_cmd.desire_cmd[1];
+                pos_setpoint.velocity.z = set_cmd.desire_cmd[2];
+                break;
+            }
+
+            case px4_cmd::Command::XYZ_REL_POS:
+            {
+                pos_setpoint.type_mask = 0b100111111000;
+                pos_setpoint.position.x = set_cmd.desire_cmd[0];
+                pos_setpoint.position.y = set_cmd.desire_cmd[1];
+                pos_setpoint.position.z = set_cmd.desire_cmd[2];
+                break;
+            }
         }
 
-        case px4_cmd::Command::XY_VEL_Z_POS:
-        {
-            pos_setpoint.type_mask = 0b100111100011;
-            pos_setpoint.velocity.x = set_cmd.desire_cmd[0];
-            pos_setpoint.velocity.y = set_cmd.desire_cmd[1];
-            pos_setpoint.position.z = set_cmd.desire_cmd[2];
-            break;
-        }
+        pos_setpoint.header.frame_id = 1;
 
-        case px4_cmd::Command::XYZ_VEL:
-        {
-            pos_setpoint.type_mask = 0b100111000111;
-            pos_setpoint.velocity.x = set_cmd.desire_cmd[0];
-            pos_setpoint.velocity.y = set_cmd.desire_cmd[1];
-            pos_setpoint.velocity.z = set_cmd.desire_cmd[2];
-            break;
-        }
-
-        case px4_cmd::Command::XYZ_REL_POS:
-        {
-            pos_setpoint.type_mask = 0b100111111000;
-            pos_setpoint.position.x = set_cmd.desire_cmd[0];
-            pos_setpoint.position.y = set_cmd.desire_cmd[1];
-            pos_setpoint.position.z = set_cmd.desire_cmd[2];
-            break;
-        }
+        pos_setpoint.yaw = set_cmd.yaw_cmd;
     }
-    
-    pos_setpoint.header.frame_id = 1;
-
-    pos_setpoint.yaw = set_cmd.yaw_cmd;
+    // 固定翼信息
+    if (set_cmd.Vehicle == px4_cmd::Command::FixWing)
+    {
+        if (set_cmd.Mode == px4_cmd::Command::Loiter)
+        {
+            pos_setpoint.type_mask = 12288;
+            pos_setpoint.position.x = current_pos.pose.position.x;
+            pos_setpoint.position.y = current_pos.pose.position.y;
+            pos_setpoint.position.z = current_pos.pose.position.z;
+            pos_setpoint.header.frame_id = 1;
+            return;
+        }
         
+        switch (set_cmd.Move_mode)
+        {
+            case px4_cmd::Command::FixWing_Takeoff:
+            {
+                pos_setpoint.type_mask = 4096;
+                break;
+            }
+
+            case px4_cmd::Command::FixWing_Gliding:
+            {
+                pos_setpoint.type_mask = 0b000100100100;
+                break;
+            }
+
+            case px4_cmd::Command::FixWing_POS:
+            {
+                pos_setpoint.type_mask = 12288;
+                break;
+            }
+
+            case px4_cmd::Command::FixWing_REL_POS:
+            {
+                pos_setpoint.type_mask = 12288;
+                break;
+            }
+        }
+        pos_setpoint.position.x = set_cmd.desire_cmd[0];
+        pos_setpoint.position.y = set_cmd.desire_cmd[1];
+        pos_setpoint.position.z = set_cmd.desire_cmd[2];
+        pos_setpoint.header.frame_id = 1;
+    }
 }
 
 // 订阅回调返回状态信息

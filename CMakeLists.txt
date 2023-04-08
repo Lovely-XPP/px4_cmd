@@ -38,6 +38,7 @@ include_directories(
 )
 
 # ##################  Exec  ###################
+## Hover ##
 # set_mode
 add_executable(set_mode src/set_mode.cpp)
 target_link_libraries(set_mode ${catkin_LIBRARIES})
@@ -51,6 +52,12 @@ target_link_libraries(set_cmd ${catkin_LIBRARIES})
 add_executable(send_cmd src/send_command.cpp)
 add_dependencies(send_cmd ${${PROJECT_NAME}_EXPORTED_TARGETS})
 target_link_libraries(send_cmd ${catkin_LIBRARIES})
+
+## Fix wing ##
+# set_command
+add_executable(set_cmd_fix src/set_command_fix.cpp)
+add_dependencies(set_cmd_fix ${${PROJECT_NAME}_EXPORTED_TARGETS})
+target_link_libraries(set_cmd_fix ${catkin_LIBRARIES})
 
 # recieve camera image
 add_executable(recieve_video src/recieve_video.cpp)
