@@ -27,30 +27,6 @@ bash $(rospack find px4_cmd)/sh/sim_cam.sh  # Sim with camera
 ```
 More Detailed Information is on [Wiki](https://github.com/Lovely-XPP/PX4_cmd/wiki/Simulation-Usage).
 
-## Support Command
-
-### Idle
-
-Initial Mode for Vehicle.
-
-### Takeoff
-
-You can set desire height for takeoff.
-
-### Move
-
-<div style="align: center">
-
-| Frame | SubCommand |
-| :---: | ----------- |
-|   ENU    | Position (XYZ) [m]<br>Velocity (XY) [m/s] + Height (Z) [m]<br>Velocity (XYZ) [m/s]<br>Relative Position (XYZ) [m] |
-|   Body   | Velocity (XYZ) [m/s] |
-
-</div>
-
-And support `yaw command [deg]` input for both frames.
-
-
 ## Support Mode
 ```c++
 "Refresh Status"  //刷新状态
@@ -64,6 +40,61 @@ And support `yaw command [deg]` input for both frames.
 "Arm"             //解除锁定
 "DisArm"          //锁定
 ```
+
+## Support Command
+
+### Hover
+
+#### Idle
+
+Initial Mode for Vehicle.
+
+#### Hover
+Hover at the setpoint.
+
+#### Takeoff
+
+You can set desire height for takeoff.
+
+#### Move
+
+<div style="align: center">
+
+| Frame | SubCommand |
+| :---: | ----------- |
+|   ENU    | Position (XYZ) [m]<br>Velocity (XY) [m/s] + Height (Z) [m]<br>Velocity (XYZ) [m/s]<br>Relative Position (XYZ) [m] |
+|   Body   | Velocity (XYZ) [m/s] |
+
+</div>
+
+And support `yaw command [deg]` input for both frames.
+
+### Fix Wing
+
+#### Idle
+
+Initial Mode for Vehicle.
+
+#### Loiter
+
+Loiter at the setpoint, you can also set the radius of loiter cycle.
+
+#### Takeoff
+
+For fix wing, you need to set x,y,z position for takeoff.
+
+#### Move
+
+<div style="align: center">
+
+| Frame | SubCommand |
+| :---: | ----------- |
+|   ENU    | Position (XYZ) [m]   |
+|   Body   | Position (XYZ) [m] |
+
+</div>
+
+
 
 ## Todo
 
