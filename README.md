@@ -3,6 +3,10 @@
 ## Introduction
 PX4 command sent via terminal (based on mavlink), for whom wants to control vehicle by themselves, e.g. setting points.
 
+## Todo
+- [x] Support Video Recieving
+- [ ] Provide API for user-define
+
 ## Installation
 ```bash
 # Create Catkin Workspace in home
@@ -96,14 +100,6 @@ For fix wing, you need to set x,y,z position for takeoff.
 
 </div>
 
-
-
-## Todo
-
-- [x] Mode Change
-- [x] Set Command 
-- [x] Send Command to PX4
-- [x] Support Video Recieving
 
 ## Required Packages
 ```
