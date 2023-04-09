@@ -22,8 +22,10 @@ source ~/.bashrc
 
 ## Run Simulation
 ```bash
-bash $(rospack find px4_cmd)/sh/sim.sh      # Sim without camera
-bash $(rospack find px4_cmd)/sh/sim_cam.sh  # Sim with camera
+bash $(rospack find px4_cmd)/sh/sim.sh      # Sim without camera (Multicopter)
+bash $(rospack find px4_cmd)/sh/sim_cam.sh  # Sim with camera (Multicopter)
+bash $(rospack find px4_cmd)/sh/sim_fix.sh      # Sim without camera (Fixwing)
+bash $(rospack find px4_cmd)/sh/sim_fix_cam.sh  # Sim with camera (Fixwing)
 ```
 More Detailed Information is on [Wiki](https://github.com/Lovely-XPP/PX4_cmd/wiki/Simulation-Usage).
 
