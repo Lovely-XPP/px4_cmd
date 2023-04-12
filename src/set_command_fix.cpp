@@ -163,6 +163,7 @@ int main(int argc, char **argv)
 
         switch (switch_cmd)
         {
+            // 待机模式
             case px4_cmd::Command::Idle:
             {
                 cmd.Move_frame = px4_cmd::Command::ENU;
@@ -176,6 +177,7 @@ int main(int argc, char **argv)
                 break;
             }
 
+            // 起飞模式
             case px4_cmd::Command::Takeoff:
             {
                 // 用户指定起飞高度
@@ -191,12 +193,13 @@ int main(int argc, char **argv)
                 break;
             }
 
+            // Move 模式
             case px4_cmd::Command::Move:
             {
+                // 输入坐标系
                 correct = false;
                 while (!correct)
                 {
-                    // 输入坐标系
                     system("clear");
                     print_title("PX4 Command Center", frame_list);
                     cout << WHITE << "Input frame id: ";
@@ -220,7 +223,7 @@ int main(int argc, char **argv)
                 }
 
 
-                // 输入命令类型
+                // 输入Move模式类型
                 system("clear");
                 print_title("PX4 Command Center", move_list);
                 cout << WHITE << "Input Move Mode Number: ";
@@ -236,31 +239,33 @@ int main(int argc, char **argv)
                 }
 
                 // 输入相应模式的值
+                // 绝对位置
                 if (switch_cmd_mode == px4_cmd::Command::XYZ_POS)
                 {
-                    
                     if (!input_cmd("X Position [m]: ", "Y Position [m]: ", "Z Position [m]: ", 0))
                     {
                         continue;
                     }
-                    break;
                 }
+                // 相对位置
                 if (switch_cmd_mode == px4_cmd::Command::XYZ_REL_POS)
                 {
                     if (!input_cmd("X Relative Position [m]: ", "Y Relative Position [m]: ", "Z Relative Position [m]: ", 0))
                     {
                         continue;
                     }
-                    break;
                 }
                     
 
                 // 修改命令
                 cmd.Move_frame = switch_frame;
                 cmd.Move_mode = switch_cmd_mode;
-                // 相对位置指令需要加上当前的位置得到绝对位置
+
+
+                // 更改具体指令
                 if (switch_cmd_mode == px4_cmd::Command::XYZ_REL_POS)
                 {
+                    // 相对位置指令需要加上当前的位置得到绝对位置
                     cmd.desire_cmd[0] = desire_cmd_value[0] + current_state.pose.position.x;
                     cmd.desire_cmd[1] = desire_cmd_value[1] + current_state.pose.position.y;
                     cmd.desire_cmd[2] = desire_cmd_value[2] + current_state.pose.position.z;
@@ -274,11 +279,13 @@ int main(int argc, char **argv)
                 break;
             }
 
+            // 盘旋模式
             case px4_cmd::Command::Loiter:
             {
                 break;
             }
 
+            // 轨迹模式
             case px4_cmd::Command::Trajectory:
             {
                 // 初始化
@@ -351,7 +358,7 @@ int main(int argc, char **argv)
                     trajectory_points.push_back(trajectory_point);
 
                     //用户输入是否继续增加航点
-                    cout << "\n\n" << "Add Next Point? (0 -> exit, else -> continue): ";
+                    cout << "\n" << YELLOW << "Add Next Point? (0 -> exit, else -> continue): " << WHITE;
                     cin >> next_point;
                     if (next_point == '0')
                     {
@@ -366,8 +373,7 @@ int main(int argc, char **argv)
                 print_head("PX4 Trajectory Center");
                 print_trajectory_info(switch_trajectory_mode, trajectory_point, trajectory_points, 0);
                 //用户确认航点
-                cout << "\n\n"
-                     << WHITE << "Confirm to Execute? (0 -> exit, else -> continue): ";
+                cout << "\n" << YELLOW << "Confirm to Execute? (0 -> exit, else -> continue): " << WHITE;
                 cin >> confirm_trajectory;
                 if (confirm_trajectory == '0')
                 {
@@ -460,8 +466,8 @@ void print_trajectory_info(int mode, vector<float>  point, std::vector<vector<fl
     //打印模式
     cout << WHITE << "Trajectory Mode: [" << GREEN << trajectory_list[mode] << WHITE << "]\n" << endl;
     //打印已输入航点
-    cout << WHITE << "------------------ Current Points -------------------\n"
-         << "ID\t X [m]\t Y [m] \t Z [m] \t Wait [s]";
+    cout << WHITE << "--------------------- Current Points ----------------------\n"
+         << "ID\t X [m]\t Y [m] \t Z [m] \t\t Wait [s]";
     for (int i = start; i < points.size(); i++)
     {
         cout << WHITE << "\n" << (start == 0 ? i + 1 : i);
@@ -510,7 +516,7 @@ bool input_cmd(string msg1, string msg2, string msg3, int other_msg, ...)
         }
     }
     // 用户确认
-    cout << "\n\n" << WHITE << "Confirm to Execute? (0 -> exit, else -> exec): ";
+    cout << "\n" << YELLOW << "Confirm to Execute? (0 -> exit, else -> continue): " << WHITE;
     cin >> confirm_exec;
     if (confirm_exec.compare("0") == 0)
     {
