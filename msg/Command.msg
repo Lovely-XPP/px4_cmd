@@ -15,6 +15,7 @@ uint8 Move = 2
 uint8 Hover = 3
 uint8 Loiter = 3
 uint8 Trajectory = 4
+uint8 User_define = 5
 
 
 ## 移动命令坐标系
