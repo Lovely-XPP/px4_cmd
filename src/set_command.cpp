@@ -153,7 +153,7 @@ int main(int argc, char **argv)
 
         // 输出标题及选项
         print_title("PX4 Offboard Command", command_list);
-        print_current_cmd(cmd, topic_name, cmd_sub.getNumPublishers() > 1);
+        print_current_cmd(cmd, topic_name, cmd_sub.getNumPublishers() >= 1);
 
         // 获取用户输入
         cout << "\n" << "Input Command Number: ";

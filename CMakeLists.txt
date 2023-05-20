@@ -64,3 +64,8 @@ add_executable(recieve_video src/recieve_video.cpp)
 add_dependencies(recieve_video ${${PROJECT_NAME}_EXPORTED_TARGETS})
 target_link_libraries(recieve_video ${catkin_LIBRARIES})
 
+# Outside Cmd example
+add_executable(example src/example.cpp)
+add_dependencies(example ${${PROJECT_NAME}_EXPORTED_TARGETS})
+target_link_libraries(example ${catkin_LIBRARIES})
+
