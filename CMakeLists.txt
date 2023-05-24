@@ -65,7 +65,7 @@ add_dependencies(recieve_video ${${PROJECT_NAME}_EXPORTED_TARGETS})
 target_link_libraries(recieve_video ${catkin_LIBRARIES})
 
 # External Cmd example
-add_executable(ext_command src/ext_command.cpp)
-add_dependencies(ext_command ${${PROJECT_NAME}_EXPORTED_TARGETS})
-target_link_libraries(ext_command ${catkin_LIBRARIES})
+add_executable(ext_cmd src/ext_command.cpp)
+add_dependencies(ext_cmd ${${PROJECT_NAME}_EXPORTED_TARGETS})
+target_link_libraries(ext_cmd ${catkin_LIBRARIES})
 
