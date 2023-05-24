@@ -13,12 +13,12 @@ px4_cmd::Command cmd;
 
 int main(int argc, char **argv)
 {
-    ros::init(argc, argv, "Outside_cmd");
+    ros::init(argc, argv, "Ext_cmd");
     ros::NodeHandle nh;
     ros::Rate rate(20.0);
 
     ros::Publisher cmd_pub;
-    cmd_pub = nh.advertise<px4_cmd::Command>("/px4_cmd/outside_command", 20);
+    cmd_pub = nh.advertise<px4_cmd::Command>("/px4_cmd/ext_command", 20);
 
     cmd.Mode = px4_cmd::Command::Move;
     cmd.Move_frame = px4_cmd::Command::ENU;

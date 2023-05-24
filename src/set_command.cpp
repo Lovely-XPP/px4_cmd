@@ -24,8 +24,8 @@ ros::Subscriber cmd_sub;
 // 订阅信息
 geometry_msgs::PoseStamped current_state;
 void state_cb(const geometry_msgs::PoseStamped::ConstPtr &msg);
-px4_cmd::Command outside_cmd;
-void user_define_cb(const px4_cmd::Command::ConstPtr &msg);
+px4_cmd::Command external_cmd;
+void external_cmd_cb(const px4_cmd::Command::ConstPtr &msg);
 
 // 初始化命令
 px4_cmd::Command cmd;
@@ -37,7 +37,7 @@ std::vector<string> command_list = {
     "Move",      // 移动
     "Hover",     // 悬停
     "Trajectory",// 航点轨迹控制
-    "User-defined Topic", //用户自定义话题输入
+    "External Command", //外部命令输入
     "Exit"       // 退出
 };
 
@@ -116,13 +116,13 @@ int main(int argc, char **argv)
     ros::NodeHandle nh;
     ros::Rate cmd_rate(10.0);
 
-    // 用户定义话题默认名
-    std::string topic_name = "/px4_cmd/outside_command";
+    // 外部命令默认话题名，支持通过命令行参数输入
+    std::string topic_name = "/px4_cmd/ext_command";
     bool get_topic = nh.getParam("cmd_topic", topic_name);
 
     // 订阅
     state_sub = nh.subscribe<geometry_msgs::PoseStamped>("/mavros/local_position/pose", 10, state_cb);
-    cmd_sub = nh.subscribe<px4_cmd::Command>(topic_name, 20, user_define_cb);
+    cmd_sub = nh.subscribe<px4_cmd::Command>(topic_name, 20, external_cmd_cb);
 
     // 广播初始化
     cmd_pub = nh.advertise<px4_cmd::Command>("/px4_cmd/control_command", 10);
@@ -488,32 +488,32 @@ int main(int argc, char **argv)
                 sleep(2);
             }
 
-            // 用户自定义命令
+            // 外部命令模式
             case px4_cmd::Command::User_define:
             {
                 ros::spinOnce();
-                cmd.Mode = outside_cmd.Mode;
-                cmd.Move_frame = outside_cmd.Move_frame;
-                cmd.Move_mode = outside_cmd.Move_mode;
+                cmd.Mode = external_cmd.Mode;
+                cmd.Move_frame = external_cmd.Move_frame;
+                cmd.Move_mode = external_cmd.Move_mode;
                 while (true) // 按ESC退出
                 {
                     if (cmd_sub.getNumPublishers() < 1)
                     {
                         system("clear");
-                        print_title("PX4 User-Defined Command", null_string);
+                        print_title("PX4 External Command", null_string);
                         cout << RED << "[ERROR] Outside Cmd Topic Disconneted!" << WHITE << endl;
                         sleep(2);
                         cmd.Mode = px4_cmd::Command::Hover;
                         break;
                     }
-                    cmd.desire_cmd[0] = outside_cmd.desire_cmd[0];
-                    cmd.desire_cmd[1] = outside_cmd.desire_cmd[1];
-                    cmd.desire_cmd[2] = outside_cmd.desire_cmd[2];
-                    cmd.yaw_cmd = outside_cmd.yaw_cmd;
+                    cmd.desire_cmd[0] = external_cmd.desire_cmd[0];
+                    cmd.desire_cmd[1] = external_cmd.desire_cmd[1];
+                    cmd.desire_cmd[2] = external_cmd.desire_cmd[2];
+                    cmd.yaw_cmd = external_cmd.yaw_cmd;
                     ros::spinOnce();
                     cmd_rate.sleep();
                     system("clear");
-                    print_title("PX4 User-Defined Command", null_string);
+                    print_title("PX4 External Command", null_string);
                     print_current_cmd(cmd, "", false);
                 }
             }
@@ -568,9 +568,9 @@ void state_cb(const geometry_msgs::PoseStamped::ConstPtr &msg)
     current_state = *msg;
 }
 
-void user_define_cb(const px4_cmd::Command::ConstPtr &msg)
+void external_cmd_cb(const px4_cmd::Command::ConstPtr &msg)
 {
-    outside_cmd = *msg;
+    external_cmd = *msg;
 }
 
 // 轨迹标题输出

@@ -7,7 +7,7 @@
     
     <include>
       <uri>model://fpv_cam</uri>
-      <pose>-0.15 0 0.2 0 1.57 0</pose>
+      <pose>-0.15 0 0.15 0 1.57 0</pose>
     </include>
     
     <joint name="fpv_cam_joint" type="fixed">
