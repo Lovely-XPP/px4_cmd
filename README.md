@@ -4,8 +4,9 @@
 PX4 command sent via terminal (based on mavlink), for whom wants to control vehicle by themselves, e.g. setting points.
 
 ## Todo
+- [x] Support Fix-Wing.
 - [x] Support Video Recieving
-- [ ] Provide API for user-define
+- [x] Provide API for User-Define External Command
 
 ## Installation
 ```bash
@@ -75,6 +76,9 @@ You can set desire height for takeoff.
 
 And support `yaw command [deg]` input for both frames.
 
+#### External Command
+See `ext_command.cpp` for detail.
+
 ### Fix Wing
 
 #### Idle
@@ -100,6 +104,8 @@ For fix wing, you need to set x,y,z position for takeoff.
 
 </div>
 
+#### External Command
+See `ext_command.cpp` for detail.
 
 ## Required Packages
 ```
