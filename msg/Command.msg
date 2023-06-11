@@ -39,5 +39,7 @@ uint8 FixWing_POS = 2       ### 定点模式(绝对位置)
 uint8 FixWing_REL_POS = 3   ### 定点模式(相对位置)
 
 ## 指令输入
-float32[3] desire_cmd          ## [m] [m/s] [m/s^2]
-float32 yaw_cmd                ## [rad]
+float32[3] desire_cmd    ### [m] [m/s] [m/s^2]
+float32 yaw_cmd          ### [rad]
+float32 ext_total_time   ### 外部指令运行总时间 [s]
+float32 ext_time         ### 外部指令当前运行时间 [s]

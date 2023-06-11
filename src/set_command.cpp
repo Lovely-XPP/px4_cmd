@@ -7,6 +7,7 @@
 #include <mavros_msgs/State.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <px4_cmd/Command.h>
+#include <std_msgs/Bool.h>
 
 #include <utility/printf_utility.h>
 #include <utility/handle_cin.h>
@@ -18,17 +19,20 @@ using namespace std;
 
 // 发布消息初始化
 ros::Publisher cmd_pub;
+ros::Publisher ext_on_pub;
 ros::Subscriber state_sub;
 ros::Subscriber cmd_sub;
 
 // 订阅信息
 geometry_msgs::PoseStamped current_state;
+std_msgs::Bool ext_on_msg;
 void state_cb(const geometry_msgs::PoseStamped::ConstPtr &msg);
 px4_cmd::Command external_cmd;
 void external_cmd_cb(const px4_cmd::Command::ConstPtr &msg);
 
 // 初始化命令
 px4_cmd::Command cmd;
+bool ext_on = false;
 
 // 定义列表储存所有模式
 std::vector<string> command_list = {
@@ -38,6 +42,7 @@ std::vector<string> command_list = {
     "Hover",     // 悬停
     "Trajectory",// 航点轨迹控制
     "External Command", //外部命令输入
+    "Refresh Status", // 刷新状态
     "Exit"       // 退出
 };
 
@@ -73,7 +78,7 @@ int switch_cmd_mode = 0;
 int switch_trajectory_mode = 0;
 string confirm_exec = "0";
 bool correct = false;
-
+const int cmd_len = command_list.size();
 
 // 轨迹模式专用
 // 判断是否继续增加航点
@@ -126,6 +131,7 @@ int main(int argc, char **argv)
 
     // 广播初始化
     cmd_pub = nh.advertise<px4_cmd::Command>("/px4_cmd/control_command", 10);
+    ext_on_pub = nh.advertise<std_msgs::Bool>("/px4_cmd/ext_on", 20);
 
     // 命令信息
     desire_cmd_value[0] = 0.0;
@@ -491,12 +497,16 @@ int main(int argc, char **argv)
             // 外部命令模式
             case px4_cmd::Command::User_define:
             {
-                ros::spinOnce();
                 cmd.Mode = external_cmd.Mode;
                 cmd.Move_frame = external_cmd.Move_frame;
                 cmd.Move_mode = external_cmd.Move_mode;
-                while (true) // 按ESC退出
+                while (true)
                 {
+                    ext_on = true;
+                    ext_on_msg.data = ext_on;
+                    ext_on_pub.publish(ext_on_msg);
+                    ros::spinOnce();
+                    cmd_rate.sleep();
                     if (cmd_sub.getNumPublishers() < 1)
                     {
                         system("clear");
@@ -504,18 +514,25 @@ int main(int argc, char **argv)
                         cout << RED << "[ERROR] Outside Cmd Topic Disconneted!" << WHITE << endl;
                         sleep(2);
                         cmd.Mode = px4_cmd::Command::Hover;
+                        ext_on = false;
+                        ext_on_msg.data = ext_on;
+                        ext_on_pub.publish(ext_on_msg);
                         break;
                     }
                     cmd.desire_cmd[0] = external_cmd.desire_cmd[0];
                     cmd.desire_cmd[1] = external_cmd.desire_cmd[1];
                     cmd.desire_cmd[2] = external_cmd.desire_cmd[2];
                     cmd.yaw_cmd = external_cmd.yaw_cmd;
-                    ros::spinOnce();
-                    cmd_rate.sleep();
                     system("clear");
                     print_title("PX4 External Command", null_string);
+                    cout << "Time: " << fixed << setprecision(2) << external_cmd.ext_time << "/" << external_cmd.ext_total_time << endl;
                     print_current_cmd(cmd, "", false);
                 }
+            }
+            // 刷新
+            default:
+            {
+                break;
             }
         }
     }

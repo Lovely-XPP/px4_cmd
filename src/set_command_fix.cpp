@@ -7,6 +7,7 @@
 #include <mavros_msgs/State.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <px4_cmd/Command.h>
+#include <std_msgs/Bool.h>
 
 #include <utility/printf_utility.h>
 #include <utility/handle_cin.h>
@@ -18,17 +19,20 @@ using namespace std;
 
 // 发布消息初始化
 ros::Publisher cmd_pub;
+ros::Publisher ext_on_pub;
 ros::Subscriber state_sub;
 ros::Subscriber cmd_sub;
 
 // 订阅信息
 geometry_msgs::PoseStamped current_state;
+std_msgs::Bool ext_on_msg;
 void state_cb(const geometry_msgs::PoseStamped::ConstPtr &msg);
 px4_cmd::Command external_cmd;
 void external_cmd_cb(const px4_cmd::Command::ConstPtr &msg);
 
 // 初始化命令
 px4_cmd::Command cmd;
+bool ext_on = false;
 
 // 定义列表储存所有模式
 std::vector<string> command_list = {
@@ -38,6 +42,7 @@ std::vector<string> command_list = {
     "Loiter",           // 盘旋
     "Trajectory",       // 航点轨迹控制
     "External Command", // 外部命令输入
+    "Refresh Status",   // 刷新状态
     "Exit"              // 退出
 };
 
@@ -439,12 +444,16 @@ int main(int argc, char **argv)
             // 外部命令模式
             case px4_cmd::Command::User_define:
             {
-                ros::spinOnce();
                 cmd.Mode = external_cmd.Mode;
                 cmd.Move_frame = external_cmd.Move_frame;
                 cmd.Move_mode = external_cmd.Move_mode;
                 while (true) // 按ESC退出
                 {
+                    ext_on = true;
+                    ext_on_msg.data = ext_on;
+                    ext_on_pub.publish(ext_on_msg);
+                    ros::spinOnce();
+                    cmd_rate.sleep();
                     if (cmd_sub.getNumPublishers() < 1)
                     {
                         system("clear");
@@ -452,18 +461,25 @@ int main(int argc, char **argv)
                         cout << RED << "[ERROR] Outside Cmd Topic Disconneted!" << WHITE << endl;
                         sleep(2);
                         cmd.Mode = px4_cmd::Command::Hover;
+                        ext_on = false;
+                        ext_on_msg.data = ext_on;
+                        ext_on_pub.publish(ext_on_msg);
                         break;
                     }
                     cmd.desire_cmd[0] = external_cmd.desire_cmd[0];
                     cmd.desire_cmd[1] = external_cmd.desire_cmd[1];
                     cmd.desire_cmd[2] = external_cmd.desire_cmd[2];
                     cmd.yaw_cmd = external_cmd.yaw_cmd;
-                    ros::spinOnce();
-                    cmd_rate.sleep();
                     system("clear");
                     print_title("PX4 External Command", null_string);
+                    cout << "Time: " << fixed << setprecision(2) << external_cmd.ext_time << "/" << external_cmd.ext_total_time << endl;
                     print_current_cmd(cmd, "", false);
                 }
+            }
+            // 刷新
+            default:
+            {
+                break;
             }
         }
     }
