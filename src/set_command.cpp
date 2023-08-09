@@ -523,6 +523,8 @@ int main(int argc, char **argv)
                     cmd.desire_cmd[1] = external_cmd.desire_cmd[1];
                     cmd.desire_cmd[2] = external_cmd.desire_cmd[2];
                     cmd.yaw_cmd = external_cmd.yaw_cmd;
+                    cmd.Move_mode = external_cmd.Move_mode;
+                    cmd.Move_frame = external_cmd.Move_frame;
                     system("clear");
                     print_title("PX4 External Command", null_string);
                     cout << "Time: " << fixed << setprecision(2) << external_cmd.ext_time << "/" << external_cmd.ext_total_time << endl;

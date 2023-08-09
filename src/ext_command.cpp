@@ -31,9 +31,10 @@ int main(int argc, char **argv)
     ros::Publisher cmd_pub;
     cmd_pub = nh.advertise<px4_cmd::Command>("/px4_cmd/ext_command", 20);
 
-    cmd.Mode = px4_cmd::Command::Move;
-    cmd.Move_frame = px4_cmd::Command::ENU;
-    cmd.Move_mode = px4_cmd::Command::XYZ_POS;
+    // 设置外部命令的基本形式
+    cmd.Mode = px4_cmd::Command::Move;              // 模式为移动 Move
+    cmd.Move_frame = px4_cmd::Command::ENU;         // 坐标系取绝对坐标系
+    cmd.Move_mode = px4_cmd::Command::XYZ_POS;      // 移动指令类型
     cmd.ext_total_time = run_time;
     cmd.ext_time = 0;
 

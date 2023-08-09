@@ -7,6 +7,8 @@ PX4 command sent via terminal (based on mavlink), for whom wants to control vehi
 - [x] Support Fix-Wing
 - [x] Support Video Recieving
 - [x] Provide API for User-Define External Command
+- [x] Add Models
+- [ ] Support Launch Generators
 
 ## Installation
 ```bash
@@ -153,3 +155,4 @@ Therefore, even if we provide stable Offboard Command (publish to `/mavros/setpo
 ## Credits
 - [PX4-Autopilot](https://github.com/PX4/PX4-Autopilot)
 - [PX4 Guide](https://docs.px4.io/main)
+- [XTDrone](https://github.com/robin-shaun/XTDrone) for providing various models
