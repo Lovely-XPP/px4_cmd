@@ -16,6 +16,14 @@ class launch_generator():
         self.sitl_port = 18570
         self.tcp_port = 4560
         self.types = ["iris", "typhoon_h480", "plane"]
+        self.sensors_to_names = {
+            "None": "",
+            "2D-Lidar": "_2d_lidar",
+            "3D-Lidar": "_3d_lidar",
+            "Camera": "_stereo_camera",
+            "Downward Camera": "_downward_camera",
+            "Realsense": "_realsense"
+        }
         pass
         
 
@@ -40,7 +48,7 @@ class launch_generator():
         lable2.resize(150, 35)
         # select
         list2 = QtWidgets.QComboBox(main_win)
-        list2.addItems(["None", "Camera", "Realsense", "2D-Lidar", "3D-Lidar"])
+        list2.addItems(["None", "Camera", "Downward Camera", "Realsense", "2D-Lidar", "3D-Lidar"])
         list2.move(550, 20)
         list2.resize(200, 35)
         list2.setStyleSheet("background-color: rgb(155,205,155)")
@@ -60,6 +68,7 @@ class launch_generator():
         list3.setStyleSheet("background-color: rgb(135,206,235)")
         self.world_list = list3
 
+        # topic name
         # lable
         lable4 = QtWidgets.QLabel("Topic Name", main_win)
         lable4.move(450, 70)
@@ -82,10 +91,12 @@ class launch_generator():
         self.table = table
         headers = ["Vehicle", "Sensor", "x", "y", "z", "R", "P", "Y"]
         model = QtGui.QStandardItemModel(0, len(headers))
+        self.model = model
         model.setHorizontalHeaderLabels(headers)
         self.table.setModel(model)
         self.table.horizontalHeader().setStretchLastSection(True)
         self.table.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
+        self.model.itemChanged.connect(self.update_edit_table)
 
 
     # get_types
@@ -96,9 +107,9 @@ class launch_generator():
     # get_type_sensors
     def get_sensor(self, type) -> list:
         if "iris" in type:
-            sensors = ["None", "Camera", "Realsense", "2D-Lidar", "3D-Lidar"]
+            sensors = ["None", "Camera", "Downward Camera", "Realsense", "2D-Lidar", "3D-Lidar"]
         if "typhoon_h480" in type:
-            sensors = ["None", "Camera", "3D-Lidar"]
+            sensors = ["None", "Camera", "Realsense", "2D-Lidar"]
         if "plane" in type:
             sensors = ["None", "Camera"]
         return sensors
@@ -217,6 +228,10 @@ class launch_generator():
     # browse dir
     def browse_dir(self):
         filename, file_type = QtWidgets.QFileDialog.getSaveFileName(None, "Select Saved Launch File Dir", os.getcwd(), "Launch Files (*.launch)")
+        if filename == "":
+            self.text.setText("")
+            self.output_file = ""
+            return
         filename = filename.split('.')[0]
         filename = filename + ".launch"
         self.text.setText(filename)
@@ -236,22 +251,22 @@ class launch_generator():
         button1 = QtWidgets.QPushButton("Add Vehicle", main_win)
         button1.move(780, 20)
         button1.resize(200, 45)
-        button1.setStyleSheet("background-color: rgb(176,226,255)")
+        button1.setStyleSheet("background-color: rgb(176,226,255); font-size: 12pt")
         # del vehicle button
         button2 = QtWidgets.QPushButton("Del Vehicle", main_win)
         button2.move(780, 75)
         button2.resize(200, 45)
-        button2.setStyleSheet("background-color: rgb(255,106,106)")
+        button2.setStyleSheet("background-color: rgb(255,106,106); font-size: 12pt")
         # clear vehicle button
         button3 = QtWidgets.QPushButton("Clear Vehicles", main_win)
         button3.move(780, 130)
         button3.resize(200, 45)
-        button3.setStyleSheet("background-color: rgb(224,102,255)")
+        button3.setStyleSheet("background-color: rgb(224,102,255); font-size: 12pt")
         # generate button
         button4 = QtWidgets.QPushButton("Generate Launch", main_win)
         button4.move(780, 195)
         button4.resize(200, 65)
-        button4.setStyleSheet("background-color: rgb(84,255,159)")
+        button4.setStyleSheet("background-color: rgb(84,255,159); font-weight: bold; font-size: 15pt")
         # set trigger
         self.add_button = button1
         self.del_button = button2
@@ -278,6 +293,8 @@ class launch_generator():
             item6 = QtGui.QStandardItem(self.init_pos[row]['R'])
             item7 = QtGui.QStandardItem(self.init_pos[row]['P'])
             item8 = QtGui.QStandardItem(self.init_pos[row]['Y'])
+            item1.setEditable(False)
+            item2.setEditable(False)
             model.setItem(row, 0, item1)
             model.setItem(row, 1, item2)
             model.setItem(row, 2, item3)
@@ -286,44 +303,68 @@ class launch_generator():
             model.setItem(row, 5, item6)
             model.setItem(row, 6, item7)
             model.setItem(row, 7, item8)
+        self.model = model
         self.table.setModel(model)
         self.table.horizontalHeader().setStretchLastSection(True)
         self.table.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
+        self.model.itemChanged.connect(self.update_edit_table)
+
+
+    # Update Edit table
+    def update_edit_table(self):
+        row = self.table.currentIndex().row()
+        column = self.table.currentIndex().column()
+        data = self.table.currentIndex().data()
+        data = self.judge(data)
+        if data == "":
+            self.update_table()
+            return
+        init_pos_str = "xyzRPY"
+        self.init_pos[row][init_pos_str[column-2]] = data
+        self.update_table()
+
+
+    # judge input float
+    def judge(self, txt) -> str:
+        if txt == "":
+            msg_box = QtWidgets.QMessageBox(QtWidgets.QMessageBox.Critical, 'Error', 'Initial Postion Can not Be Empty!')
+            msg_box.exec_()
+            return ""
+        try:
+            return str(float(txt))
+        except:
+            msg_box = QtWidgets.QMessageBox(QtWidgets.QMessageBox.Critical, 'Error', 'Input Initial Postion Only Support Float Type!')
+            msg_box.exec_()
+            return ""
 
 
     # Add vehicle button signal handle
     def add_vehicle(self) -> None:
         init_pos = {}
-        if self.text_x.text() == "":
-            msg_box = QtWidgets.QMessageBox(QtWidgets.QMessageBox.Critical, 'Error', 'Please Input Initial Postion!')
-            msg_box.exec_()
+        x = self.judge(self.text_x.text())
+        if x == "":
             return
-        init_pos['x'] = self.text_x.text()
-        if self.text_y.text() == "":
-            msg_box = QtWidgets.QMessageBox(QtWidgets.QMessageBox.Critical, 'Error', 'Please Input Initial Postion!')
-            msg_box.exec_()
+        init_pos['x'] = x
+        y = self.judge(self.text_y.text())
+        if y == "":
             return
-        init_pos['y'] = self.text_y.text()
-        if self.text_z.text() == "":
-            msg_box = QtWidgets.QMessageBox(QtWidgets.QMessageBox.Critical, 'Error', 'Please Input Initial Postion!')
-            msg_box.exec_()
+        init_pos['y'] = y
+        z = self.judge(self.text_z.text())
+        if z == "":
             return
-        init_pos['z'] = self.text_z.text()
-        if self.text_R.text() == "":
-            msg_box = QtWidgets.QMessageBox(QtWidgets.QMessageBox.Critical, 'Error', 'Please Input Initial Postion!')
-            msg_box.exec_()
+        init_pos['z'] = z
+        P = self.judge(self.text_P.text())
+        if P == "":
             return
-        init_pos['R'] = self.text_R.text()
-        if self.text_P.text() == "":
-            msg_box = QtWidgets.QMessageBox(QtWidgets.QMessageBox.Critical, 'Error', 'Please Input Initial Postion!')
-            msg_box.exec_()
+        init_pos['P'] = P
+        R = self.judge(self.text_R.text())
+        if R == "":
             return
-        init_pos['P'] = self.text_P.text()
-        if self.text_Y.text() == "":
-            msg_box = QtWidgets.QMessageBox(QtWidgets.QMessageBox.Critical, 'Error', 'Please Input Initial Postion!')
-            msg_box.exec_()
+        init_pos['R'] = R
+        Y = self.judge(self.text_Y.text())
+        if Y == "":
             return
-        init_pos['Y'] = self.text_Y.text()
+        init_pos['Y'] = Y
         self.init_pos.append(init_pos)
         self.vehicles.append(self.type_list.currentText())
         self.sensors.append(self.sensor_list.currentText())
@@ -405,6 +446,7 @@ class launch_generator():
         for i in range(len(self.vehicles)):
             vehicle = self.vehicles[i]
             sensor = self.sensors[i]
+            model = vehicle + self.sensors_to_names[sensor]
             init_pos = self.init_pos[i]
             if topic_type == 0:
                 topic_name = f"{vehicle}_{i}"
@@ -415,16 +457,20 @@ class launch_generator():
             ET.SubElement(agent, 'arg', attrib={"name": "ID", "value": f"{i}"})
             #ET.SubElement(agent, 'arg', attrib={"name": "ID_in_group", "value": f"{i}"})
             ET.SubElement(agent, 'arg', attrib={"name": "fcu_url", "value": f"udp://:{remote_port}@localhost:{local_port}"})
-            # px4 config
-            px4 = ET.SubElement(agent, 'include', attrib={"file": "$(find px4)/launch/single_vehicle_spawn.launch"})
             for pos_str in "xyzRPY":
-                ET.SubElement(px4, 'arg', attrib={"name": pos_str, "value": str(init_pos[pos_str])})
+                ET.SubElement(agent, 'arg', attrib={"name": pos_str, "default": str(init_pos[pos_str])})
+            ET.SubElement(agent, 'arg', attrib={"name": "sdf", "default": f"$(find px4_cmd)/models/{model}/{model}.sdf"})
+            # px4 config
+            px4 = ET.SubElement(agent, 'include', attrib={"file": "$(find px4)/launch/px4.launch"})
+            ET.SubElement(px4, 'arg', attrib={"name": "est", "value": "$(arg est)"})
             ET.SubElement(px4, 'arg', attrib={"name": "vehicle", "value": vehicle})
             #ET.SubElement(px4, 'arg', attrib={"name": "sdf", "value": f"$(find mavlink_sitl_gazebo)/models/{vehicle}/{vehicle}.sdf"})
-            ET.SubElement(px4, 'arg', attrib={"name": "mavlink_udp_port", "value": str(sitl_port)})
-            ET.SubElement(px4, 'arg', attrib={"name": "mavlink_tcp_port", "value": str(tcp_port)})
+            #ET.SubElement(px4, 'arg', attrib={"name": "mavlink_udp_port", "value": str(sitl_port)})
+            #ET.SubElement(px4, 'arg', attrib={"name": "mavlink_tcp_port", "value": str(tcp_port)})
             ET.SubElement(px4, 'arg', attrib={"name": "ID", "value": "$(arg ID)"})
             #ET.SubElement(px4, 'arg', attrib={"name": "ID_in_group", "value": "$(arg ID_in_group)"})
+            # spawn model
+            ET.SubElement(agent, 'node', attrib={"name": "$(anon vehicle_spawn)", "pkg": "gazebo_ros", "type": "spawn_model", "output": "screen", "args": f"-sdf -file $(arg sdf) -model {topic_name} -x $(arg x) -y $(arg y) -z $(arg z) -R $(arg R) -P $(arg P) -Y $(arg Y)"})
             # marvros
             mavros = ET.SubElement(agent, 'include', attrib={"file": "$(find mavros)/launch/px4.launch"})
             ET.SubElement(mavros, 'arg', attrib={"name": "fcu_url", "value": "$(arg fcu_url)"})
@@ -469,7 +515,7 @@ class launch_generator():
         ros_detect = "which rospack"
         pack_list = "rospack list-names"
         ros_detect = os.popen(ros_detect).read().strip('\n').strip()
-        error_header = "This Programme requires ROS enviroment and PX4 installation.\n"
+        error_header = "This Programme requires ROS enviroment and PX4 installation and px4_cmd ROS Package.\n"
         if ros_detect == "":
             error_msg = error_header + "Please Check ROS Installation & rospack command."
             return error_msg
@@ -480,6 +526,9 @@ class launch_generator():
             return error_msg
         if "mavlink_sitl_gazebo" not in pack_list:
             error_msg = error_header + "Please Check mavlink_sitl_gazebo ROS Package Installation."
+            return error_msg
+        if "px4_cmd" not in pack_list:
+            error_msg = error_header + "Please Check px4_cmd ROS Package Installation.\nGithub: https://github.com/Lovely-XPP/PX4_cmd/"
             return error_msg
         return error_msg
 
@@ -492,18 +541,18 @@ class launch_generator():
         main_win = QtWidgets.QMainWindow()
         main_win.setFixedSize(1020, 700)
         main_win.setWindowIcon(icon)
-        main_win.setWindowTitle("PX4 Cmd Launch Generator")
+        main_win.setWindowTitle("PX4 Cmd Launch File Generator")
         main_win.setStyleSheet("background-color: rgb(255,250,250)")
-        self.add_list(main_win)
-        self.input_init_pos(main_win)
-        self.choose_dir(main_win)
-        self.add_buttons(main_win)
-        self.add_table(main_win)
         err = self.detect_env()
         if err != "":
             msg_box = QtWidgets.QMessageBox(QtWidgets.QMessageBox.Critical, 'Error', err)
             msg_box.exec_()
             sys.exit()
+        self.add_list(main_win)
+        self.input_init_pos(main_win)
+        self.choose_dir(main_win)
+        self.add_buttons(main_win)
+        self.add_table(main_win)
         main_win.show()
         sys.exit(app.exec_())
 
