@@ -117,19 +117,27 @@ class launch_generator():
 
     # input initial position
     def input_init_pos(self, main_win):
-        yshift = 15 + 50
-        lable0 = QtWidgets.QLabel("------------------------------------------------------------------ Initial Position ------------------------------------------------------------------", main_win)
-        lable0.move(50, 50+yshift)
-        lable0.resize(700, 35)
+        yshift = 10 + 50
+        lable00 = QtWidgets.QFrame(main_win)
+        op = QtWidgets.QGraphicsOpacityEffect()
+        op.setOpacity(0.3)
+        lable00.setFrameShape(QtWidgets.QFrame.Box)
+        lable00.setGraphicsEffect(op)
+        lable00.move(40, 63+yshift)
+        lable00.resize(720,75)
+        lable0 = QtWidgets.QLabel("Initial Position", main_win)
+        lable0.move(350, 55+yshift)
+        lable0.resize(100, 35)
+        lable0.setAlignment(QtCore.Qt.AlignHCenter)
         # x
         # lable
         lable1 = QtWidgets.QLabel("x", main_win)
-        lable1.move(50, 90+yshift)
+        lable1.move(50, 85+yshift)
         lable1.resize(30, 35)
         # text
         text1 = QtWidgets.QLineEdit(main_win)
         text1.setReadOnly(False)
-        text1.move(70, 90+yshift)
+        text1.move(70, 85+yshift)
         text1.resize(80, 35)
         text1.setStyleSheet("background-color: white")
         self.text_x = text1
@@ -137,12 +145,12 @@ class launch_generator():
         # y
         # lable
         lable2 = QtWidgets.QLabel("y", main_win)
-        lable2.move(170, 90+yshift)
+        lable2.move(170, 85+yshift)
         lable2.resize(30, 35)
         # text
         text2 = QtWidgets.QLineEdit(main_win)
         text2.setReadOnly(False)
-        text2.move(190, 90+yshift)
+        text2.move(190, 85+yshift)
         text2.resize(80, 35)
         text2.setStyleSheet("background-color: white")
         self.text_y = text2
@@ -150,12 +158,12 @@ class launch_generator():
         # z
         # lable
         lable3 = QtWidgets.QLabel("z", main_win)
-        lable3.move(290, 90+yshift)
+        lable3.move(290, 85+yshift)
         lable3.resize(30, 35)
         # text
         text3 = QtWidgets.QLineEdit(main_win)
         text3.setReadOnly(False)
-        text3.move(310, 90+yshift)
+        text3.move(310, 85+yshift)
         text3.resize(80, 35)
         text3.setStyleSheet("background-color: white")
         self.text_z = text3
@@ -163,12 +171,12 @@ class launch_generator():
         # R
         # lable
         lable4 = QtWidgets.QLabel("R", main_win)
-        lable4.move(410, 90+yshift)
+        lable4.move(410, 85+yshift)
         lable4.resize(30, 35)
         # text
         text4 = QtWidgets.QLineEdit(main_win)
         text4.setReadOnly(False)
-        text4.move(430, 90+yshift)
+        text4.move(430, 85+yshift)
         text4.resize(80, 35)
         text4.setStyleSheet("background-color: white")
         self.text_R = text4
@@ -176,12 +184,12 @@ class launch_generator():
         # P
         # lable
         lable5 = QtWidgets.QLabel("P", main_win)
-        lable5.move(530, 90+yshift)
+        lable5.move(530, 85+yshift)
         lable5.resize(30, 35)
         # text
         text5 = QtWidgets.QLineEdit(main_win)
         text5.setReadOnly(False)
-        text5.move(550, 90+yshift)
+        text5.move(550, 85+yshift)
         text5.resize(80, 35)
         text5.setStyleSheet("background-color: white")
         self.text_P = text5
@@ -189,12 +197,12 @@ class launch_generator():
         # Y
         # lable
         lable6 = QtWidgets.QLabel("Y", main_win)
-        lable6.move(650, 90+yshift)
+        lable6.move(650, 85+yshift)
         lable6.resize(30, 35)
         # text
         text6 = QtWidgets.QLineEdit(main_win)
         text6.setReadOnly(False)
-        text6.move(670, 90+yshift)
+        text6.move(670, 85+yshift)
         text6.resize(80, 35)
         text6.setStyleSheet("background-color: white")
         self.text_Y = text6
