@@ -88,7 +88,6 @@ class launch_generator():
         self.table.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
 
 
-
     # get_types
     def get_type(self) -> list:
         return self.types
@@ -218,8 +217,10 @@ class launch_generator():
     # browse dir
     def browse_dir(self):
         filename, file_type = QtWidgets.QFileDialog.getSaveFileName(None, "Select Saved Launch File Dir", os.getcwd(), "Launch Files (*.launch)")
-        self.text.setText(filename + ".launch")
-        self.output_file = filename + ".launch"
+        filename = filename.split('.')[0]
+        filename = filename + ".launch"
+        self.text.setText(filename)
+        self.output_file = filename
 
 
     # Associate sensor with type
@@ -362,6 +363,7 @@ class launch_generator():
         file_dir = os.popen(file_dir)
         file_dir = file_dir.read().strip('\n').strip()
         files = os.listdir(file_dir)
+        files.sort()
         return files
 
 
@@ -460,13 +462,36 @@ class launch_generator():
                 subelement.tail = newline + indent * level
             self.pretty_xml(subelement, indent, newline, level=level + 1)  # 对子元素进行递归操作
 
+
+    # detect enviroment
+    def detect_env(self) -> str:
+        error_msg = ""
+        ros_detect = "which rospack"
+        pack_list = "rospack list-names"
+        ros_detect = os.popen(ros_detect).read().strip('\n').strip()
+        error_header = "This Programme requires ROS enviroment and PX4 installation.\n"
+        if ros_detect == "":
+            error_msg = error_header + "Please Check ROS Installation & rospack command."
+            return error_msg
+        pack_list = os.popen(pack_list).read().strip('\n').strip()
+        pack_list = pack_list.split('\n')
+        if "px4" not in pack_list:
+            error_msg = error_header + "Please Check PX4 ROS Package Installation."
+            return error_msg
+        if "mavlink_sitl_gazebo" not in pack_list:
+            error_msg = error_header + "Please Check mavlink_sitl_gazebo ROS Package Installation."
+            return error_msg
+        return error_msg
+
         
     # main
     def setup(self) -> None:
         QtWidgets.QApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling)
         app = QtWidgets.QApplication(sys.argv)
+        icon = QtWidgets.QApplication.style().standardIcon(QtWidgets.QStyle.SP_FileIcon)
         main_win = QtWidgets.QMainWindow()
         main_win.setFixedSize(1020, 700)
+        main_win.setWindowIcon(icon)
         main_win.setWindowTitle("PX4 Cmd Launch Generator")
         main_win.setStyleSheet("background-color: rgb(255,250,250)")
         self.add_list(main_win)
@@ -474,6 +499,11 @@ class launch_generator():
         self.choose_dir(main_win)
         self.add_buttons(main_win)
         self.add_table(main_win)
+        err = self.detect_env()
+        if err != "":
+            msg_box = QtWidgets.QMessageBox(QtWidgets.QMessageBox.Critical, 'Error', err)
+            msg_box.exec_()
+            sys.exit()
         main_win.show()
         sys.exit(app.exec_())
 
