@@ -2,6 +2,7 @@ import sys, os
 import xml.etree.ElementTree as ET
 from PyQt5 import QtWidgets, QtCore, QtGui
 from sensors_setting import sensors_setting_window
+from info import info_window
 
 
 class launch_generator():
@@ -39,20 +40,20 @@ class launch_generator():
         list1 = QtWidgets.QComboBox(self.main_win)
         list1.addItems(self.get_type())
         list1.move(150+xshift, 20)
-        list1.resize(200, 35)
+        list1.resize(380, 35)
         list1.setStyleSheet("background-color: rgb(135,206,235)")
         self.type_list = list1
 
         # select sensor
         # lable
         lable2 = QtWidgets.QLabel("Sensor Type", self.main_win)
-        lable2.move(400+xshift, 20)
+        lable2.move(580+xshift, 20)
         lable2.resize(150, 35)
         # select
         list2 = QtWidgets.QComboBox(self.main_win)
         list2.addItems(["None", "Camera", "Downward Camera", "Realsense", "2D-Lidar", "3D-Lidar"])
-        list2.move(500+xshift, 20)
-        list2.resize(200, 35)
+        list2.move(680+xshift, 20)
+        list2.resize(390, 35)
         list2.setStyleSheet("background-color: rgb(155,205,155)")
         self.sensor_list = list2
         self.type_list.currentIndexChanged.connect(self.association)
@@ -66,20 +67,20 @@ class launch_generator():
         list3 = QtWidgets.QComboBox(self.main_win)
         list3.addItems(self.get_worldfile())
         list3.move(150+xshift, 70)
-        list3.resize(200, 35)
+        list3.resize(380, 35)
         list3.setStyleSheet("background-color: rgb(135,206,235)")
         self.world_list = list3
 
         # topic name
         # lable
         lable4 = QtWidgets.QLabel("Topic Name", self.main_win)
-        lable4.move(400+xshift, 70)
+        lable4.move(580+xshift, 70)
         lable4.resize(150, 35)
         # select
         list4 = QtWidgets.QComboBox(self.main_win)
         list4.addItems(list(self.topic_name.keys()))
-        list4.move(500+xshift, 70)
-        list4.resize(200, 35)
+        list4.move(680+xshift, 70)
+        list4.resize(390, 35)
         list4.setStyleSheet("background-color: rgb(155,205,155)")
         self.name_list = list4
 
@@ -88,7 +89,7 @@ class launch_generator():
     def add_table(self) -> None:
         xshift = -20
         table = QtWidgets.QTableView(self.main_win)
-        table.move(50+xshift, 280)
+        table.move(50+xshift, 330)
         table.resize(1020, 400)
         table.setStyleSheet("background-color: white")
         self.table = table
@@ -276,43 +277,56 @@ class launch_generator():
 
     # Add buttons
     def add_buttons(self) -> None:
-        xshfit = 70
+        xshfit = 75
         # add vehicle button
         button1 = QtWidgets.QPushButton("Add Vehicle", self.main_win)
-        button1.move(780+xshfit, 20)
-        button1.resize(200, 45)
+        button1.move(30, 270)
+        button1.resize(190, 40)
         button1.setStyleSheet("background-color: rgb(50,191,255); font-size: 13pt")
         # del vehicle button
         button2 = QtWidgets.QPushButton("Del Vehicle", self.main_win)
-        button2.move(780+xshfit, 75)
-        button2.resize(200, 45)
+        button2.move(235, 270)
+        button2.resize(190, 40)
         button2.setStyleSheet("background-color: rgb(255,106,106); font-size: 13pt")
         # clear vehicle button
         button3 = QtWidgets.QPushButton("Clear Vehicles", self.main_win)
-        button3.move(780+xshfit, 130)
-        button3.resize(200, 45)
+        button3.move(440, 270)
+        button3.resize(190, 40)
         button3.setStyleSheet("background-color: rgb(224,102,255); font-size: 13pt")
         # generate button
         button4 = QtWidgets.QPushButton("Generate Launch", self.main_win)
         button4.move(780+xshfit, 195)
-        button4.resize(200, 65)
+        button4.resize(195, 65)
         button4.setStyleSheet("background-color: rgb(84,255,159); font-weight: bold; font-size: 16pt")
         # sensors setting
-        button5 = QtWidgets.QPushButton("Sensors\nSetting", self.main_win)
-        button5.move(700, 20)
-        button5.resize(130, 85)
-        button5.setStyleSheet("background-color: rgb(255,250,205); font-size: 13pt")
+        button5 = QtWidgets.QPushButton("Sensors Setting", self.main_win)
+        button5.move(645, 270)
+        button5.resize(195, 40)
+        button5.setStyleSheet("background-color: rgb(255,190,155); font-size: 13pt")
+        # load button
+        button6 = QtWidgets.QPushButton("Load Launch", self.main_win)
+        button6.move(780+xshfit, 120)
+        button6.resize(195, 65)
+        button6.setStyleSheet("background-color: rgb(135,206,235); font-weight: bold; font-size: 16pt")
+        # information button
+        button7 = QtWidgets.QPushButton("About", self.main_win)
+        button7.move(855, 270)
+        button7.resize(195, 40)
+        button7.setStyleSheet("background-color: rgb(255,227,132); font-size: 13pt")
         # set trigger
         self.add_button = button1
         self.del_button = button2
         self.clc_button = button3
         self.generate_button = button4
         self.sensors_set_button = button5
+        self.load_button = button6
+        self.info_button = button7
         self.add_button.clicked.connect(self.add_vehicle)
         self.del_button.clicked.connect(self.del_vehicle)
         self.clc_button.clicked.connect(self.clc_vehicle)
         self.generate_button.clicked.connect(self.generate_launch)
         self.sensors_set_button.clicked.connect(self.sensors_set)
+        self.info_button.clicked.connect(self.info_win)
         
 
     # Update table
@@ -447,8 +461,24 @@ class launch_generator():
 
     # open sensors setting window
     def sensors_set(self) -> None:
-        self.sensors_setting_win = sensors_setting_window(self.main_win)
-        self.sensors_setting_win.setup()
+        sensors_setting_win = sensors_setting_window(self.main_win)
+        sensors_setting_win.setup()
+        self.sensors_data = sensors_setting_win.save_sensors_data
+
+    
+    # open information window
+    def info_win(self) -> None:
+        info = info_window(self.main_win)
+        info.setup()
+
+
+    # generate sdf file
+    def generate_sdf(self, sensor: str):
+        sensor_data = self.sensors_data[sensor]
+        sensor_folder_name = sensor.lower().replace(" ", "_")
+        models_dir = os.path.join(os.popen("rospack find px4_cmd").read().strip('\n').strip(), "models")
+        sensor_model_dir = os.path.join(models_dir, sensor_folder_name)
+        origin_xml = ET.parse(os.path.join(sensor_model_dir, f"{sensor_folder_name}.sdf"))
 
 
     # generate launch
@@ -583,7 +613,7 @@ class launch_generator():
         app.setStyle('Fusion')
         icon = QtWidgets.QApplication.style().standardIcon(QtWidgets.QStyle.SP_FileIcon)
         main_win = QtWidgets.QMainWindow()
-        main_win.setFixedSize(1080, 700)
+        main_win.setFixedSize(1080, 750)
         main_win.setWindowIcon(icon)
         main_win.setWindowTitle("PX4 Cmd Launch File Generator")
         main_win.setStyleSheet("background-color: rgb(255,250,250)")

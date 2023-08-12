@@ -7,6 +7,7 @@ PI = 3.1415926535897932384626433
 class sensors_setting_window():
     # initial
     def __init__(self, main_win: QtWidgets.QMainWindow) -> None:
+        self.main_win = main_win
         self.sensors_to_names = {
             "--- Select Sensor Type ---": "",
             "Lidar": "lidar",
@@ -16,7 +17,6 @@ class sensors_setting_window():
             "Realsense Camera": "realsense_camera"
         }
         self.sensors = list(self.sensors_to_names.keys())
-        self.main_win = main_win
         # lidar initial value
         lidar = {}
         lidar['Position'] = [0.0, 0.0, 0.0]
@@ -52,7 +52,7 @@ class sensors_setting_window():
     
     # main ui 
     def main_ui(self) -> None:
-        # create grid 
+        # create layout
         vbox = QtWidgets.QVBoxLayout()
         hbox = QtWidgets.QHBoxLayout()
         hbox.setSpacing(10)
@@ -75,12 +75,12 @@ class sensors_setting_window():
         save_box.setAlignment(QtCore.Qt.AlignHCenter)
         save_and_exit_button = QtWidgets.QPushButton("Save Exit", self.win)
         load_button = QtWidgets.QPushButton("Load", self.win)
-        load_button.setStyleSheet("background-color: rgb(50,191,255); font-weight: bold; font-size: 16pt")
+        load_button.setStyleSheet("background-color: rgb(159,231,167); font-weight: bold; font-size: 16pt")
         load_button.setMinimumSize(150, 40)
-        save_and_exit_button.setStyleSheet("background-color: rgb(84,255,159); font-weight: bold; font-size: 16pt")
+        save_and_exit_button.setStyleSheet("background-color: rgb(176,208,238); font-weight: bold; font-size: 16pt")
         save_and_exit_button.setMinimumSize(150, 40)
         save_button = QtWidgets.QPushButton("Save", self.win)
-        save_button.setStyleSheet("background-color: rgb(84,255,159); font-weight: bold; font-size: 16pt")
+        save_button.setStyleSheet("background-color: rgb(180,180,241); font-weight: bold; font-size: 16pt")
         save_button.setMinimumSize(150, 40)
         save_box.addWidget(load_button)
         save_box.addWidget(save_button)
@@ -482,7 +482,6 @@ class sensors_setting_window():
         win.setWindowTitle("Sensors Setting")
         win.setStyleSheet("background-color: rgb(255,250,250)")
         self.win = win
-        win.children()
         self.main_ui()
         self.win.setFixedSize(600,600)
         self.win.show()

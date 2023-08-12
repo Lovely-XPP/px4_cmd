@@ -1,4 +1,3 @@
-<!-- DO NOT EDIT: Generated from depth_camera.sdf.jinja -->
 <?xml version="1.0" ?>
 <sdf version="1.5">
   <model name="depth_camera">
