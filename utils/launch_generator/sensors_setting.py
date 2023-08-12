@@ -6,7 +6,7 @@ PI = 3.1415926535897932384626433
 
 class sensors_setting_window():
     # initial
-    def __init__(self, main_win: QtWidgets.QMainWindow) -> None:
+    def __init__(self, main_win: QtWidgets.QMainWindow, saved_data: dict) -> None:
         self.main_win = main_win
         self.sensors_to_names = {
             "--- Select Sensor Type ---": "",
@@ -43,6 +43,8 @@ class sensors_setting_window():
             "Stereo Camera": stereo_cam,
             "Realsense Camera": camera
         }
+        if len(saved_data.keys()) > 0:
+            self.sensors_data = saved_data
         # save data inforamtion
         self.save_sensors_data = self.sensors_data
         # set textedit widgets max height
@@ -449,9 +451,11 @@ class sensors_setting_window():
                     if type(sensors_data[key1][key]) != float and type(sensors_data[key1][key]) != int:
                         msg_box.exec_()
                         return
+        self.sensors_data = sensors_data
+        self.save_sensors_data = self.sensors_data
+        self.update_ui()
         msg_box = QtWidgets.QMessageBox(QtWidgets.QMessageBox.Information, 'Info', 'The Sensors Configuration Json File is Successfully Loaded.')
         msg_box.exec_()
-        self.save_sensors_data = self.sensors_data
 
 
     # save 

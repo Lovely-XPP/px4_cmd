@@ -1,3 +1,9 @@
+"""
+Author: Peng Yi
+email: yipeng3@mail2.sysu.edu.cn
+Version: V1.0
+Desciption: A GUI based on pyqt5 for generating px4 launch files.
+"""
 import sys, os
 import xml.etree.ElementTree as ET
 from PyQt5 import QtWidgets, QtCore, QtGui
@@ -11,6 +17,7 @@ class launch_generator():
         self.vehicles = []
         self.sensors = []
         self.init_pos = []
+        self.sensors_data = {}
         self.output_file = ""
         self.topic_name = {"{Vehicle Type}_{ID}": 0, "uav_{ID}": 1}
         self.local_port = 34580
@@ -22,7 +29,7 @@ class launch_generator():
             "None": "",
             "Lidar": "_lidar",
             "Depth Camera": "_depth_camera",
-            "RGB Camera": "_fpv_camera",
+            "RGB Camera": "_rgb_camera",
             "Stereo Camera": "_stereo_camera",
             "Realsense Camera": "_realsense_camera"
         }
@@ -51,7 +58,7 @@ class launch_generator():
         lable2.resize(150, 35)
         # select
         list2 = QtWidgets.QComboBox(self.main_win)
-        list2.addItems(["None", "Camera", "Downward Camera", "Realsense", "2D-Lidar", "3D-Lidar"])
+        list2.addItems(self.sensors_to_names.keys())
         list2.move(680+xshift, 20)
         list2.resize(390, 35)
         list2.setStyleSheet("background-color: rgb(155,205,155)")
@@ -111,11 +118,11 @@ class launch_generator():
     # get_type_sensors
     def get_sensor(self, type) -> list:
         if "iris" in type:
-            sensors = ["None", "Camera", "Downward Camera", "Realsense", "2D-Lidar", "3D-Lidar"]
+            sensors = self.sensors_to_names.keys()
         if "typhoon_h480" in type:
-            sensors = ["None", "Camera", "Realsense", "2D-Lidar"]
+            sensors = self.sensors_to_names.keys()
         if "plane" in type:
-            sensors = ["None", "Camera"]
+            sensors = self.sensors_to_names.keys()
         return sensors
     
 
@@ -461,7 +468,7 @@ class launch_generator():
 
     # open sensors setting window
     def sensors_set(self) -> None:
-        self.sensors_setting_win = sensors_setting_window(self.main_win)
+        self.sensors_setting_win = sensors_setting_window(self.main_win, self.sensors_data)
         self.sensors_setting_win.setup()
         self.sensors_data = self.sensors_setting_win.save_sensors_data
 
@@ -473,12 +480,125 @@ class launch_generator():
 
 
     # generate sdf file
-    def generate_sdf(self, sensor: str):
-        sensor_data = self.sensors_data[sensor]
-        sensor_folder_name = sensor.lower().replace(" ", "_")
+    def generate_sdf(self, vehicle_name: str, sensor_name: str) -> None:
+        vehicle_name = vehicle_name.lower()
+        sensor_data = self.sensors_data[sensor_name]
+        position_data = sensor_data['Position']
+        pose_data = sensor_data['Pose']
+        sensor_folder_name = sensor_name.lower().replace(" ", "_")
         models_dir = os.path.join(os.popen("rospack find px4_cmd").read().strip('\n').strip(), "models")
         sensor_model_dir = os.path.join(models_dir, sensor_folder_name)
-        origin_xml = ET.parse(os.path.join(sensor_model_dir, f"{sensor_folder_name}.sdf"))
+        tree = ET.parse(os.path.join(sensor_model_dir, f"{sensor_folder_name}_origin.sdf"))
+        # get root node
+        root = tree.getroot()
+        # get model node
+        model = root.find("model")
+        # get & set position and pose
+        pose = model.find("pose")
+        link = model.find("link")
+        pose.text = f"{position_data[0]} {position_data[1]} {position_data[2]} {pose_data[0]} {pose_data[1]} {pose_data[2]}"
+        # get sensors node
+        sensors = []
+        for child in link:
+            if child.tag == "sensor":
+                sensors.append(child)
+        # set Lidar Parameters
+        if sensor_name == "Lidar":
+            for sensor in sensors:
+                ray = sensor.find("ray")
+                scan = ray.find("scan")
+                horizontal = scan.find("horizontal")
+                horizontal.find("samples").text = str(sensor_data['Samples'])
+                horizontal.find("resolution").text = str(sensor_data['Resolution'])
+                horizontal.find("min_angle").text = str(sensor_data['Min Angle'])
+                horizontal.find("max_angle").text = str(sensor_data['Max Angle'])
+        # set Camera Parameters
+        if "Camera" in sensor_name:
+            for sensor in sensors:
+                cameras = sensor.findall("camera")
+                for camera in cameras:
+                    image = camera.find("image")
+                    image.find("width").text = str(sensor_data['Width'])
+                    image.find("height").text = str(sensor_data['Height'])
+            # for stereo camera has a additional parameter
+            if "Stereo" in sensor_name:
+                cam_pose = []
+                for sensor in sensors:
+                    cameras = sensor.findall("camera")
+                    for camera in cameras:
+                        cam_pose.append(camera.find("pose"))
+                cam1 = list(cam_pose[0].text.strip().split(' '))
+                cam2 = list(cam_pose[1].text.strip().split(' '))
+                cam1[1] = str(sensor_data['Distance']/2.0)
+                cam2[1] = str(-sensor_data['Distance']/2.0)
+                cam_pose[0].text = ' '.join(cam1)
+                cam_pose[1].text = ' '.join(cam2)
+        # write sdf file
+        output_file = os.path.join(sensor_model_dir, f"{sensor_folder_name}.sdf")
+        if os.path.exists(output_file):
+            os.remove(output_file)
+        # pretty xml
+        self.pretty_xml(tree.getroot(), indent='\t', newline='\n')
+        # write to file
+        tree.write(output_file, encoding="utf-8", xml_declaration=True)
+        with open(output_file, 'a+') as f:
+            f.write("\n<!--this sdf file is generated by PX4 Cmd generator.py  -->")
+        
+        # generate linked sdf file
+        sdf_model = ET.Element('sdf', attrib={"version": "1.1"})
+        model = ET.SubElement(sdf_model, 'model', attrib={"name": f"{vehicle_name}_{sensor_folder_name}"})
+        vehicle_model = ET.SubElement(model, 'include')
+        ET.SubElement(vehicle_model, 'uri').text = f"file://{os.path.join(models_dir, vehicle_name)}"
+        sensor_model = ET.SubElement(model, 'include')
+        ET.SubElement(sensor_model, 'uri').text = f"file://{os.path.join(models_dir, sensor_model_dir)}"
+        joint = ET.SubElement(model, 'joint', attrib={"name": f"{vehicle_name}_{sensor_folder_name}_joint", "type": "fixed"})
+        ET.SubElement(joint, 'child').text = f"{sensor_folder_name}::link"
+        ET.SubElement(joint, 'parent').text = f"{vehicle_name}::base_link"
+        axis = ET.SubElement(joint, 'axis')
+        ET.SubElement(axis, 'xyz').text = "0 0 0"
+        lim = ET.SubElement(axis, 'limit')
+        ET.SubElement(lim, 'upper').text = "0"
+        ET.SubElement(lim, 'lower').text = "0"
+        # plane need a addition plugin
+        if "plane" in vehicle_name:
+            plugin = ET.SubElement(model, 'plugin', attrib={"name": "catapult_plugin", "filename": "libgazebo_catapult_plugin.so"})
+            ET.SubElement(plugin, "robotNamespace")
+            ET.SubElement(plugin, "link_name").text = f"{vehicle_name}::base_link"
+            ET.SubElement(plugin, "commandSubTopic").text = "/gazebo/command/motor_speed"
+            ET.SubElement(plugin, "motorNumber").text = "4"
+            ET.SubElement(plugin, "force").text = "50"
+            ET.SubElement(plugin, "duration").text = "0.5"
+        # generate tree
+        tree = ET.ElementTree(sdf_model)
+        output_sdf_dir = os.path.join(models_dir, f"{vehicle_name}_{sensor_folder_name}")
+        output_sdf_file = os.path.join(output_sdf_dir, f"{vehicle_name}_{sensor_folder_name}.sdf")
+        if not os.path.exists(output_sdf_dir):
+            os.mkdir(output_sdf_dir)
+        # pretty xml
+        self.pretty_xml(tree.getroot(), indent='\t', newline='\n')
+        # write to file
+        tree.write(output_sdf_file, encoding="utf-8", xml_declaration=True)
+        with open(output_sdf_file, 'a+') as f:
+            f.write("\n<!--this sdf file is generated by PX4 Cmd generator.py  -->")
+        
+        # generate linked sdf model config file
+        config = ET.Element('model')
+        ET.SubElement(config, 'name').text = f"{vehicle_name}_{sensor_folder_name}"
+        ET.SubElement(config, 'version').text = "1.1"
+        ET.SubElement(config, 'sdf', attrib={"version": "1.1"}).text = f"{vehicle_name}_{sensor_folder_name}.sdf"
+        author = ET.SubElement(config, 'author')
+        ET.SubElement(author, 'name').text = "Peng Yi"
+        ET.SubElement(author, "email").text = "yipeng3@mail2.sysu.edu.cn"
+        ET.SubElement(config, 'description').text = f"A {vehicle_name} with {sensor_folder_name}."
+        # generate tree
+        tree = ET.ElementTree(config)
+        output_config_file = os.path.join(output_sdf_dir, "model.config")
+        # pretty xml
+        self.pretty_xml(tree.getroot(), indent='\t', newline='\n')
+        # write to file
+        tree.write(output_config_file, encoding="utf-8", xml_declaration=True)
+        with open(output_config_file, 'a+') as f:
+            f.write("\n<!--this model config file is generated by PX4 Cmd generator.py  -->")
 
 
     # generate launch
@@ -519,7 +639,11 @@ class launch_generator():
         for i in range(len(self.vehicles)):
             vehicle = self.vehicles[i]
             sensor = self.sensors[i]
-            model = vehicle + self.sensors_to_names[sensor]
+            if sensor == self.sensors[0]:
+                model = vehicle
+            else:
+                self.generate_sdf(vehicle, sensor)
+                model = vehicle + self.sensors_to_names[sensor]
             init_pos = self.init_pos[i]
             if topic_type == 0:
                 topic_name = f"{vehicle}_{i}"
@@ -561,7 +685,7 @@ class launch_generator():
         # write to file
         tree.write(self.output_file, encoding="utf-8", xml_declaration=True)
         with open(self.output_file, 'a+') as f:
-            f.write("\n<!--the launch file is generated by PX4 Cmd generator.py  -->")
+            f.write("\n<!--this launch file is generated by PX4 Cmd generator.py  -->")
         msg_box = QtWidgets.QMessageBox(QtWidgets.QMessageBox.Information, 'Info', f'Generate Launch File to {self.output_file} Successfully!')
         msg_box.exec_()
 

@@ -1,6 +1,6 @@
 <?xml version='1.0'?>
 <sdf version='1.6'>
-    <model name='fpv_cam'>
+    <model name='rgb_camera'>
     <pose>-0.158979 -0.04405 0.045074 0 -0 0</pose>
       <link name='link'>
         <inertial>

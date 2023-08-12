@@ -8,7 +8,7 @@ PX4 command sent via terminal (based on mavlink), for whom wants to control vehi
 - [x] Support Video Recieving
 - [x] Provide API for User-Define External Command
 - [x] Add Models
-- [ ] Support Launch Generators
+- [x] Support Launch Generators
 
 ## Installation
 ```bash
