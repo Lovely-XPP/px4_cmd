@@ -461,9 +461,9 @@ class launch_generator():
 
     # open sensors setting window
     def sensors_set(self) -> None:
-        sensors_setting_win = sensors_setting_window(self.main_win)
-        sensors_setting_win.setup()
-        self.sensors_data = sensors_setting_win.save_sensors_data
+        self.sensors_setting_win = sensors_setting_window(self.main_win)
+        self.sensors_setting_win.setup()
+        self.sensors_data = self.sensors_setting_win.save_sensors_data
 
     
     # open information window

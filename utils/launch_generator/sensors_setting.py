@@ -73,29 +73,29 @@ class sensors_setting_window():
         # save box
         save_box = QtWidgets.QHBoxLayout()
         save_box.setAlignment(QtCore.Qt.AlignHCenter)
-        save_and_exit_button = QtWidgets.QPushButton("Save Exit", self.win)
+        export_button = QtWidgets.QPushButton("Export", self.win)
         load_button = QtWidgets.QPushButton("Load", self.win)
         load_button.setStyleSheet("background-color: rgb(159,231,167); font-weight: bold; font-size: 16pt")
         load_button.setMinimumSize(150, 40)
-        save_and_exit_button.setStyleSheet("background-color: rgb(176,208,238); font-weight: bold; font-size: 16pt")
-        save_and_exit_button.setMinimumSize(150, 40)
+        export_button.setStyleSheet("background-color: rgb(176,208,238); font-weight: bold; font-size: 16pt")
+        export_button.setMinimumSize(150, 40)
         save_button = QtWidgets.QPushButton("Save", self.win)
         save_button.setStyleSheet("background-color: rgb(180,180,241); font-weight: bold; font-size: 16pt")
         save_button.setMinimumSize(150, 40)
         save_box.addWidget(load_button)
         save_box.addWidget(save_button)
         save_box.addStretch(1)
-        save_box.addWidget(save_and_exit_button)
+        save_box.addWidget(export_button)
         vbox.addStretch(7)
         vbox.addLayout(save_box)
         # set trigger
         save_button.clicked.connect(self.save)
-        save_and_exit_button.clicked.connect(self.save_exit)
+        export_button.clicked.connect(self.export)
         load_button.clicked.connect(self.load)
 
         # set layout
-        self.win.setLayout(vbox)
         list1.currentTextChanged.connect(self.update_ui)
+        self.win.setLayout(vbox)
         self.list1 = list1
         self.vbox = vbox
         
@@ -279,23 +279,23 @@ class sensors_setting_window():
         # save box
         save_box = QtWidgets.QHBoxLayout()
         save_box.setAlignment(QtCore.Qt.AlignHCenter)
-        save_and_exit_button = QtWidgets.QPushButton("Save Exit", self.win)
+        export_button = QtWidgets.QPushButton("Export", self.win)
         load_button = QtWidgets.QPushButton("Load", self.win)
         load_button.setStyleSheet("background-color: rgb(50,191,255); font-weight: bold; font-size: 16pt")
         load_button.setMinimumSize(150, 40)
-        save_and_exit_button.setStyleSheet("background-color: rgb(84,255,159); font-weight: bold; font-size: 16pt")
-        save_and_exit_button.setMinimumSize(150, 40)
+        export_button.setStyleSheet("background-color: rgb(84,255,159); font-weight: bold; font-size: 16pt")
+        export_button.setMinimumSize(150, 40)
         save_button = QtWidgets.QPushButton("Save", self.win)
         save_button.setStyleSheet("background-color: rgb(84,255,159); font-weight: bold; font-size: 16pt")
         save_button.setMinimumSize(150, 40)
         save_box.addWidget(load_button)
         save_box.addWidget(save_button)
         save_box.addStretch(1)
-        save_box.addWidget(save_and_exit_button)
+        save_box.addWidget(export_button)
         self.vbox.addLayout(save_box)
         # set trigger
         save_button.clicked.connect(self.save)
-        save_and_exit_button.clicked.connect(self.save_exit)
+        export_button.clicked.connect(self.export)
         load_button.clicked.connect(self.load)
 
 
@@ -455,12 +455,10 @@ class sensors_setting_window():
 
 
     # save 
-    def save(self):
+    def export(self):
         self.save_sensors_data = self.sensors_data
         filename, file_type = QtWidgets.QFileDialog.getSaveFileName(None, "Select Saved Sensors Config File Dir", os.getcwd(), "Json Files (*.json)")
         if filename == "":
-            self.text.setText("")
-            self.output_file = ""
             return
         filename = filename.split('.')[0]
         filename = filename + ".json"
@@ -471,9 +469,10 @@ class sensors_setting_window():
     
 
     # save and exit
-    def save_exit(self):
-        self.save()
-        self.win.close()
+    def save(self):
+        self.save_sensors_data = self.sensors_data
+        msg_box = QtWidgets.QMessageBox(QtWidgets.QMessageBox.Information, 'Info', 'fThe Sensors Configuration is Successfully Saved.')
+        msg_box.exec_()
 
 
     # main
