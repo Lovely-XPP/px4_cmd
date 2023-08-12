@@ -6,7 +6,7 @@
     </include>
     
     <include>
-      <uri>model://fpv_cam</uri>
+      <uri>file:///home/xpp/Documents/px4_cmd/src/PX4_cmd/models/fpv_cam</uri>
       <pose>-0.15 0 0.15 0 1.57 0</pose>
     </include>
     

@@ -1,6 +1,7 @@
 import sys, os
 import xml.etree.ElementTree as ET
 from PyQt5 import QtWidgets, QtCore, QtGui
+from sensors_setting import sensors_setting_window
 
 
 class launch_generator():
@@ -18,38 +19,39 @@ class launch_generator():
         self.types = ["iris", "typhoon_h480", "plane"]
         self.sensors_to_names = {
             "None": "",
-            "2D-Lidar": "_2d_lidar",
-            "3D-Lidar": "_3d_lidar",
-            "Camera": "_stereo_camera",
-            "Downward Camera": "_downward_camera",
-            "Realsense": "_realsense"
+            "Lidar": "_lidar",
+            "Depth Camera": "_depth_camera",
+            "RGB Camera": "_fpv_camera",
+            "Stereo Camera": "_stereo_camera",
+            "Realsense Camera": "_realsense_camera"
         }
         pass
         
 
     # select type
-    def add_list(self, main_win) -> None:
+    def add_list(self) -> None:
+        xshift = -20
         # lable
-        lable1 = QtWidgets.QLabel("Vehicle Type",main_win)
-        lable1.move(50, 20)
+        lable1 = QtWidgets.QLabel("Vehicle Type", self.main_win)
+        lable1.move(50+xshift, 20)
         lable1.resize(150, 35)
         # select
-        list1 = QtWidgets.QComboBox(main_win)
+        list1 = QtWidgets.QComboBox(self.main_win)
         list1.addItems(self.get_type())
-        list1.move(150, 20)
+        list1.move(150+xshift, 20)
         list1.resize(200, 35)
         list1.setStyleSheet("background-color: rgb(135,206,235)")
         self.type_list = list1
 
         # select sensor
         # lable
-        lable2 = QtWidgets.QLabel("Sensor Type", main_win)
-        lable2.move(450, 20)
+        lable2 = QtWidgets.QLabel("Sensor Type", self.main_win)
+        lable2.move(400+xshift, 20)
         lable2.resize(150, 35)
         # select
-        list2 = QtWidgets.QComboBox(main_win)
+        list2 = QtWidgets.QComboBox(self.main_win)
         list2.addItems(["None", "Camera", "Downward Camera", "Realsense", "2D-Lidar", "3D-Lidar"])
-        list2.move(550, 20)
+        list2.move(500+xshift, 20)
         list2.resize(200, 35)
         list2.setStyleSheet("background-color: rgb(155,205,155)")
         self.sensor_list = list2
@@ -57,36 +59,37 @@ class launch_generator():
 
         # select world
         # lable
-        lable3 = QtWidgets.QLabel("World File", main_win)
-        lable3.move(50, 70)
+        lable3 = QtWidgets.QLabel("World File", self.main_win)
+        lable3.move(50+xshift, 70)
         lable3.resize(150, 35)
         # select
-        list3 = QtWidgets.QComboBox(main_win)
+        list3 = QtWidgets.QComboBox(self.main_win)
         list3.addItems(self.get_worldfile())
-        list3.move(150, 70)
+        list3.move(150+xshift, 70)
         list3.resize(200, 35)
         list3.setStyleSheet("background-color: rgb(135,206,235)")
         self.world_list = list3
 
         # topic name
         # lable
-        lable4 = QtWidgets.QLabel("Topic Name", main_win)
-        lable4.move(450, 70)
+        lable4 = QtWidgets.QLabel("Topic Name", self.main_win)
+        lable4.move(400+xshift, 70)
         lable4.resize(150, 35)
         # select
-        list4 = QtWidgets.QComboBox(main_win)
+        list4 = QtWidgets.QComboBox(self.main_win)
         list4.addItems(list(self.topic_name.keys()))
-        list4.move(550, 70)
+        list4.move(500+xshift, 70)
         list4.resize(200, 35)
         list4.setStyleSheet("background-color: rgb(155,205,155)")
         self.name_list = list4
 
 
     # Add table
-    def add_table(self, main_win):
-        table = QtWidgets.QTableView(main_win)
-        table.move(50, 280)
-        table.resize(930, 400)
+    def add_table(self) -> None:
+        xshift = -20
+        table = QtWidgets.QTableView(self.main_win)
+        table.move(50+xshift, 280)
+        table.resize(1020, 400)
         table.setStyleSheet("background-color: white")
         self.table = table
         headers = ["Vehicle", "Sensor", "x", "y", "z", "R", "P", "Y"]
@@ -116,125 +119,143 @@ class launch_generator():
     
 
     # input initial position
-    def input_init_pos(self, main_win):
+    def input_init_pos(self) -> None:
         yshift = 10 + 50
-        lable00 = QtWidgets.QFrame(main_win)
+        lable00 = QtWidgets.QFrame(self.main_win)
         op = QtWidgets.QGraphicsOpacityEffect()
         op.setOpacity(0.3)
         lable00.setFrameShape(QtWidgets.QFrame.Box)
         lable00.setGraphicsEffect(op)
-        lable00.move(40, 63+yshift)
-        lable00.resize(720,75)
-        lable0 = QtWidgets.QLabel("Initial Position", main_win)
-        lable0.move(350, 55+yshift)
+        lable00.move(30, 63+yshift)
+        lable00.resize(800,75)
+        lable0 = QtWidgets.QLabel("Initial Position", self.main_win)
+        lable0.move(400, 55+yshift)
         lable0.resize(100, 35)
         lable0.setAlignment(QtCore.Qt.AlignHCenter)
+
+        x0 = 50
+        dx1 = 20
+        dx2 = 15
+        x1 = 95
+        x = x0
         # x
         # lable
-        lable1 = QtWidgets.QLabel("x", main_win)
-        lable1.move(50, 85+yshift)
+        lable1 = QtWidgets.QLabel("x", self.main_win)
+        lable1.move(x, 85+yshift)
         lable1.resize(30, 35)
         # text
-        text1 = QtWidgets.QLineEdit(main_win)
+        text1 = QtWidgets.QLineEdit(self.main_win)
         text1.setReadOnly(False)
-        text1.move(70, 85+yshift)
-        text1.resize(80, 35)
+        x = x + dx2
+        text1.move(x, 85+yshift)
+        text1.resize(x1, 35)
         text1.setStyleSheet("background-color: white")
         self.text_x = text1
 
         # y
         # lable
-        lable2 = QtWidgets.QLabel("y", main_win)
-        lable2.move(170, 85+yshift)
+        lable2 = QtWidgets.QLabel("y", self.main_win)
+        x = x + x1 + dx1
+        lable2.move(x, 85+yshift)
         lable2.resize(30, 35)
         # text
-        text2 = QtWidgets.QLineEdit(main_win)
+        text2 = QtWidgets.QLineEdit(self.main_win)
         text2.setReadOnly(False)
-        text2.move(190, 85+yshift)
-        text2.resize(80, 35)
+        x = x + dx2
+        text2.move(x, 85+yshift)
+        text2.resize(x1, 35)
         text2.setStyleSheet("background-color: white")
         self.text_y = text2
 
         # z
         # lable
-        lable3 = QtWidgets.QLabel("z", main_win)
-        lable3.move(290, 85+yshift)
+        lable3 = QtWidgets.QLabel("z", self.main_win)
+        x = x + x1 + dx1
+        lable3.move(x, 85+yshift)
         lable3.resize(30, 35)
         # text
-        text3 = QtWidgets.QLineEdit(main_win)
+        text3 = QtWidgets.QLineEdit(self.main_win)
         text3.setReadOnly(False)
-        text3.move(310, 85+yshift)
-        text3.resize(80, 35)
+        x = x + dx2
+        text3.move(x, 85+yshift)
+        text3.resize(x1, 35)
         text3.setStyleSheet("background-color: white")
         self.text_z = text3
 
         # R
         # lable
-        lable4 = QtWidgets.QLabel("R", main_win)
-        lable4.move(410, 85+yshift)
+        lable4 = QtWidgets.QLabel("R", self.main_win)
+        x = x + x1 + dx1
+        lable4.move(x, 85+yshift)
         lable4.resize(30, 35)
         # text
-        text4 = QtWidgets.QLineEdit(main_win)
+        text4 = QtWidgets.QLineEdit(self.main_win)
         text4.setReadOnly(False)
-        text4.move(430, 85+yshift)
-        text4.resize(80, 35)
+        x = x + dx2
+        text4.move(x, 85+yshift)
+        text4.resize(x1, 35)
         text4.setStyleSheet("background-color: white")
         self.text_R = text4
 
         # P
         # lable
-        lable5 = QtWidgets.QLabel("P", main_win)
-        lable5.move(530, 85+yshift)
+        lable5 = QtWidgets.QLabel("P", self.main_win)
+        x = x + x1 + dx1
+        lable5.move(x, 85+yshift)
         lable5.resize(30, 35)
         # text
-        text5 = QtWidgets.QLineEdit(main_win)
+        text5 = QtWidgets.QLineEdit(self.main_win)
         text5.setReadOnly(False)
-        text5.move(550, 85+yshift)
-        text5.resize(80, 35)
+        x = x + dx2
+        text5.move(x, 85+yshift)
+        text5.resize(x1, 35)
         text5.setStyleSheet("background-color: white")
         self.text_P = text5
 
         # Y
         # lable
-        lable6 = QtWidgets.QLabel("Y", main_win)
-        lable6.move(650, 85+yshift)
+        lable6 = QtWidgets.QLabel("Y", self.main_win)
+        x = x + x1 + dx1
+        lable6.move(x, 85+yshift)
         lable6.resize(30, 35)
         # text
-        text6 = QtWidgets.QLineEdit(main_win)
+        text6 = QtWidgets.QLineEdit(self.main_win)
         text6.setReadOnly(False)
-        text6.move(670, 85+yshift)
-        text6.resize(80, 35)
+        x = x + dx2
+        text6.move(x, 85+yshift)
+        text6.resize(x1, 35)
         text6.setStyleSheet("background-color: white")
         self.text_Y = text6
 
 
     # select dir
-    def choose_dir(self, main_win) -> None:
+    def choose_dir(self) -> None:
+        xshift = -20
         yshift = 30 + 45
         # lable
-        lable = QtWidgets.QLabel("Output Dir", main_win)
-        lable.move(50, 140+yshift)
+        lable = QtWidgets.QLabel("Output Dir", self.main_win)
+        lable.move(50+xshift, 140+yshift)
         lable.resize(100, 35)
 
         # show dir
-        text = QtWidgets.QLineEdit(main_win)
+        text = QtWidgets.QLineEdit(self.main_win)
         text.setReadOnly(True)
-        text.move(150, 140+yshift)
-        text.resize(500, 35)
+        text.move(155+xshift, 140+yshift)
+        text.resize(580, 35)
         text.setStyleSheet("background-color: white")
         self.text = text
 
         # browse button
-        button = QtWidgets.QPushButton("Browse", main_win)
-        button.move(660, 140+yshift)
-        button.resize(90, 35)
+        button = QtWidgets.QPushButton("Browse", self.main_win)
+        button.move(750+xshift, 140+yshift)
+        button.resize(100, 35)
         button.setStyleSheet("background-color: rgb(255,235,230)")
         self.browse_button = button
         self.browse_button.clicked.connect(self.browse_dir)
     
 
     # browse dir
-    def browse_dir(self):
+    def browse_dir(self) -> None:
         filename, file_type = QtWidgets.QFileDialog.getSaveFileName(None, "Select Saved Launch File Dir", os.getcwd(), "Launch Files (*.launch)")
         if filename == "":
             self.text.setText("")
@@ -254,40 +275,48 @@ class launch_generator():
 
 
     # Add buttons
-    def add_buttons(self, main_win) -> None:
+    def add_buttons(self) -> None:
+        xshfit = 70
         # add vehicle button
-        button1 = QtWidgets.QPushButton("Add Vehicle", main_win)
-        button1.move(780, 20)
+        button1 = QtWidgets.QPushButton("Add Vehicle", self.main_win)
+        button1.move(780+xshfit, 20)
         button1.resize(200, 45)
-        button1.setStyleSheet("background-color: rgb(176,226,255); font-size: 12pt")
+        button1.setStyleSheet("background-color: rgb(50,191,255); font-size: 13pt")
         # del vehicle button
-        button2 = QtWidgets.QPushButton("Del Vehicle", main_win)
-        button2.move(780, 75)
+        button2 = QtWidgets.QPushButton("Del Vehicle", self.main_win)
+        button2.move(780+xshfit, 75)
         button2.resize(200, 45)
-        button2.setStyleSheet("background-color: rgb(255,106,106); font-size: 12pt")
+        button2.setStyleSheet("background-color: rgb(255,106,106); font-size: 13pt")
         # clear vehicle button
-        button3 = QtWidgets.QPushButton("Clear Vehicles", main_win)
-        button3.move(780, 130)
+        button3 = QtWidgets.QPushButton("Clear Vehicles", self.main_win)
+        button3.move(780+xshfit, 130)
         button3.resize(200, 45)
-        button3.setStyleSheet("background-color: rgb(224,102,255); font-size: 12pt")
+        button3.setStyleSheet("background-color: rgb(224,102,255); font-size: 13pt")
         # generate button
-        button4 = QtWidgets.QPushButton("Generate Launch", main_win)
-        button4.move(780, 195)
+        button4 = QtWidgets.QPushButton("Generate Launch", self.main_win)
+        button4.move(780+xshfit, 195)
         button4.resize(200, 65)
-        button4.setStyleSheet("background-color: rgb(84,255,159); font-weight: bold; font-size: 15pt")
+        button4.setStyleSheet("background-color: rgb(84,255,159); font-weight: bold; font-size: 16pt")
+        # sensors setting
+        button5 = QtWidgets.QPushButton("Sensors\nSetting", self.main_win)
+        button5.move(700, 20)
+        button5.resize(130, 85)
+        button5.setStyleSheet("background-color: rgb(255,250,205); font-size: 13pt")
         # set trigger
         self.add_button = button1
         self.del_button = button2
         self.clc_button = button3
         self.generate_button = button4
+        self.sensors_set_button = button5
         self.add_button.clicked.connect(self.add_vehicle)
         self.del_button.clicked.connect(self.del_vehicle)
         self.clc_button.clicked.connect(self.clc_vehicle)
         self.generate_button.clicked.connect(self.generate_launch)
-
+        self.sensors_set_button.clicked.connect(self.sensors_set)
+        
 
     # Update table
-    def update_table(self):
+    def update_table(self) -> None:
         numbers = len(self.vehicles)
         headers = ["Vehicle", "Sensor", "x", "y", "z", "R", "P", "Y"]
         model = QtGui.QStandardItemModel(numbers, len(headers))
@@ -319,11 +348,11 @@ class launch_generator():
 
 
     # Update Edit table
-    def update_edit_table(self):
+    def update_edit_table(self) -> None:
         row = self.table.currentIndex().row()
         column = self.table.currentIndex().column()
         data = self.table.currentIndex().data()
-        data = self.judge(data)
+        data = self.check_input_data(data)
         if data == "":
             self.update_table()
             return
@@ -332,8 +361,8 @@ class launch_generator():
         self.update_table()
 
 
-    # judge input float
-    def judge(self, txt) -> str:
+    # check input data
+    def check_input_data(self, txt) -> str:
         if txt == "":
             msg_box = QtWidgets.QMessageBox(QtWidgets.QMessageBox.Critical, 'Error', 'Initial Postion Can not Be Empty!')
             msg_box.exec_()
@@ -349,27 +378,27 @@ class launch_generator():
     # Add vehicle button signal handle
     def add_vehicle(self) -> None:
         init_pos = {}
-        x = self.judge(self.text_x.text())
+        x = self.check_input_data(self.text_x.text())
         if x == "":
             return
         init_pos['x'] = x
-        y = self.judge(self.text_y.text())
+        y = self.check_input_data(self.text_y.text())
         if y == "":
             return
         init_pos['y'] = y
-        z = self.judge(self.text_z.text())
+        z = self.check_input_data(self.text_z.text())
         if z == "":
             return
         init_pos['z'] = z
-        P = self.judge(self.text_P.text())
+        P = self.check_input_data(self.text_P.text())
         if P == "":
             return
         init_pos['P'] = P
-        R = self.judge(self.text_R.text())
+        R = self.check_input_data(self.text_R.text())
         if R == "":
             return
         init_pos['R'] = R
-        Y = self.judge(self.text_Y.text())
+        Y = self.check_input_data(self.text_Y.text())
         if Y == "":
             return
         init_pos['Y'] = Y
@@ -414,6 +443,12 @@ class launch_generator():
         files = os.listdir(file_dir)
         files.sort()
         return files
+
+
+    # open sensors setting window
+    def sensors_set(self) -> None:
+        self.sensors_setting_win = sensors_setting_window(self.main_win)
+        self.sensors_setting_win.setup()
 
 
     # generate launch
@@ -502,7 +537,7 @@ class launch_generator():
 
     
     # elemnt为传进来的Elment类，参数indent用于缩进，newline用于换行
-    def pretty_xml(self, element, indent, newline, level = 0):  
+    def pretty_xml(self, element, indent, newline, level = 0) -> None:  
         if element:  # 判断element是否有子元素    
             if (element.text is None) or element.text.isspace():  # 如果element的text没有内容
                 element.text = newline + indent * (level + 1)
@@ -545,23 +580,25 @@ class launch_generator():
     def setup(self) -> None:
         QtWidgets.QApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling)
         app = QtWidgets.QApplication(sys.argv)
+        app.setStyle('Fusion')
         icon = QtWidgets.QApplication.style().standardIcon(QtWidgets.QStyle.SP_FileIcon)
         main_win = QtWidgets.QMainWindow()
-        main_win.setFixedSize(1020, 700)
+        main_win.setFixedSize(1080, 700)
         main_win.setWindowIcon(icon)
         main_win.setWindowTitle("PX4 Cmd Launch File Generator")
         main_win.setStyleSheet("background-color: rgb(255,250,250)")
+        self.main_win = main_win
         err = self.detect_env()
         if err != "":
             msg_box = QtWidgets.QMessageBox(QtWidgets.QMessageBox.Critical, 'Error', err)
             msg_box.exec_()
             sys.exit()
-        self.add_list(main_win)
-        self.input_init_pos(main_win)
-        self.choose_dir(main_win)
-        self.add_buttons(main_win)
-        self.add_table(main_win)
-        main_win.show()
+        self.add_list()
+        self.input_init_pos()
+        self.choose_dir()
+        self.add_buttons()
+        self.add_table()
+        self.main_win.show()
         sys.exit(app.exec_())
 
 
