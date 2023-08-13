@@ -1,7 +1,7 @@
 """
 Author: Peng Yi
 email: yipeng3@mail2.sysu.edu.cn
-Version: V1.0
+Version: V1.1
 Desciption: A GUI based on pyqt5 for generating px4 launch files.
 """
 import sys, os
@@ -17,6 +17,7 @@ class launch_generator():
         self.vehicles = []
         self.sensors = []
         self.init_pos = []
+        self.world_files = []
         self.sensors_data = {}
         self.output_file = ""
         self.topic_name = {"{Vehicle Type}_{ID}": 0, "uav_{ID}": 1}
@@ -24,7 +25,7 @@ class launch_generator():
         self.remote_port = 24540
         self.sitl_port = 18570
         self.tcp_port = 4560
-        self.types = ["iris", "typhoon_h480", "plane"]
+        self.vehicle_types = ["iris", "typhoon_h480", "plane"]
         self.sensors_to_names = {
             "None": "",
             "Lidar": "_lidar",
@@ -33,6 +34,8 @@ class launch_generator():
             "Stereo Camera": "_stereo_camera",
             "Realsense Camera": "_realsense_camera"
         }
+        self.sensors_type = list(self.sensors_to_names.keys())
+        self.get_worldfile()
         pass
         
 
@@ -58,7 +61,7 @@ class launch_generator():
         lable2.resize(150, 35)
         # select
         list2 = QtWidgets.QComboBox(self.main_win)
-        list2.addItems(self.sensors_to_names.keys())
+        list2.addItems(self.sensors_type)
         list2.move(680+xshift, 20)
         list2.resize(390, 35)
         list2.setStyleSheet("background-color: rgb(155,205,155)")
@@ -72,7 +75,7 @@ class launch_generator():
         lable3.resize(150, 35)
         # select
         list3 = QtWidgets.QComboBox(self.main_win)
-        list3.addItems(self.get_worldfile())
+        list3.addItems(self.world_files)
         list3.move(150+xshift, 70)
         list3.resize(380, 35)
         list3.setStyleSheet("background-color: rgb(135,206,235)")
@@ -112,17 +115,17 @@ class launch_generator():
 
     # get_types
     def get_type(self) -> list:
-        return self.types
+        return self.vehicle_types
     
 
     # get_type_sensors
     def get_sensor(self, type) -> list:
         if "iris" in type:
-            sensors = self.sensors_to_names.keys()
+            sensors = self.sensors_type
         if "typhoon_h480" in type:
-            sensors = self.sensors_to_names.keys()
+            sensors = self.sensors_type
         if "plane" in type:
-            sensors = self.sensors_to_names.keys()
+            sensors = self.sensors_type
         return sensors
     
 
@@ -334,6 +337,7 @@ class launch_generator():
         self.generate_button.clicked.connect(self.generate_launch)
         self.sensors_set_button.clicked.connect(self.sensors_set)
         self.info_button.clicked.connect(self.info_win)
+        self.load_button.clicked.connect(self.load_launch)
         
 
     # Update table
@@ -457,26 +461,25 @@ class launch_generator():
 
     
     # get world file
-    def get_worldfile(self) -> list:
+    def get_worldfile(self) -> None:
         file_dir = "echo $(rospack find mavlink_sitl_gazebo)/worlds/"
         file_dir = os.popen(file_dir)
         file_dir = file_dir.read().strip('\n').strip()
         files = os.listdir(file_dir)
         files.sort()
-        return files
+        self.world_files = files
 
 
     # open sensors setting window
     def sensors_set(self) -> None:
-        self.sensors_setting_win = sensors_setting_window(self.main_win, self.sensors_data)
         self.sensors_setting_win.setup()
         self.sensors_data = self.sensors_setting_win.save_sensors_data
 
     
     # open information window
     def info_win(self) -> None:
-        info = info_window(self.main_win)
-        info.setup()
+        self.info = info_window(self.main_win)
+        self.info.setup()
 
 
     # generate sdf file
@@ -621,6 +624,7 @@ class launch_generator():
         ET.SubElement(launch, 'arg', attrib={"name": "debug", "default": "false"})
         ET.SubElement(launch, 'arg', attrib={"name": "verbose", "default": "false"})
         ET.SubElement(launch, 'arg', attrib={"name": "paused", "default": "false"})
+        ET.SubElement(launch, 'arg', attrib={"name": "topic_type", "default": f"{self.name_list.currentText()}"})
 
         # gazebo_simulation config
         gazebo_sim = ET.SubElement(launch, 'include', attrib={"file": "$(find gazebo_ros)/launch/empty_world.launch"})
@@ -639,7 +643,7 @@ class launch_generator():
         for i in range(len(self.vehicles)):
             vehicle = self.vehicles[i]
             sensor = self.sensors[i]
-            if sensor == self.sensors[0]:
+            if sensor == self.sensors_type[0]:
                 model = vehicle
             else:
                 self.generate_sdf(vehicle, sensor)
@@ -651,12 +655,14 @@ class launch_generator():
                 topic_name = f"uav_{i}"
             # init arg
             agent = ET.SubElement(launch, 'group', attrib={"ns": topic_name})
+            ET.SubElement(agent, 'arg', attrib={"name": "vehicle", "value": vehicle})
+            ET.SubElement(agent, 'arg', attrib={"name": "sensor", "value": sensor})
             ET.SubElement(agent, 'arg', attrib={"name": "ID", "value": f"{i}"})
             #ET.SubElement(agent, 'arg', attrib={"name": "ID_in_group", "value": f"{i}"})
             ET.SubElement(agent, 'arg', attrib={"name": "fcu_url", "value": f"udp://:{remote_port}@localhost:{local_port}"})
             for pos_str in "xyzRPY":
-                ET.SubElement(agent, 'arg', attrib={"name": pos_str, "default": str(init_pos[pos_str])})
-            ET.SubElement(agent, 'arg', attrib={"name": "sdf", "default": f"$(find px4_cmd)/models/{model}/{model}.sdf"})
+                ET.SubElement(agent, 'arg', attrib={"name": pos_str, "value": str(init_pos[pos_str])})
+            ET.SubElement(agent, 'arg', attrib={"name": "sdf", "value": f"$(find px4_cmd)/models/{model}/{model}.sdf"})
             # px4 config
             px4 = ET.SubElement(agent, 'include', attrib={"file": "$(find px4)/launch/px4.launch"})
             ET.SubElement(px4, 'arg', attrib={"name": "est", "value": "$(arg est)"})
@@ -728,7 +734,78 @@ class launch_generator():
             error_msg = error_header + "Please Check px4_cmd ROS Package Installation.\nGithub: https://github.com/Lovely-XPP/PX4_cmd/"
             return error_msg
         return error_msg
+    
 
+    # load launch file
+    def load_launch(self) -> None:
+        # tip for load launch file
+        msg_box = QtWidgets.QMessageBox(QtWidgets.QMessageBox.Information, 'Info', 'Only Support Loading Launch File Generated by the Programme and will replace The Edited One.')
+        msg_box.exec_()
+        # get filename by file browser
+        filename, file_type = QtWidgets.QFileDialog.getOpenFileName(None, "Select Launch File", os.getcwd(), "Launch Files (*.launch)")
+        if not os.path.exists(filename):
+            msg_box = QtWidgets.QMessageBox(QtWidgets.QMessageBox.Critical, 'Error', 'Cannot find the Launch File.')
+            msg_box.exec_()
+            return
+        filename = filename.split('.')[0]
+        filename = filename + ".launch"
+        # load file name
+        tree = ET.parse(filename)
+        root = tree.getroot()
+        # get and check data
+        msg_box_err = QtWidgets.QMessageBox(QtWidgets.QMessageBox.Critical, 'Error', 'The Launch File is bad, please check the file.')
+        try:
+            topic = root.find("*[@name='topic_type']").get('default').strip()
+            world = root.find("*[@name='world']").get('default').split("/worlds/")[1].strip()
+            if (topic not in self.topic_name.keys()) or (world not in self.world_files):
+                msg_box_err.exec_()
+                return
+        except:
+            msg_box_err.exec_()
+            return
+        vehicles = []
+        sensors = []
+        init_pos = []
+        all = 0
+        collect = 0
+        for group in root.findall("group"):
+            all += 1
+            pos = {}
+            try:
+                vehicle = group.find("*[@name='vehicle']").get('value').strip()
+                sensor = group.find("*[@name='sensor']").get('value').strip()
+                x = str(float(group.find("*[@name='x']").get('value').strip()))
+                y = str(float(group.find("*[@name='y']").get('value').strip()))
+                z = str(float(group.find("*[@name='z']").get('value').strip()))
+                R = str(float(group.find("*[@name='R']").get('value').strip()))
+                P = str(float(group.find("*[@name='P']").get('value').strip()))
+                Y = str(float(group.find("*[@name='Y']").get('value').strip()))
+                if (vehicle not in self.vehicle_types) or (sensor not in self.sensors_type):
+                    continue
+            except:
+                continue
+            collect += 1
+            pos['x'] = x
+            pos['y'] = y
+            pos['z'] = z
+            pos['R'] = R
+            pos['P'] = P
+            pos['Y'] = Y
+            vehicles.append(vehicle)
+            sensors.append(sensor)
+            init_pos.append(pos)
+        if collect == 0:
+            msg_box_err.exec_()
+            return
+        self.vehicles = vehicles
+        self.sensors = sensors
+        self.init_pos = init_pos
+        self.update_table()
+        self.name_list.setCurrentText(topic)
+        self.world_list.setCurrentText(world)
+        msg_box = QtWidgets.QMessageBox(QtWidgets.QMessageBox.Information, 'Info', f'The Launch File is Loaded Successfully.\nDetected Vehicles Count: {all}\nFailed Loaded Vehicles Count: {all-collect}\nSuccessfully Loaded Vehicles Count: {collect}\n')
+        msg_box.exec_()
+        
         
     # main
     def setup(self) -> None:
@@ -747,6 +824,8 @@ class launch_generator():
             msg_box = QtWidgets.QMessageBox(QtWidgets.QMessageBox.Critical, 'Error', err)
             msg_box.exec_()
             sys.exit()
+        self.sensors_setting_win = sensors_setting_window(self.main_win, self.sensors_data)
+        self.sensors_data = self.sensors_setting_win.save_sensors_data
         self.add_list()
         self.input_init_pos()
         self.choose_dir()

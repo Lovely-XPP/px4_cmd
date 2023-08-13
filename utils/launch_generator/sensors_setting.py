@@ -416,7 +416,7 @@ class sensors_setting_window():
     def load(self):
         msg_box = QtWidgets.QMessageBox(QtWidgets.QMessageBox.Information, 'Info', 'Load Sensors Configuration Files Will Replace Origin Configuration.')
         msg_box.exec_()
-        filename, file_type = QtWidgets.QFileDialog.getOpenFileName(None, "Select Saved Sensors Config File Dir", os.getcwd(), "Json Files (*.json)")
+        filename, file_type = QtWidgets.QFileDialog.getOpenFileName(None, "Select Sensors Config File", os.getcwd(), "Json Files (*.json)")
         if not os.path.exists(filename):
             msg_box = QtWidgets.QMessageBox(QtWidgets.QMessageBox.Critical, 'Error', 'Cannot find the Sensors Configuration Json File.')
             msg_box.exec_()
