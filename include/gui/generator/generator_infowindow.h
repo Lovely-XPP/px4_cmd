@@ -8,7 +8,7 @@
 #include <QTextBrowser>
 #include <string>
 #include <vector>
-#include <stdio.h>
+#include <iostream>
 
 #include <print_utility/printf_utility.h>
 

@@ -1,10 +1,12 @@
 #ifndef GENERATORMAINWINDOW_H
 #define GENERATORMAINWINDOW_H
 #include <QMainWindow>
+#include <QApplication>
 #include <QDialog>
 #include <QMessageBox>
 #include <QLabel>
 #include <QFrame>
+#include <QIcon>
 #include <QLineEdit>
 #include <QComboBox>
 #include <QTableView>
@@ -16,7 +18,7 @@
 #include <QGraphicsOpacityEffect>
 #include <string>
 #include <vector>
-#include <stdio.h>
+#include <iostream>
 
 #include <gui/generator/generator_infowindow.h>
 #include <gui/generator/generator_sensorswindow.h>
@@ -41,7 +43,7 @@ class GeneratorMainWindow : public QWidget
 
     private:
         // settings
-        string version = "V1.0.0";
+        string version = "V1.0.1";
         int local_port = 34580;
         int remote_port = 24540;
         int sitl_port = 18570;
@@ -87,6 +89,8 @@ class GeneratorMainWindow : public QWidget
 
         void setup()
         {
+            QIcon *icon = new QIcon(QApplication::style()->standardIcon(QStyle::SP_FileIcon));
+            win->setWindowIcon(*icon);
             win->setFixedSize(1080, 750);
             win->setWindowTitle(("PX4 Cmd Launch File Generator [Version: " + version + "]").c_str());
             win->setStyleSheet("background-color: rgb(255,250,250)");
@@ -100,6 +104,7 @@ class GeneratorMainWindow : public QWidget
                 msg_box->setInformativeText(err.c_str());
                 exit(msg_box->exec());
             }
+            sensor_datas = sensors_win->sensors_save_data;
             get_world_files();
             add_list();
             add_table();
@@ -656,7 +661,6 @@ class GeneratorMainWindow : public QWidget
             XMLElement *agent_arg_3;
             XMLElement *agent_arg_4;
             XMLElement *agent_arg_5;
-            XMLElement *agent_arg_6;
             XMLElement *agent_arg_x;
             XMLElement *agent_arg_y;
             XMLElement *agent_arg_z;
@@ -730,17 +734,13 @@ class GeneratorMainWindow : public QWidget
                 agent_arg_3->SetAttribute("value", (to_string(i)).c_str());
                 agent->InsertEndChild(agent_arg_3);
                 agent_arg_4 = doc.NewElement("arg");
-                agent_arg_4->SetAttribute("name", "ID");
-                agent_arg_4->SetAttribute("value", (to_string(i)).c_str());
+                agent_arg_4->SetAttribute("name", "fcu_url");
+                agent_arg_4->SetAttribute("value", ("udp://:" + to_string(remote_port) + "@localhost:" + to_string(local_port)).c_str());
                 agent->InsertEndChild(agent_arg_4);
                 agent_arg_5 = doc.NewElement("arg");
-                agent_arg_5->SetAttribute("name", "fcu_url");
-                agent_arg_5->SetAttribute("value", ("udp://:" + to_string(remote_port) + "@localhost:" + to_string(local_port)).c_str());
+                agent_arg_5->SetAttribute("name", "sdf");
+                agent_arg_5->SetAttribute("value", ("$(find px4_cmd)/models/" + model + "/" + model + ".sdf").c_str());
                 agent->InsertEndChild(agent_arg_5);
-                agent_arg_6 = doc.NewElement("arg");
-                agent_arg_6->SetAttribute("name", "fcu_url");
-                agent_arg_6->SetAttribute("value", ("$(find px4_cmd)/models/" + model + "/" + model + ".sdf").c_str());
-                agent->InsertEndChild(agent_arg_6);
                 agent_arg_x = doc.NewElement("arg");
                 agent_arg_x->SetAttribute("name", "x");
                 agent_arg_x->SetAttribute("value", init_pos[i][0].c_str());
@@ -755,15 +755,15 @@ class GeneratorMainWindow : public QWidget
                 agent->InsertEndChild(agent_arg_z);
                 agent_arg_R = doc.NewElement("arg");
                 agent_arg_R->SetAttribute("name", "R");
-                agent_arg_R->SetAttribute("value", init_pos[i][0].c_str());
+                agent_arg_R->SetAttribute("value", init_pos[i][3].c_str());
                 agent->InsertEndChild(agent_arg_R);
                 agent_arg_P = doc.NewElement("arg");
                 agent_arg_P->SetAttribute("name", "P");
-                agent_arg_P->SetAttribute("value", init_pos[i][1].c_str());
+                agent_arg_P->SetAttribute("value", init_pos[i][4].c_str());
                 agent->InsertEndChild(agent_arg_P);
                 agent_arg_Y = doc.NewElement("arg");
                 agent_arg_Y->SetAttribute("name", "Y");
-                agent_arg_Y->SetAttribute("value", init_pos[i][2].c_str());
+                agent_arg_Y->SetAttribute("value", init_pos[i][5].c_str());
                 agent->InsertEndChild(agent_arg_Y);
                 // PX4 config
                 px4_comment = doc.NewComment(" px4 ");
@@ -785,7 +785,7 @@ class GeneratorMainWindow : public QWidget
                 px4->InsertEndChild(px4_arg_3);
                 // spawn model
                 spawn_model_comment = doc.NewComment(" spawn model ");
-                agent->InsertEndChild(spawn_model);
+                agent->InsertEndChild(spawn_model_comment);
                 spawn_model = doc.NewElement("node");
                 spawn_model->SetAttribute("name", "$(anon vehicle_spawn)");
                 spawn_model->SetAttribute("pkg", "gazebo_ros");
@@ -809,7 +809,7 @@ class GeneratorMainWindow : public QWidget
                 mavros->InsertEndChild(mavros_arg_2);
                 mavros_arg_3 = doc.NewElement("arg");
                 mavros_arg_3->SetAttribute("name", "tgt_system");
-                mavros_arg_3->SetAttribute("value", "$(eval 1 + arg('ID'))");
+                mavros_arg_3->SetAttribute("value", "$(eval 1 + arg(\'ID\'))");
                 mavros->InsertEndChild(mavros_arg_3);
                 mavros_arg_4 = doc.NewElement("arg");
                 mavros_arg_4->SetAttribute("name", "tgt_component");
@@ -1021,6 +1021,8 @@ class GeneratorMainWindow : public QWidget
             update_table();
             topics_list->setCurrentText(topic_type.c_str());
             worlds_list->setCurrentText(world_file.c_str());
+            output_file = filename;
+            txt_dir->setText(output_file.c_str());
             msg_box->setIcon(QMessageBox::Icon::Information);
             msg_box->setText("Info");
             msg_box->setWindowTitle("Info");
@@ -1114,7 +1116,7 @@ class GeneratorMainWindow : public QWidget
             sensor_data *sensor_load_data;
             for (auto item = sensor_datas.begin(); item < sensor_datas.end(); item++)
             {
-                if ((*item)->name == vehicle_name)
+                if ((*item)->name == sensor_name)
                 {
                     sensor_load_data = *item;
                     break;
@@ -1147,11 +1149,11 @@ class GeneratorMainWindow : public QWidget
             msg_box->setIcon(QMessageBox::Icon::Critical);
             msg_box->setText("Error");
             msg_box->setWindowTitle("Error");
-            msg_box->setInformativeText(("Fail to load sensor model sdf file :" + sensor_sdf_dir + "\nPlease check the integrity of px4_cmd package.").c_str());
+            msg_box->setInformativeText(("Fail to load sensor model sdf file :" + sensor_origin_sdf_dir + "\nPlease check the integrity of px4_cmd package.").c_str());
             // read and edit sensor sdf file
             // init doc
             XMLDocument doc;
-            if (doc.LoadFile(sensor_sdf_dir.c_str()))
+            if (doc.LoadFile(sensor_origin_sdf_dir.c_str()))
             {
                 msg_box->exec();
                 return false;
@@ -1234,10 +1236,16 @@ class GeneratorMainWindow : public QWidget
                 // camera
                 else
                 {
-                    for (auto cam_item = item->FirstChildElement("camera"); item; item->NextSiblingElement("camera"))
+                    for (auto cam_item = item->FirstChildElement("camera"); cam_item; cam_item = cam_item->NextSiblingElement("camera"))
                     {
-                        para_1 = cam_item->FirstChildElement("width");
-                        para_2 = cam_item->FirstChildElement("height");
+                        node_1 = cam_item->FirstChildElement("image");
+                        if (!node_1)
+                        {
+                            msg_box->exec();
+                            return false;
+                        }
+                        para_1 = node_1->FirstChildElement("width");
+                        para_2 = node_1->FirstChildElement("height");
                         if (!para_1 || !para_2)
                         {
                             msg_box->exec();
@@ -1245,37 +1253,21 @@ class GeneratorMainWindow : public QWidget
                         }
                         para_1->SetText(sensor_load_data->width.c_str());
                         para_2->SetText(sensor_load_data->height.c_str());
-                    }
-                    // distance parameter for stereo camera
-                    if (sensor_name == "Stereo Camera")
-                    {
-                        distance = stof(sensor_load_data->distance);
-                        if (item->FindAttribute("name"))
+                        // distance parameter for stereo camera
+                        if (sensor_name == "Stereo Camera")
                         {
-                            msg_box->exec();
-                            return false;
-                        }
-                        if (string(item->Attribute("name")) == "left")
-                        {
-                            cam_pose = para_3->GetText();
-                            cam_poses = cam_pose.split(" ");
-                            cam_poses[1] = QString(to_string(distance / 2).c_str());
-                            cam_pose = "";
-                            for (auto str = cam_poses.begin(); str < cam_poses.end(); str++)
+                            distance = stof(sensor_load_data->distance);
+                            if (!cam_item->FindAttribute("name"))
                             {
-                                cam_pose = cam_pose + " " + *str;
+                                msg_box->exec();
+                                return false;
                             }
-                            cam_edited_pose = cam_pose.toStdString();
-                            cam_edited_pose.erase(0);
-                            para_3->SetText(cam_edited_pose.c_str());
-                        }
-                        else
-                        {
-                            if (string(item->Attribute("name")) == "right")
+                            para_3 = cam_item->FirstChildElement("pose");
+                            if (string(cam_item->Attribute("name")) == "left")
                             {
                                 cam_pose = para_3->GetText();
                                 cam_poses = cam_pose.split(" ");
-                                cam_poses[1] = QString(to_string(-distance / 2).c_str());
+                                cam_poses[1] = QString(to_string(distance / 2).c_str());
                                 cam_pose = "";
                                 for (auto str = cam_poses.begin(); str < cam_poses.end(); str++)
                                 {
@@ -1287,8 +1279,25 @@ class GeneratorMainWindow : public QWidget
                             }
                             else
                             {
-                                msg_box->exec();
-                                return false;
+                                if (string(cam_item->Attribute("name")) == "right")
+                                {
+                                    cam_pose = para_3->GetText();
+                                    cam_poses = cam_pose.split(" ");
+                                    cam_poses[1] = QString(to_string(-distance / 2).c_str());
+                                    cam_pose = "";
+                                    for (auto str = cam_poses.begin(); str < cam_poses.end(); str++)
+                                    {
+                                        cam_pose = cam_pose + " " + *str;
+                                    }
+                                    cam_edited_pose = cam_pose.toStdString();
+                                    cam_edited_pose.erase(0);
+                                    para_3->SetText(cam_edited_pose.c_str());
+                                }
+                                else
+                                {
+                                    msg_box->exec();
+                                    return false;
+                                }
                             }
                         }
                     }

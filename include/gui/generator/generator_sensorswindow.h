@@ -11,7 +11,7 @@
 #include <QFileDialog>
 #include <string>
 #include <vector>
-#include <stdio.h>
+#include <iostream>
 #include <fstream>
 
 #include <json/json.h>
