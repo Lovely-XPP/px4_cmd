@@ -1,8 +1,12 @@
 #ifndef PRINTF_UTILITY_H
-#define PRINTF__UTILITY_H
+#define PRINTF_UTILITY_H
 #include <iostream>
 #include <list>
 #include <string>
+#include <vector>
+#include <math.h>
+#include <ftw.h>
+#include <algorithm>
 
 using namespace std;
 
@@ -67,4 +71,65 @@ void Info(string msg)
     cout << GREEN << "[ INFO] " + msg << WHITE << endl;
 }
 
+void get_cmd_output(const char *cmd, std::string &result)
+{
+    FILE *pipe = popen(cmd, "r");
+    if (!pipe)
+    {
+
+        printf("popen error\n");
+        return;
+    }
+    size_t ret = 0;
+    char *buf = nullptr;
+    size_t len = 1024;
+    while ((ret = getline(&buf, &len, pipe)) != -1)
+    {
+        result.append(buf);
+    }
+    return;
+};
+
+void strip(std::string &s, const char *str = " ")
+{
+    int str_len = strlen(str);
+    std::string first = "";
+    std::string last = "";
+    // 去掉字符串开头的空格
+    first = s.substr(0,str_len);
+    while (!first.compare(str))
+    {
+        s.erase(0, s.find_first_not_of(str));
+        first = s.substr(0, str_len);
+    }
+    // 去掉字符串末尾的空格
+    last = s.substr(s.length() - str_len, s.length());
+    while (!last.compare(str))
+    {
+        s.erase(s.find_last_not_of(str) + str_len);
+        last = s.substr(s.length() - str_len, s.length());
+    }
+}
+
+vector<string> files = {};
+
+int add_files(const char *fpath, const struct stat *sb, int typeflag)
+{
+    string file = fpath;
+    files.push_back(file);
+    return 0;
+}
+
+vector<string> get_files(string dir)
+{
+    ftw(dir.c_str(), &add_files, 1);
+    files.erase(files.begin());
+    for (auto item = files.begin(); item != files.end(); item++)
+    {
+        std::string file = *item;
+        *item = file.erase(0, dir.length());
+    }
+    sort(files.begin(), files.end());
+    return files;
+};
 #endif
