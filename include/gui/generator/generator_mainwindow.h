@@ -8,6 +8,7 @@
 #include <QFrame>
 #include <QIcon>
 #include <QLineEdit>
+#include <QCheckBox>
 #include <QComboBox>
 #include <QTableView>
 #include <QPushButton>
@@ -44,7 +45,7 @@ class GeneratorMainWindow : public QWidget
 
     private:
         // settings
-        string version = "V1.0.2";
+        string version = "V1.0.3";
         int local_port = 34580;
         int remote_port = 24540;
         int sitl_port = 18570;
@@ -87,6 +88,7 @@ class GeneratorMainWindow : public QWidget
         QPushButton *load_button;
         QPushButton *info_button;
         QPushButton *browse_button;
+        QCheckBox *gazebo_gui_checkbox;
 
         void setup()
         {
@@ -112,6 +114,7 @@ class GeneratorMainWindow : public QWidget
             add_init_pos_input();
             add_buttons();
             add_browse_dir();
+            add_checkbox();
             QObject::connect(browse_button, &QPushButton::clicked, this, &GeneratorMainWindow::browse_dir_slot);
             QObject::connect(add_button, &QPushButton::clicked, this, &GeneratorMainWindow::add_vehicle_slot);
             QObject::connect(model, &QStandardItemModel::itemChanged, this, &GeneratorMainWindow::update_edit_table_slot);
@@ -214,6 +217,7 @@ class GeneratorMainWindow : public QWidget
             list4->move(680 + xshift, 70);
             list4->resize(390, 35);
             list4->setStyleSheet("background-color: rgb(155,205,155)");
+            list4->setCurrentText("uav_{ID}");
             topics_list = list4;
         }
 
@@ -408,14 +412,14 @@ class GeneratorMainWindow : public QWidget
             float yshift = 30 + 45;
             // label
             QLabel *label = new QLabel("Output Dir", win);
-            label->move(50 + xshift, 140 + yshift);
+            label->move(170 + xshift, 140 + yshift);
             label->resize(100, 35);
 
             // show dir
             QLineEdit *text = new QLineEdit(win);
             text->setReadOnly(true);
-            text->move(155 + xshift, 140 + yshift);
-            text->resize(580, 35);
+            text->move(255 + xshift, 140 + yshift);
+            text->resize(480, 35);
             text->setStyleSheet("background-color: white");
             txt_dir = text;
 
@@ -425,6 +429,17 @@ class GeneratorMainWindow : public QWidget
             button->resize(100, 35);
             button->setStyleSheet("background-color: rgb(255,235,230)");
             browse_button = button;
+        }
+
+        void add_checkbox()
+        {
+            float xshift = -20;
+            float yshift = 30 + 45;
+
+            // check box
+            gazebo_gui_checkbox = new QCheckBox("Gazebo GUI", win);
+            gazebo_gui_checkbox->move(50 + xshift, 147 + yshift);
+            gazebo_gui_checkbox->setChecked(true);
         }
 
         void get_world_files()
@@ -591,6 +606,12 @@ class GeneratorMainWindow : public QWidget
             XMLElement *root = doc.NewElement("launch");
             doc.InsertEndChild(root);
             // arg config
+            // get gui state
+            string gazebo_gui = "false";
+            if (gazebo_gui_checkbox->isChecked())
+            {
+                gazebo_gui = "true";
+            }
             string world_file = worlds_list->currentText().toStdString();
             XMLElement *arg_1 = doc.NewElement("arg");
             arg_1->SetAttribute("name", "est");
@@ -602,7 +623,7 @@ class GeneratorMainWindow : public QWidget
             root->InsertEndChild(arg_2);
             XMLElement *arg_3 = doc.NewElement("arg");
             arg_3->SetAttribute("name", "gui");
-            arg_3->SetAttribute("default", "true");
+            arg_3->SetAttribute("default", gazebo_gui.c_str());
             root->InsertEndChild(arg_3);
             XMLElement *arg_4 = doc.NewElement("arg");
             arg_4->SetAttribute("name", "debug");
@@ -870,7 +891,8 @@ class GeneratorMainWindow : public QWidget
             msg_box->setInformativeText("The Launch File is bad, please check the file.");
             // get root node
             XMLElement *root = doc.RootElement();
-            // get topic type & world file
+            // get topic type & world file & gui state
+            string gazebo_gui = "";
             string topic_type = "";
             string world_file = "";
             string name = "";
@@ -898,6 +920,16 @@ class GeneratorMainWindow : public QWidget
                 if (name == "topic_type")
                 {
                     topic_type = element->Attribute("default");
+                }
+                // gui state
+                if (name == "gui")
+                {
+                    gazebo_gui = element->Attribute("default");
+                    if (gazebo_gui != "true" && gazebo_gui != "false")
+                    {
+                        msg_box->exec();
+                        return;
+                    }
                 }
             }
             // check data
@@ -1022,6 +1054,14 @@ class GeneratorMainWindow : public QWidget
             update_table();
             topics_list->setCurrentText(topic_type.c_str());
             worlds_list->setCurrentText(world_file.c_str());
+            if (gazebo_gui == "true")
+            {
+                gazebo_gui_checkbox->setChecked(true);
+            }
+            else
+            {
+                gazebo_gui_checkbox->setChecked(false);
+            }
             output_file = filename;
             txt_dir->setText(output_file.c_str());
             msg_box->setIcon(QMessageBox::Icon::Information);
