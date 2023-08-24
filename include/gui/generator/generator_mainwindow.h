@@ -45,7 +45,7 @@ class GeneratorMainWindow : public QWidget
 
     private:
         // settings
-        string version = "V1.1.0";
+        string version = "V1.1.1";
         int local_port = 14580;
         int remote_port = 14540;
         int sitl_port = 14560;
@@ -699,6 +699,14 @@ class GeneratorMainWindow : public QWidget
             XMLComment *agent_cmd_comment;
             XMLElement *agent_arg_cmd;
             XMLElement *agent_arg_cmd_param;
+            XMLElement *agent_arg_vehicle_param;
+            XMLElement *agent_arg_sensor_param;
+            XMLElement *agent_arg_x_param;
+            XMLElement *agent_arg_y_param;
+            XMLElement *agent_arg_z_param;
+            XMLElement *agent_arg_R_param;
+            XMLElement *agent_arg_P_param;
+            XMLElement *agent_arg_Y_param;
             XMLComment *px4_comment;
             XMLElement *px4;
             XMLElement *px4_arg_1;
@@ -835,6 +843,40 @@ class GeneratorMainWindow : public QWidget
                 agent_arg_cmd_param->SetAttribute("command", "$(arg cmd)");
                 agent_arg_cmd_param->SetAttribute("name", "sdf_$(arg vehicle)$(arg ID)");
                 agent->InsertEndChild(agent_arg_cmd_param);
+                // vehicle and sensor
+                agent_arg_vehicle_param = doc.NewElement("param");
+                agent_arg_vehicle_param->SetAttribute("name", "vehicle");
+                agent_arg_vehicle_param->SetAttribute("value", vehicle.c_str());
+                agent->InsertEndChild(agent_arg_vehicle_param);
+                agent_arg_sensor_param = doc.NewElement("param");
+                agent_arg_sensor_param->SetAttribute("name", "sensor");
+                agent_arg_sensor_param->SetAttribute("value", sensor.c_str());
+                agent->InsertEndChild(agent_arg_sensor_param);
+                // parameter for init
+                agent_arg_x_param = doc.NewElement("param");
+                agent_arg_x_param->SetAttribute("name", "init_x");
+                agent_arg_x_param->SetAttribute("value", init_pos[i][0].c_str());
+                agent->InsertEndChild(agent_arg_x_param);
+                agent_arg_y_param = doc.NewElement("param");
+                agent_arg_y_param->SetAttribute("name", "init_y");
+                agent_arg_y_param->SetAttribute("value", init_pos[i][1].c_str());
+                agent->InsertEndChild(agent_arg_y_param);
+                agent_arg_z_param = doc.NewElement("param");
+                agent_arg_z_param->SetAttribute("name", "init_z");
+                agent_arg_z_param->SetAttribute("value", init_pos[i][2].c_str());
+                agent->InsertEndChild(agent_arg_z_param);
+                agent_arg_R_param = doc.NewElement("param");
+                agent_arg_R_param->SetAttribute("name", "init_R");
+                agent_arg_R_param->SetAttribute("value", init_pos[i][3].c_str());
+                agent->InsertEndChild(agent_arg_R_param);
+                agent_arg_P_param = doc.NewElement("param");
+                agent_arg_P_param->SetAttribute("name", "init_P");
+                agent_arg_P_param->SetAttribute("value", init_pos[i][4].c_str());
+                agent->InsertEndChild(agent_arg_P_param);
+                agent_arg_Y_param = doc.NewElement("param");
+                agent_arg_Y_param->SetAttribute("name", "init_Y");
+                agent_arg_Y_param->SetAttribute("value", init_pos[i][5].c_str());
+                agent->InsertEndChild(agent_arg_Y_param);
                 // PX4 config
                 px4_comment = doc.NewComment(" px4 ");
                 agent->InsertEndChild(px4_comment);
@@ -1158,6 +1200,14 @@ class GeneratorMainWindow : public QWidget
             update_signal = true;
             int numbers = vehicles.size();
             QStringList list;
+            QStandardItem *item_1;
+            QStandardItem *item_2;
+            QStandardItem *item_3;
+            QStandardItem *item_4;
+            QStandardItem *item_5;
+            QStandardItem *item_6;
+            QStandardItem *item_7;
+            QStandardItem *item_8;
             model->clear();
             for (auto item = table_headers.begin(); item != table_headers.end(); item++)
             {
@@ -1166,14 +1216,14 @@ class GeneratorMainWindow : public QWidget
             model->setHorizontalHeaderLabels(list);
             for (int i = 0; i < numbers; i++)
             {
-                QStandardItem *item_1 = new QStandardItem();
-                QStandardItem *item_2 = new QStandardItem();
-                QStandardItem *item_3 = new QStandardItem();
-                QStandardItem *item_4 = new QStandardItem();
-                QStandardItem *item_5 = new QStandardItem();
-                QStandardItem *item_6 = new QStandardItem();
-                QStandardItem *item_7 = new QStandardItem();
-                QStandardItem *item_8 = new QStandardItem();
+                item_1 = new QStandardItem();
+                item_2 = new QStandardItem();
+                item_3 = new QStandardItem();
+                item_4 = new QStandardItem();
+                item_5 = new QStandardItem();
+                item_6 = new QStandardItem();
+                item_7 = new QStandardItem();
+                item_8 = new QStandardItem();
                 item_1->setText(vehicles[i].c_str());
                 item_2->setText(sensors[i].c_str());
                 item_3->setText(init_pos[i][0].c_str());

@@ -193,7 +193,6 @@ class MonitorLoadWindow : public QWidget
             QString node;
             QStringList nodes_tmp;
             get_cmd_output("rosnode list | grep 'mavros'", tmp);
-            strip(tmp, "\n");
             node = tmp.c_str();
             nodes_tmp = node.split("/mavros\n");
             for (auto item = nodes_tmp.begin(); item != nodes_tmp.end(); item++)
@@ -204,6 +203,7 @@ class MonitorLoadWindow : public QWidget
             {
                 if (nodes.size() == 0)
                 {
+                    nodes_tmp.removeLast();
                     nodes = nodes_tmp;
                 }
                 return true;

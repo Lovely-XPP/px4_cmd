@@ -16,7 +16,10 @@ find_package(catkin REQUIRED COMPONENTS
     mavros_msgs
     geometry_msgs
     message_generation
+    tf
 )
+find_package(Boost REQUIRED COMPONENTS system)
+
 # Qt depend
 find_package(Qt5Gui)
 find_package(Qt5Core)
