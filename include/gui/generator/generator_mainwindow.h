@@ -97,7 +97,7 @@ class GeneratorMainWindow : public QWidget
             win->setFixedSize(1080, 750);
             win->setWindowTitle(("PX4 Cmd Launch File Generator [Version: " + version + "]").c_str());
             win->setStyleSheet("background-color: rgb(255,250,250)");
-            string err = "";
+            string err = detect_env();
             if (err.length() != 0)
             {
                 msg_box = new QMessageBox(win);

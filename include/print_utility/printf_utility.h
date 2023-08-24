@@ -95,12 +95,20 @@ void strip(std::string &s, const char *str = " ")
     int str_len = strlen(str);
     std::string first = "";
     std::string last = "";
+    if (s.size() == 0)
+    {
+        return;
+    }
     // 去掉字符串开头的空格
     first = s.substr(0,str_len);
     while (!first.compare(str))
     {
         s.erase(0, s.find_first_not_of(str));
         first = s.substr(0, str_len);
+    }
+    if (s.size() == 0)
+    {
+        return;
     }
     // 去掉字符串末尾的空格
     last = s.substr(s.length() - str_len, s.length());

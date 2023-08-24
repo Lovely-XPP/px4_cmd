@@ -31,6 +31,7 @@ include_directories(
 # third party lib
 add_subdirectory(third_party/jsoncpp)
 add_subdirectory(third_party/tinyxml2)
+add_subdirectory(third_party/qcustomplot)
 
 # message generation
 add_message_files(
@@ -79,7 +80,21 @@ target_link_libraries(ext_cmd ${catkin_LIBRARIES})
 
 ##################  GUI  ###################
 # Generator
-add_executable(generator src/gui/launch_generator/generator.cpp)
+add_executable(generator src/gui/generator.cpp)
 target_link_libraries(generator Qt5::Widgets)
 target_link_libraries(generator jsoncpp)
 target_link_libraries(generator tinyxml2)
+
+# Controller
+add_executable(controller src/gui/generator.cpp)
+target_link_libraries(controller Qt5::Widgets)
+target_link_libraries(controller jsoncpp)
+target_link_libraries(controller tinyxml2)
+
+# Monitor
+add_executable(monitor src/gui/monitor.cpp)
+target_link_libraries(monitor ${catkin_LIBRARIES})
+target_link_libraries(monitor Qt5::Widgets)
+target_link_libraries(monitor jsoncpp)
+target_link_libraries(monitor tinyxml2)
+target_link_libraries(monitor qcustomplot)
