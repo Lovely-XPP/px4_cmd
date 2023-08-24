@@ -6,16 +6,19 @@ set(CMAKE_CXX_STANDARD 11)
  
 project(qcustomplot)
 
-find_package(Qt5Gui)
-find_package(Qt5Core)
-find_package(Qt5Widgets)
+find_package(Qt5 COMPONENTS 
+    Widgets 
+    Gui
+    Core
+    PrintSupport
+    REQUIRED)
 
-link_libraries(Qt5::Widgets)
- 
-add_library(${PROJECT_NAME} 
+add_library( ${PROJECT_NAME} 
     STATIC
-    qcustomplot.h
     qcustomplot.cpp
-)
+    qcustomplot.h)
+
+set_target_properties( ${PROJECT_NAME} PROPERTIES AUTOMOC TRUE )
+target_link_libraries( ${PROJECT_NAME} Qt5::Widgets Qt5::PrintSupport)
     
 target_include_directories(${PROJECT_NAME} PUBLIC ${PROJECT_SOURCE_DIR})

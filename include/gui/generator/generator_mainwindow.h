@@ -45,10 +45,10 @@ class GeneratorMainWindow : public QWidget
 
     private:
         // settings
-        string version = "V1.0.3";
-        int local_port = 34580;
-        int remote_port = 24540;
-        int sitl_port = 18570;
+        string version = "V1.1.0";
+        int local_port = 14580;
+        int remote_port = 14540;
+        int sitl_port = 14560;
         int tcp_port = 4560;
         vector<string> topic_types = {"{Vehicle Type}_{ID}", "uav_{ID}"};
         vector<string> vehicle_types = {"iris", "typhoon_h480", "plane"};
@@ -689,6 +689,16 @@ class GeneratorMainWindow : public QWidget
             XMLElement *agent_arg_R;
             XMLElement *agent_arg_P;
             XMLElement *agent_arg_Y;
+            XMLElement *agent_arg_mavid;
+            XMLElement *agent_arg_udp_port;
+            XMLElement *agent_arg_tcp_port;
+            XMLElement *agent_arg_sdk_port;
+            XMLElement *agent_arg_cam_udp_port;
+            XMLElement *agent_arg_gst_udp_port;
+            XMLElement *agent_arg_video_uri;
+            XMLComment *agent_cmd_comment;
+            XMLElement *agent_arg_cmd;
+            XMLElement *agent_arg_cmd_param;
             XMLComment *px4_comment;
             XMLElement *px4;
             XMLElement *px4_arg_1;
@@ -760,8 +770,8 @@ class GeneratorMainWindow : public QWidget
                 agent_arg_4->SetAttribute("value", ("udp://:" + to_string(remote_port) + "@localhost:" + to_string(local_port)).c_str());
                 agent->InsertEndChild(agent_arg_4);
                 agent_arg_5 = doc.NewElement("arg");
-                agent_arg_5->SetAttribute("name", "sdf");
-                agent_arg_5->SetAttribute("value", ("$(find px4_cmd)/models/" + model + "/" + model + ".sdf").c_str());
+                agent_arg_5->SetAttribute("name", "model");
+                agent_arg_5->SetAttribute("value", model.c_str());
                 agent->InsertEndChild(agent_arg_5);
                 agent_arg_x = doc.NewElement("arg");
                 agent_arg_x->SetAttribute("name", "x");
@@ -787,6 +797,44 @@ class GeneratorMainWindow : public QWidget
                 agent_arg_Y->SetAttribute("name", "Y");
                 agent_arg_Y->SetAttribute("value", init_pos[i][5].c_str());
                 agent->InsertEndChild(agent_arg_Y);
+                agent_arg_mavid = doc.NewElement("arg");
+                agent_arg_mavid->SetAttribute("name", "mavlink_id");
+                agent_arg_mavid->SetAttribute("value", "$(eval 1 + arg('ID'))");
+                agent->InsertEndChild(agent_arg_mavid);
+                agent_arg_udp_port = doc.NewElement("arg");
+                agent_arg_udp_port->SetAttribute("name", "mavlink_udp_port");
+                agent_arg_udp_port->SetAttribute("value", to_string(sitl_port).c_str());
+                agent->InsertEndChild(agent_arg_udp_port);
+                agent_arg_tcp_port = doc.NewElement("arg");
+                agent_arg_tcp_port->SetAttribute("name", "mavlink_tcp_port");
+                agent_arg_tcp_port->SetAttribute("value", to_string(tcp_port).c_str());
+                agent->InsertEndChild(agent_arg_tcp_port);
+                agent_arg_sdk_port = doc.NewElement("arg");
+                agent_arg_sdk_port->SetAttribute("name", "sdk_udp_port");
+                agent_arg_sdk_port->SetAttribute("value", to_string(remote_port).c_str());
+                agent->InsertEndChild(agent_arg_sdk_port);
+                agent_arg_cam_udp_port = doc.NewElement("arg");
+                agent_arg_cam_udp_port->SetAttribute("name", "mavlink_cam_udp_port");
+                agent_arg_cam_udp_port->SetAttribute("value", "14530");
+                agent->InsertEndChild(agent_arg_cam_udp_port);
+                agent_arg_gst_udp_port = doc.NewElement("arg");
+                agent_arg_gst_udp_port->SetAttribute("name", "gst_udp_port");
+                agent_arg_gst_udp_port->SetAttribute("value", "$(eval 5600 + arg('ID'))");
+                agent->InsertEndChild(agent_arg_gst_udp_port);
+                agent_arg_video_uri = doc.NewElement("arg");
+                agent_arg_video_uri->SetAttribute("name", "video_uri");
+                agent_arg_video_uri->SetAttribute("value", "$(eval 5600 + arg('ID'))");
+                agent->InsertEndChild(agent_arg_video_uri);
+                agent_cmd_comment = doc.NewComment(" generate sdf vehicle model ");
+                agent->InsertEndChild(agent_cmd_comment);
+                agent_arg_cmd = doc.NewElement("arg");
+                agent_arg_cmd->SetAttribute("name", "cmd");
+                agent_arg_cmd->SetAttribute("value", "$(find px4_cmd)/scripts/model_gen.py --stdout --mavlink_id=$(arg mavlink_id) --mavlink_udp_port=$(arg mavlink_udp_port) --sdk_udp_port=$(arg sdk_udp_port) --mavlink_tcp_port=$(arg mavlink_tcp_port) --gst_udp_port=$(arg gst_udp_port) --video_uri=$(arg video_uri) --mavlink_cam_udp_port=$(arg mavlink_cam_udp_port) $(find px4_cmd)/models/$(arg model)/$(arg model).sdf.jinja $(find px4_cmd)");
+                agent->InsertEndChild(agent_arg_cmd);
+                agent_arg_cmd_param = doc.NewElement("param");
+                agent_arg_cmd_param->SetAttribute("command", "$(arg cmd)");
+                agent_arg_cmd_param->SetAttribute("name", "sdf_$(arg vehicle)$(arg ID)");
+                agent->InsertEndChild(agent_arg_cmd_param);
                 // PX4 config
                 px4_comment = doc.NewComment(" px4 ");
                 agent->InsertEndChild(px4_comment);
@@ -813,7 +861,7 @@ class GeneratorMainWindow : public QWidget
                 spawn_model->SetAttribute("pkg", "gazebo_ros");
                 spawn_model->SetAttribute("type", "spawn_model");
                 spawn_model->SetAttribute("output", "screen");
-                spawn_model->SetAttribute("args", ("-sdf -file $(arg sdf) -model " + topic_name + " -x $(arg x) -y $(arg y) -z $(arg z) -R $(arg R) -P $(arg P) -Y $(arg Y)").c_str());
+                spawn_model->SetAttribute("args", ("-sdf -param sdf_$(arg vehicle)$(arg ID) -model " + topic_name + " -x $(arg x) -y $(arg y) -z $(arg z) -R $(arg R) -P $(arg P) -Y $(arg Y)").c_str());
                 agent->InsertEndChild(spawn_model);
                 // mavros
                 mavros_comment = doc.NewComment(" mavros ");
@@ -1352,26 +1400,24 @@ class GeneratorMainWindow : public QWidget
             }
             
             // generate model sdf
+            string vehicle_sdf_dir = models_dir + vehicle_name + "/" + vehicle_name + ".sdf.jinja";
             string model_name = vehicle_name + "_" + sensor_folder_name;
             string model_sdf_folder = models_dir + model_name;
-            string model_sdf_dir = model_sdf_folder + "/" + model_name + ".sdf";
+            string model_sdf_dir = model_sdf_folder + "/" + model_name + ".sdf.jinja";
             string model_config_dir = model_sdf_folder + "/" + "model.config";
             mkdir(model_sdf_folder.c_str(), 0777);
-            doc.Parse("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<!-- This launch file is generated by PX4 Cmd generator -->");
-            root = doc.NewElement("sdf");
+            msg_box->setText("Error");
+            msg_box->setWindowTitle("Error");
+            msg_box->setInformativeText(("Fail to load vehicle model sdf file :" + vehicle_sdf_dir + "\nPlease check the integrity of px4_cmd package.").c_str());
+            if (doc.LoadFile(vehicle_sdf_dir.c_str()))
+            {
+                msg_box->exec();
+                return false;
+            }
+            root = doc.RootElement();
             root->SetAttribute("version", "1.7");
-            doc.InsertEndChild(root);
-            XMLElement *model = doc.NewElement("model");
+            XMLElement *model = root->FirstChildElement();
             model->SetAttribute("name", model_name.c_str());
-            root->InsertEndChild(model);
-            // include vehicle model sdf
-            XMLComment *vehicle_info = doc.NewComment(" vehicle model ");
-            model->InsertEndChild(vehicle_info);
-            XMLElement *vehicle_sdf = doc.NewElement("include");
-            model->InsertEndChild(vehicle_sdf);
-            XMLElement *vehicle_uri = doc.NewElement("uri");
-            vehicle_uri->SetText(("file://" + models_dir + vehicle_name).c_str());
-            vehicle_sdf->InsertEndChild(vehicle_uri);
             // include sensor model sdf
             XMLComment *sensor_info = doc.NewComment(" sensor model ");
             model->InsertEndChild(sensor_info);
@@ -1379,7 +1425,7 @@ class GeneratorMainWindow : public QWidget
             model->InsertEndChild(sensor_sdf);
             XMLElement *sensor_uri = doc.NewElement("uri");
             sensor_uri->SetText(("file://" + models_dir + sensor_folder_name).c_str());
-            sensor_info->InsertEndChild(sensor_uri);
+            sensor_sdf->InsertEndChild(sensor_uri);
             // joint
             XMLComment *joint_info = doc.NewComment(" joint ");
             model->InsertEndChild(joint_info);

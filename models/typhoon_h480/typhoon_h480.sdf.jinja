@@ -1,5 +1,5 @@
-<!-- DO NOT EDIT: Generated from iris.sdf.jinja -->
-<sdf version='1.5'>
+<?xml version="1.0"?>
+<sdf version='1.7'>
   <model name='typhoon_h480'>
     <!-- Typhoon H body -->
     <pose>0 0 0.26 0 0 0.0</pose>
@@ -404,7 +404,7 @@
         <plugin name="GstCameraPlugin" filename="libgazebo_gst_camera_plugin.so">
             <robotNamespace></robotNamespace>
             <udpHost>127.0.0.1</udpHost>
-            <udpPort>5600</udpPort>
+            <udpPort>{{ gst_udp_port }}</udpPort>
         </plugin>
         <plugin name="CameraManagerPlugin" filename="libgazebo_camera_manager_plugin.so">
             <robotNamespace>typhoon_h480</robotNamespace>
@@ -412,10 +412,10 @@
             <width>3840</width>
             <height>2160</height>
             <maximum_zoom>8.0</maximum_zoom>
-            <video_uri>5600</video_uri>
-            <system_id>1</system_id>
-            <cam_component_id>100</cam_component_id>
-            <mavlink_cam_udp_port>14530</mavlink_cam_udp_port>
+            <video_uri>{{ video_uri }}</video_uri>
+            <system_id>{{ mavlink_id }}</system_id>
+            <cam_component_id>{{ cam_component_id }}</cam_component_id>
+            <mavlink_cam_udp_port>{{ mavlink_cam_udp_port }}</mavlink_cam_udp_port>
         </plugin>
       </sensor>
     </link>
@@ -1285,16 +1285,16 @@
       <magSubTopic>/mag</magSubTopic>
       <baroSubTopic>/baro</baroSubTopic>
       <mavlink_addr>INADDR_ANY</mavlink_addr>
-      <mavlink_tcp_port>4560</mavlink_tcp_port>
-      <mavlink_udp_port>14560</mavlink_udp_port>
-      <serialEnabled>0</serialEnabled>
-      <serialDevice>/dev/ttyACM0</serialDevice>
-      <baudRate>921600</baudRate>
+      <mavlink_tcp_port>{{ mavlink_tcp_port }}</mavlink_tcp_port>
+      <mavlink_udp_port>{{ mavlink_udp_port }}</mavlink_udp_port>
+      <serialEnabled>{{ serial_enabled }}</serialEnabled>
+      <serialDevice>{{ serial_device }}</serialDevice>
+      <baudRate>{{ serial_baudrate }}</baudRate>
       <qgc_addr>INADDR_ANY</qgc_addr>
-      <qgc_udp_port>14550</qgc_udp_port>
+      <qgc_udp_port>{{ qgc_udp_port }}</qgc_udp_port>
       <sdk_addr>INADDR_ANY</sdk_addr>
-      <sdk_udp_port>14540</sdk_udp_port>
-      <hil_mode>0</hil_mode>
+      <sdk_udp_port>{{ sdk_udp_port }}</sdk_udp_port>
+      <hil_mode>{{ hil_mode }}</hil_mode>
       <hil_state_level>false</hil_state_level>
       <enable_lockstep>true</enable_lockstep>
       <use_tcp>true</use_tcp>

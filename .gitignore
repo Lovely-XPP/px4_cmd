@@ -3,5 +3,3 @@
 build
 *.html
 *.pyc
-*.sdf
-*.config
