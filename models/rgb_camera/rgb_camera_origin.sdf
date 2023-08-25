@@ -68,10 +68,10 @@
           <plugin name='camera_plugin' filename='libgazebo_ros_camera.so'>
               <robotNamespace></robotNamespace>
             <alwaysOn>true</alwaysOn>
-            <imageTopicName>image_raw</imageTopicName>
+            <imageTopicName>rgb/image_raw</imageTopicName>
             <cameraInfoTopicName>camera_info</cameraInfoTopicName>
             <updateRate>30.0</updateRate>
-            <cameraName>usb_cam</cameraName>
+            <cameraName>rgb_cam</cameraName>
             <frameName>/robot_camera_link</frameName>
             <CxPrime>320.5</CxPrime>
             <Cx>320.5</Cx>

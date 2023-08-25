@@ -31,6 +31,7 @@
 
 #include <ros/ros.h>
 
+#include <gui/monitor/monitor_infowindow.h>
 #include <print_utility/printf_utility.h>
 #include <qcustomplot.h>
 #include <vehicle.h>
@@ -42,6 +43,7 @@ class MonitorMainWindow : public QWidget
 {
     public:
         QDialog *win = new QDialog();
+        MonitorInfoWindow *info_win = new MonitorInfoWindow(win);
         QWidget *parent;
         MonitorMainWindow(QWidget *parent_widget, QStringList nodes_input)
         {
@@ -56,12 +58,14 @@ class MonitorMainWindow : public QWidget
         string version = "V1.0.0";
         double update_time = 0.3;
         vector<string> table_headers_pos = {"Vehicle", "Sensor", "Mode", "x", "y", "z", "vx", "vy", "vz", "roll", "pitch", "yaw"};
+        vector<string> table_headers_topic = {"Node", "Sensor", "Senor Topic"};
         QVector<vehicle *> data;
 
         // init vector
         QStringList nodes;
         QVector<double> x_end = {0};
         QVector<double> y_end = {0};
+        QStringList topics;
 
         // output file string
         string output_file = "";
@@ -71,10 +75,13 @@ class MonitorMainWindow : public QWidget
         QMessageBox *msg_box;
         QCustomPlot *plot;
         QTableView *table_pos;
+        QTableView *table_topic;
         QStandardItemModel *model_pos;
+        QStandardItemModel *model_topic;
         QHBoxLayout *hbox = new QHBoxLayout();
         QVBoxLayout *vbox = new QVBoxLayout();
-        QPushButton *button;
+        QPushButton *signal_button;
+        QPushButton *info_button;
 
         void setup()
         {
@@ -91,11 +98,64 @@ class MonitorMainWindow : public QWidget
                 data.push_back(vec);
             }
 
+            // add lable
+            QLabel *topic_label = new QLabel("[ Vehicle Sensor Topics Information ]", win);
+            QLabel *pos_label = new QLabel("[ Vehicle Position & Pose Information ]", win);
+            QLabel *plot_label = new QLabel("[ Vehicle Position 2D Plane Plot (x-y Plane) ]", win);
+            topic_label->setStyleSheet("color: black; font-size: 14pt; font-weight: bold");
+            pos_label->setStyleSheet("color: black; font-size: 14pt; font-weight: bold");
+            plot_label->setStyleSheet("color: black; font-size: 14pt; font-weight: bold");
+
             // add button
-            button = new QPushButton(win);
-            button->setFixedSize(1, 1);
+            signal_button = new QPushButton(win);
+            signal_button->setFixedSize(1, 1);
+            //info
+            info_button = new QPushButton("About", win);
+            info_button->setMinimumHeight(50);
+            info_button->setStyleSheet("color: black; font-size: 16pt; font-weight: bold");
 
             // add table
+            // topic
+            table_topic = new QTableView(win);
+            table_topic->setStyleSheet("background-color: white");
+            model_topic = new QStandardItemModel(data.size(), table_headers_topic.size(), win);
+            QStringList list_topic;
+            QString node_name;
+            QString sensor_name;
+            int topic_count = 0;
+            for (auto item = table_headers_topic.begin(); item != table_headers_topic.end(); item++)
+            {
+                list_topic.append(&(*item->c_str()));
+            }
+            model_topic->setHorizontalHeaderLabels(list_topic);
+            for (auto node_item = data.begin(); node_item != data.end(); node_item++)
+            {
+                node_name = (*node_item)->node_name.c_str();
+                sensor_name = (*node_item)->sensor_name.c_str();
+                for (auto topic_item = (*node_item)->sensor_topics.begin(); topic_item != (*node_item)->sensor_topics.end(); topic_item++)
+                {
+                    QStandardItem *item_1 = new QStandardItem();
+                    QStandardItem *item_2 = new QStandardItem();
+                    QStandardItem *item_3 = new QStandardItem();
+                    item_1->setEditable(false);
+                    item_2->setEditable(false);
+                    item_3->setEditable(false);
+                    item_1->setTextAlignment(Qt::AlignCenter);
+                    item_2->setTextAlignment(Qt::AlignCenter);
+                    item_3->setTextAlignment(Qt::AlignVCenter | Qt::AlignLeft);
+                    item_1->setText(node_name);
+                    item_2->setText(sensor_name);
+                    item_3->setText(*topic_item);
+                    model_topic->setItem(topic_count, 0, item_1);
+                    model_topic->setItem(topic_count, 1, item_2);
+                    model_topic->setItem(topic_count, 2, item_3);
+                    topic_count++;
+                }
+            }
+            table_topic->setModel(model_topic);
+            table_topic->horizontalHeader()->setStretchLastSection(true);
+            table_topic->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
+            // pos
             table_pos = new QTableView(win);
             table_pos->setStyleSheet("background-color: white");
             model_pos = new QStandardItemModel(data.size(), table_headers_pos.size(), win);
@@ -108,22 +168,21 @@ class MonitorMainWindow : public QWidget
             table_pos->setModel(model_pos);
             table_pos->horizontalHeader()->setStretchLastSection(true);
             table_pos->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
-            vbox->addWidget(table_pos, 1);
 
-        // add plot
-        QPen pen;
-        int count = data.size();
-        plot = new QCustomPlot(win);
-        plot->xAxis2->setVisible(true);
-        plot->xAxis2->setTickLabels(false);
-        plot->yAxis2->setVisible(true);
-        plot->yAxis2->setTickLabels(false);
-        for (int i = 0; i < count; i++)
-        {
-            pen.setColor(QColor::fromRgb(gen_rand(255), gen_rand(255), gen_rand(255)));
-            plot->addGraph()->setName("");
-            plot->legend->removeItem(0);
-            plot->graph()->setPen(pen);
+            // add plot
+            QPen pen;
+            int count = data.size();
+            plot = new QCustomPlot(win);
+            plot->xAxis2->setVisible(true);
+            plot->xAxis2->setTickLabels(false);
+            plot->yAxis2->setVisible(true);
+            plot->yAxis2->setTickLabels(false);
+            for (int i = 0; i < count; i++)
+            {
+                pen.setColor(QColor::fromRgb(gen_rand(255), gen_rand(255), gen_rand(255)));
+                plot->addGraph()->setName("");
+                plot->legend->removeItem(0);
+                plot->graph()->setPen(pen);
             }
             for (int i = 0; i < count; i++)
             {
@@ -137,16 +196,37 @@ class MonitorMainWindow : public QWidget
             plot->yAxis->setLabel("y (meter)");
             plot->legend->setVisible(true);
             plot->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom | QCP::iSelectPlottables);
-            vbox->addWidget(plot, 1);
-
+            
             // set layout
+            QVBoxLayout *vbox_1 = new QVBoxLayout();
+            QHBoxLayout *hbox_1 = new QHBoxLayout();
+            QHBoxLayout *hbox_2 = new QHBoxLayout();
+            QHBoxLayout *hbox_3 = new QHBoxLayout();
+            hbox_1->addWidget(topic_label);
+            hbox_2->addWidget(pos_label);
+            hbox_3->addWidget(plot_label);
+            hbox_1->setAlignment(Qt::AlignCenter);
+            hbox_2->setAlignment(Qt::AlignCenter);
+            hbox_3->setAlignment(Qt::AlignCenter);
+            hbox->addWidget(info_button, 1);
+            vbox_1->addLayout(hbox_1, 1);
+            vbox_1->addWidget(table_topic, 6);
+            hbox->addLayout(vbox_1, 4);
+            vbox->addLayout(hbox, 6);
+            vbox->addLayout(hbox_2, 1);
+            vbox->addWidget(table_pos, 6);
+            vbox->addLayout(hbox_3, 1);
+            vbox->addWidget(plot, 6);
             win->setLayout(vbox);
             for (int i = 0; i < data.size(); i++)
             {
                 std::thread thread(&MonitorMainWindow::update_table, this, i);
                 thread.detach();
             }
-            QObject::connect(button, &QPushButton::clicked, this, &MonitorMainWindow::update_plot_slot);
+            
+            // connect signal and slot
+            QObject::connect(signal_button, &QPushButton::clicked, this, &MonitorMainWindow::update_plot_slot);
+            QObject::connect(info_button, &QPushButton::clicked, this, &MonitorMainWindow::info_window_slot);
         }
 
         void update_table(int thread_id)
@@ -237,7 +317,7 @@ class MonitorMainWindow : public QWidget
                 item_12->setText(to_string((*(vec->yaw.end() - 1))).c_str());
                 if (thread_id == 0)
                 {
-                    button->click();
+                    signal_button->click();
                 }
                 ros::Duration(update_time).sleep();
             }
@@ -271,6 +351,14 @@ class MonitorMainWindow : public QWidget
             plot->replot();
         }
 
+        // slot functions
+        void info_window_slot()
+        {
+            info_win->win->exec();
+        }
+
+        // utility functions
+        // get rand number from 0 to rand_max
         int gen_rand(int rand_max)
         {
             return int(rand() / (double)RAND_MAX * rand_max);

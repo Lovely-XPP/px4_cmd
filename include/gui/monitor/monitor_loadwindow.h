@@ -157,6 +157,10 @@ class MonitorLoadWindow : public QWidget
                         label_2->setStyleSheet("color: red; font-size: 11pt");
                         button->setEnabled(false);
                     }
+                    else
+                    {
+                        sleep(1);
+                    }
                 }
                 if (ros_state)
                 {
@@ -182,7 +186,7 @@ class MonitorLoadWindow : public QWidget
                         first = false;
                     }
                 }
-                ros::Duration(0.1).sleep();
+                ros::Duration(0.5).sleep();
             }
             win->close();
         }
@@ -203,7 +207,6 @@ class MonitorLoadWindow : public QWidget
             {
                 if (nodes.size() == 0)
                 {
-                    ros::Duration(0.5).sleep();
                     nodes_tmp.removeLast();
                     nodes = nodes_tmp;
                 }

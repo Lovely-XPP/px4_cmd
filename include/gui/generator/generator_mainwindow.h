@@ -47,7 +47,7 @@ class GeneratorMainWindow : public QWidget
 
     private:
         // settings
-        string version = "V1.1.2";
+        string version = "V1.1.3";
         int local_port = 34580;
         int remote_port = 14540;
         int sitl_port = 24560;
@@ -1338,7 +1338,10 @@ class GeneratorMainWindow : public QWidget
                     msg_box->exec();
                     return false;
                 }
-                node_0->SetText(sensor_load_data->update_rate.c_str());
+                if (sensor_name != "Stereo Camera")
+                {
+                    node_0->SetText(sensor_load_data->update_rate.c_str());
+                }
                 if (sensor_name == "Lidar")
                 {
                     node_1 = item->FirstChildElement("ray");
@@ -1397,6 +1400,13 @@ class GeneratorMainWindow : public QWidget
                         // distance parameter for stereo camera
                         if (sensor_name == "Stereo Camera")
                         {
+                            node_2 = item->FirstChildElement("update_rate");
+                            if (!node_2)
+                            {
+                                msg_box->exec();
+                                return false;
+                            }
+                            node_2->SetText(sensor_load_data->update_rate.c_str());
                             distance = stof(sensor_load_data->distance);
                             if (!cam_item->FindAttribute("name"))
                             {

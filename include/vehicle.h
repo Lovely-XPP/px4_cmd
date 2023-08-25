@@ -1,5 +1,6 @@
 #include <ros/ros.h>
 #include <string>
+#include <QStringList>
 #include <QVector>
 #include <QThread>
 #include <thread>
@@ -18,6 +19,8 @@ using namespace std;
 class vehicle
 {
     private:
+        // setting
+        double update_time = 0.1;
         ros::Subscriber pos_sub;
         ros::Subscriber vel_sub;
         ros::Subscriber pose_sub;
@@ -32,6 +35,7 @@ class vehicle
         double init_R;
         double init_P;
         double init_Y;
+        void get_sensor_topic();
         void pos_cb(const geometry_msgs::PoseStamped::ConstPtr &msg);
         void vel_cb(const geometry_msgs::TwistStamped::ConstPtr &msg);
         void state_cb(const mavros_msgs::State::ConstPtr &msg);
@@ -47,14 +51,17 @@ class vehicle
         QVector<double> pitch;
         QVector<double> roll;
         QVector<double> yaw;
+        QStringList sensor_topics;
         string state_mode;
+        string node_name;
         string vehicle_name;
         string sensor_name;
-        void set_node_name(string node_name);
+        void set_node_name(string node);
 };
 
-void vehicle::set_node_name(string node_name)
+void vehicle::set_node_name(string node)
 {
+    node_name = node;
     int argc = 0;
     char **argv;
     string topic_header = "/" + node_name + "/mavros/";
@@ -68,18 +75,23 @@ void vehicle::set_node_name(string node_name)
     ros::param::get(("/" + node_name + "/init_R").c_str(), init_R);
     ros::param::get(("/" + node_name + "/init_P").c_str(), init_P);
     ros::param::get(("/" + node_name + "/init_Y").c_str(), init_Y);
+    get_sensor_topic();
     pos_sub = nh.subscribe<geometry_msgs::PoseStamped>((topic_header + "local_position/pose").c_str(), 20, &vehicle::pos_cb, this);
     vel_sub = nh.subscribe<geometry_msgs::TwistStamped>((topic_header + "local_position/velocity_local").c_str(), 20, &vehicle::vel_cb, this);
     state_sub = nh.subscribe<mavros_msgs::State>((topic_header + "state").c_str(), 20, &vehicle::state_cb, this);
     std::thread ros_thread(&vehicle::ros_thread_fun, this);
     ros_thread.detach();
+    while (!ros::ok())
+    {
+        ros::Duration(update_time).sleep();
+    }
 }
 
 void vehicle::ros_thread_fun()
 {
     while (ros::ok())
     {
-        ros::Duration(0.5).sleep();
+        ros::Duration(update_time).sleep();
         ros::spinOnce();
     }
 }
@@ -108,4 +120,31 @@ void vehicle::state_cb(const mavros_msgs::State::ConstPtr &msg)
 {
     state_mode = msg->mode.c_str();
     ros::Duration(0.5).sleep();
+}
+
+void vehicle::get_sensor_topic()
+{
+    QString node = node_name.c_str();
+    QString sensor_type = sensor_name.c_str();
+    sensor_type = sensor_type.toLower();
+    if (sensor_type.toStdString().find("camera") == std::string::npos)
+    {
+        sensor_topics.push_back("None");
+        return;
+    }
+    sensor_type = sensor_type.split(" ")[0];
+    sensor_type = "/" + node + "/" + sensor_type + "_cam";
+    if (sensor_type.toStdString().find("stereo") != std::string::npos)
+    {
+        sensor_topics.push_back(sensor_type + "/left/image_raw");
+        sensor_topics.push_back(sensor_type + "/right/image_raw");
+    }
+    else
+    {
+        sensor_topics.push_back(sensor_type + "/image_raw");
+        if (sensor_type.toStdString().find("depth") != std::string::npos)
+        {
+            sensor_topics.push_back(sensor_type + "/depth/image_raw");
+        }
+    }
 }
