@@ -27,6 +27,8 @@
 #include <print_utility/printf_utility.h>
 #include <tinyxml2.h>
 
+#define PI 3.14159265358979323846
+
 using namespace std;
 using namespace tinyxml2;
 
@@ -45,10 +47,10 @@ class GeneratorMainWindow : public QWidget
 
     private:
         // settings
-        string version = "V1.1.1";
-        int local_port = 14580;
+        string version = "V1.1.2";
+        int local_port = 34580;
         int remote_port = 14540;
-        int sitl_port = 14560;
+        int sitl_port = 24560;
         int tcp_port = 4560;
         vector<string> topic_types = {"{Vehicle Type}_{ID}", "uav_{ID}"};
         vector<string> vehicle_types = {"iris", "typhoon_h480", "plane"};
@@ -795,15 +797,15 @@ class GeneratorMainWindow : public QWidget
                 agent->InsertEndChild(agent_arg_z);
                 agent_arg_R = doc.NewElement("arg");
                 agent_arg_R->SetAttribute("name", "R");
-                agent_arg_R->SetAttribute("value", init_pos[i][3].c_str());
+                agent_arg_R->SetAttribute("value", to_string(atof(init_pos[i][3].c_str()) / 180 * PI).c_str());
                 agent->InsertEndChild(agent_arg_R);
                 agent_arg_P = doc.NewElement("arg");
                 agent_arg_P->SetAttribute("name", "P");
-                agent_arg_P->SetAttribute("value", init_pos[i][4].c_str());
+                agent_arg_P->SetAttribute("value", to_string(atof(init_pos[i][4].c_str()) / 180 * PI).c_str());
                 agent->InsertEndChild(agent_arg_P);
                 agent_arg_Y = doc.NewElement("arg");
                 agent_arg_Y->SetAttribute("name", "Y");
-                agent_arg_Y->SetAttribute("value", init_pos[i][5].c_str());
+                agent_arg_Y->SetAttribute("value", to_string(atof(init_pos[i][5].c_str()) / 180 * PI).c_str());
                 agent->InsertEndChild(agent_arg_Y);
                 agent_arg_mavid = doc.NewElement("arg");
                 agent_arg_mavid->SetAttribute("name", "mavlink_id");

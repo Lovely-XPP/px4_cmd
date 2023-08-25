@@ -68,9 +68,9 @@ class MonitorLoadWindow : public QWidget
             label_1 = new QLabel("", win);
             label_2 = new QLabel("", win);
             label_1->setText("Can not Detected ROS Running!");
-            label_1->setStyleSheet("color: red");
+            label_1->setStyleSheet("color: red; font-size: 11pt");
             label_2->setText("Please Run roslaunch xxx.launch to Continue...");
-            label_2->setStyleSheet("color: red");
+            label_2->setStyleSheet("color: red; font-size: 11pt");
             vbox->addWidget(label_1);
             vbox->addWidget(label_2);
             vbox->setAlignment(Qt::AlignVCenter);
@@ -203,6 +203,7 @@ class MonitorLoadWindow : public QWidget
             {
                 if (nodes.size() == 0)
                 {
+                    ros::Duration(0.5).sleep();
                     nodes_tmp.removeLast();
                     nodes = nodes_tmp;
                 }

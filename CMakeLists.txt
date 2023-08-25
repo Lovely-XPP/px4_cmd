@@ -21,9 +21,11 @@ find_package(catkin REQUIRED COMPONENTS
 find_package(Boost REQUIRED COMPONENTS system)
 
 # Qt depend
-find_package(Qt5Gui)
-find_package(Qt5Core)
-find_package(Qt5Widgets)
+find_package(Qt5 COMPONENTS 
+    Widgets
+    Gui
+    Core)
+set(CMAKE_AUTOMOC ON)
 
 # include dir
 include_directories(

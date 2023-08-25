@@ -21,6 +21,7 @@ class vehicle
         ros::Subscriber pos_sub;
         ros::Subscriber vel_sub;
         ros::Subscriber pose_sub;
+        ros::Subscriber state_sub;
         tf::Quaternion quat;
         double R;
         double P;
@@ -33,6 +34,7 @@ class vehicle
         double init_Y;
         void pos_cb(const geometry_msgs::PoseStamped::ConstPtr &msg);
         void vel_cb(const geometry_msgs::TwistStamped::ConstPtr &msg);
+        void state_cb(const mavros_msgs::State::ConstPtr &msg);
         void ros_thread_fun();
 
     public:
@@ -45,6 +47,7 @@ class vehicle
         QVector<double> pitch;
         QVector<double> roll;
         QVector<double> yaw;
+        string state_mode;
         string vehicle_name;
         string sensor_name;
         void set_node_name(string node_name);
@@ -67,6 +70,7 @@ void vehicle::set_node_name(string node_name)
     ros::param::get(("/" + node_name + "/init_Y").c_str(), init_Y);
     pos_sub = nh.subscribe<geometry_msgs::PoseStamped>((topic_header + "local_position/pose").c_str(), 20, &vehicle::pos_cb, this);
     vel_sub = nh.subscribe<geometry_msgs::TwistStamped>((topic_header + "local_position/velocity_local").c_str(), 20, &vehicle::vel_cb, this);
+    state_sub = nh.subscribe<mavros_msgs::State>((topic_header + "state").c_str(), 20, &vehicle::state_cb, this);
     std::thread ros_thread(&vehicle::ros_thread_fun, this);
     ros_thread.detach();
 }
@@ -98,4 +102,10 @@ void vehicle::vel_cb(const geometry_msgs::TwistStamped::ConstPtr &msg)
     vx.push_back(msg->twist.linear.x);
     vy.push_back(msg->twist.linear.y);
     vz.push_back(msg->twist.linear.z);
+}
+
+void vehicle::state_cb(const mavros_msgs::State::ConstPtr &msg)
+{
+    state_mode = msg->mode.c_str();
+    ros::Duration(0.5).sleep();
 }
