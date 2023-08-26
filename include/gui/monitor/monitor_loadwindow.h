@@ -34,12 +34,14 @@ class MonitorLoadWindow : public QWidget
     private:
         // settings
         string version = "V1.0.0";
+        bool thread_stop = false;
 
         //Widgets
         QMessageBox *msg_box;
         QHBoxLayout *hbox = new QHBoxLayout();
         QVBoxLayout *vbox = new QVBoxLayout();
-        QPushButton *button;
+        QPushButton *start_button;
+        QPushButton *exit_button;
         QLabel *label_1;
         QLabel *label_2;
 
@@ -48,7 +50,7 @@ class MonitorLoadWindow : public QWidget
             // init window
             QIcon *icon = new QIcon(QApplication::style()->standardIcon(QStyle::SP_FileIcon));
             win->setWindowIcon(*icon);
-            win->setFixedSize(800, 130);
+            win->setFixedSize(900, 130);
             win->setWindowTitle(("PX4 Cmd Simulation Monitor [Version: " + version + "]").c_str());
             win->setStyleSheet("background-color: rgb(255,250,250)");
             
@@ -75,21 +77,25 @@ class MonitorLoadWindow : public QWidget
             vbox->addWidget(label_2);
             vbox->setAlignment(Qt::AlignVCenter);
             vbox->setSpacing(20);
-            hbox->addLayout(vbox);
+            hbox->addLayout(vbox, 2);
 
-            // button
-            button = new QPushButton("Start Monitor", win);
-            button->setStyleSheet("background-color: rgb(84,255,159); font-weight: bold; font-size: 16pt");
-            button->setMinimumHeight(70);
-            button->setEnabled(false);
-            hbox->addWidget(button);
-            hbox->setSpacing(40);
+            // start_button
+            start_button = new QPushButton("Start", win);
+            start_button->setStyleSheet("background-color: rgb(84,255,159); font-weight: bold; font-size: 16pt");
+            start_button->setMinimumHeight(70);
+            start_button->setEnabled(false);
+            exit_button = new QPushButton("Exit", win);
+            exit_button->setStyleSheet("background-color: rgb(255,99,71); font-weight: bold; font-size: 16pt");
+            exit_button->setMinimumHeight(70);
+            hbox->addWidget(start_button, 1);
+            hbox->addWidget(exit_button, 1);
 
             // layout
             win->setLayout(hbox);
 
             // connect signal and slot
-            QObject::connect(button, &QPushButton::clicked, this, &MonitorLoadWindow::button_slot);
+            QObject::connect(start_button, &QPushButton::clicked, this, &MonitorLoadWindow::start_button_slot);
+            QObject::connect(exit_button, &QPushButton::clicked, this, &MonitorLoadWindow::exit_button_slot);
 
             // thread for detect ros
             std::thread pub_thread(&MonitorLoadWindow::detect_ros, this);
@@ -97,9 +103,13 @@ class MonitorLoadWindow : public QWidget
         }
 
         // slot functions
-        void button_slot()
+        void start_button_slot()
         {
             push_button = true;
+        }
+        void exit_button_slot()
+        {
+            thread_stop = true;
         }
 
         // detect environment
@@ -142,9 +152,8 @@ class MonitorLoadWindow : public QWidget
             ros::Time::init();
             bool ros_state = !ros::master::check();
             bool px4_state = false;
-            bool first = true;
             QString vehicle_nodes = "";
-            while (!px4_state || !push_button)
+            while ((!px4_state || !push_button) && !thread_stop)
             {
                 if (ros_state != ros::master::check())
                 {
@@ -155,7 +164,7 @@ class MonitorLoadWindow : public QWidget
                         label_1->setStyleSheet("color: red; font-size: 11pt");
                         label_2->setText("Please Run roslaunch xxx.launch to Continue...");
                         label_2->setStyleSheet("color: red; font-size: 11pt");
-                        button->setEnabled(false);
+                        start_button->setEnabled(false);
                     }
                     else
                     {
@@ -164,16 +173,16 @@ class MonitorLoadWindow : public QWidget
                 }
                 if (ros_state)
                 {
-                    if (first || px4_state != detect_px4())
+                    if (px4_state != detect_px4())
                     {
                         px4_state = detect_px4();
                         if (px4_state)
                         {
                             label_1->setText(("Detecte ROS & PX4 Running!\nDetected Nodes Count: " + to_string(nodes.size())).c_str());
                             label_1->setStyleSheet("color: green; font-size: 11pt");
-                            label_2->setText("Please Click [Start Monitor] Button to Continue...");
+                            label_2->setText("Please Click [Start Monitor] start_button to Continue...");
                             label_2->setStyleSheet("color: green; font-size: 11pt");
-                            button->setEnabled(true);
+                            start_button->setEnabled(true);
                         }
                         else
                         {
@@ -181,9 +190,8 @@ class MonitorLoadWindow : public QWidget
                             label_1->setStyleSheet("color: orange; font-size: 11pt");
                             label_2->setText("Please Check Launch File and Restart ROS to Continue...");
                             label_2->setStyleSheet("color: orange; font-size: 11pt");
-                            button->setEnabled(false);
+                            start_button->setEnabled(false);
                         }
-                        first = false;
                     }
                 }
                 ros::Duration(0.5).sleep();

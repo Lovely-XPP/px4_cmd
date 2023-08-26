@@ -59,13 +59,15 @@ class MonitorMainWindow : public QWidget
         double update_time = 0.3;
         vector<string> table_headers_pos = {"Vehicle", "Sensor", "Mode", "x", "y", "z", "vx", "vy", "vz", "roll", "pitch", "yaw"};
         vector<string> table_headers_topic = {"Node", "Sensor", "Senor Topic"};
-        QVector<vehicle *> data;
 
         // init vector
         QStringList nodes;
         QVector<double> x_end = {0};
         QVector<double> y_end = {0};
         QStringList topics;
+        QVector<vehicle *> data;
+        QVector<std::thread *> threads;
+        bool thread_stop = false;
 
         // output file string
         string output_file = "";
@@ -76,12 +78,14 @@ class MonitorMainWindow : public QWidget
         QCustomPlot *plot;
         QTableView *table_pos;
         QTableView *table_topic;
+        QLabel *info_label;
         QStandardItemModel *model_pos;
         QStandardItemModel *model_topic;
         QHBoxLayout *hbox = new QHBoxLayout();
         QVBoxLayout *vbox = new QVBoxLayout();
         QPushButton *signal_button;
         QPushButton *info_button;
+        QPushButton *exit_button;
 
         void setup()
         {
@@ -102,8 +106,10 @@ class MonitorMainWindow : public QWidget
             QLabel *topic_label = new QLabel("[ Vehicle Sensor Topics Information ]", win);
             QLabel *pos_label = new QLabel("[ Vehicle Position & Pose Information ]", win);
             QLabel *plot_label = new QLabel("[ Vehicle Position 2D Plane Plot (x-y Plane) ]", win);
-            topic_label->setStyleSheet("color: black; font-size: 14pt; font-weight: bold");
-            pos_label->setStyleSheet("color: black; font-size: 14pt; font-weight: bold");
+            info_label = new QLabel(("[ROS State]  Running\n[Vehicle Count]  " + to_string(nodes.size())).c_str(), win);
+            info_label->setStyleSheet("color: green; font-size: 14pt");
+            topic_label->setStyleSheet("color: rgb(255,137,46); font-size: 14pt; font-weight: bold");
+            pos_label->setStyleSheet("color: rgb(120,200,200); font-size: 14pt; font-weight: bold");
             plot_label->setStyleSheet("color: black; font-size: 14pt; font-weight: bold");
 
             // add button
@@ -112,12 +118,15 @@ class MonitorMainWindow : public QWidget
             //info
             info_button = new QPushButton("About", win);
             info_button->setMinimumHeight(50);
-            info_button->setStyleSheet("color: black; font-size: 16pt; font-weight: bold");
+            info_button->setStyleSheet("background-color: rgb(255,227,132); color: black; font-size: 16pt; font-weight: bold");
+            exit_button = new QPushButton("Exit", win);
+            exit_button->setMinimumHeight(50);
+            exit_button->setStyleSheet("background-color: rgb(255,106,106); color: black; font-size: 16pt; font-weight: bold");
 
             // add table
             // topic
             table_topic = new QTableView(win);
-            table_topic->setStyleSheet("background-color: white");
+            table_topic->setStyleSheet("background-color: rgb(255,245,235)");
             model_topic = new QStandardItemModel(data.size(), table_headers_topic.size(), win);
             QStringList list_topic;
             QString node_name;
@@ -157,7 +166,7 @@ class MonitorMainWindow : public QWidget
             table_topic->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
             // pos
             table_pos = new QTableView(win);
-            table_pos->setStyleSheet("background-color: white");
+            table_pos->setStyleSheet("background-color: rgb(239,255,254)");
             model_pos = new QStandardItemModel(data.size(), table_headers_pos.size(), win);
             QStringList list_pos;
             for (auto item = table_headers_pos.begin(); item != table_headers_pos.end(); item++)
@@ -173,6 +182,10 @@ class MonitorMainWindow : public QWidget
             QPen pen;
             int count = data.size();
             plot = new QCustomPlot(win);
+            plot->setBackground(QColor(255, 250, 250)); 
+            plot->axisRect()->setBackground(QColor(255, 250, 250));
+            plot->legend->setBrush(QColor(100, 100, 100, 0));
+            plot->legend->setBorderPen(Qt::NoPen);
             plot->xAxis2->setVisible(true);
             plot->xAxis2->setTickLabels(false);
             plot->yAxis2->setVisible(true);
@@ -183,6 +196,7 @@ class MonitorMainWindow : public QWidget
                 plot->addGraph()->setName("");
                 plot->legend->removeItem(0);
                 plot->graph()->setPen(pen);
+                plot->graph()->setAntialiasedFill(true);
             }
             for (int i = 0; i < count; i++)
             {
@@ -191,14 +205,29 @@ class MonitorMainWindow : public QWidget
                 plot->graph()->setPen(pen);
                 plot->graph()->setLineStyle(QCPGraph::LineStyle::lsNone);
                 plot->graph()->setScatterStyle(QCPScatterStyle(QCPScatterStyle::ssDisc, 8));
+                plot->graph()->setAntialiasedFill(true);
+            }
+            for (int i = 1; i < count; i++)
+            {
+                plot->legend->addElement(0, i, plot->legend->item(i));
             }
             plot->xAxis->setLabel("x (meter)");
             plot->yAxis->setLabel("y (meter)");
             plot->legend->setVisible(true);
             plot->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom | QCP::iSelectPlottables);
-            
+            int plot_count = plot->plotLayout()->rowCount();
+            int indent = win->width() / 2 - 50 * nodes.size();
+            if (indent <= 0)
+            {
+                indent = 1;
+            }
+            plot->legend->setMargins(QMargins(indent, 1, indent, 1));
+            plot->plotLayout()->addElement(plot_count, 0, plot->legend);
+            plot->plotLayout()->setRowStretchFactor(plot_count, 0.0001);
+            plot->xAxis->axisRect()->insetLayout()->setInsetAlignment(0, Qt::AlignBottom | Qt::AlignRight);
             // set layout
             QVBoxLayout *vbox_1 = new QVBoxLayout();
+            QVBoxLayout *vbox_2 = new QVBoxLayout();
             QHBoxLayout *hbox_1 = new QHBoxLayout();
             QHBoxLayout *hbox_2 = new QHBoxLayout();
             QHBoxLayout *hbox_3 = new QHBoxLayout();
@@ -208,25 +237,53 @@ class MonitorMainWindow : public QWidget
             hbox_1->setAlignment(Qt::AlignCenter);
             hbox_2->setAlignment(Qt::AlignCenter);
             hbox_3->setAlignment(Qt::AlignCenter);
-            hbox->addWidget(info_button, 1);
+            vbox_2->addWidget(info_label, 2);
+            vbox_2->addStretch(1);
+            vbox_2->addWidget(info_button, 1);
+            vbox_2->addStretch(1);
+            vbox_2->addWidget(exit_button, 1);
+            hbox->addLayout(vbox_2, 1);
             vbox_1->addLayout(hbox_1, 1);
             vbox_1->addWidget(table_topic, 6);
             hbox->addLayout(vbox_1, 4);
-            vbox->addLayout(hbox, 6);
+            vbox->addLayout(hbox, 8);
             vbox->addLayout(hbox_2, 1);
-            vbox->addWidget(table_pos, 6);
+            vbox->addWidget(table_pos, 8);
             vbox->addLayout(hbox_3, 1);
-            vbox->addWidget(plot, 6);
+            vbox->addWidget(plot, 12);
             win->setLayout(vbox);
             for (int i = 0; i < data.size(); i++)
             {
                 std::thread thread(&MonitorMainWindow::update_table, this, i);
                 thread.detach();
+                threads.push_back(&thread);
             }
-            
+            std::thread thread(&MonitorMainWindow::update_info, this);
+            thread.detach();
+            threads.push_back(&thread);
+
             // connect signal and slot
             QObject::connect(signal_button, &QPushButton::clicked, this, &MonitorMainWindow::update_plot_slot);
             QObject::connect(info_button, &QPushButton::clicked, this, &MonitorMainWindow::info_window_slot);
+            QObject::connect(exit_button, &QPushButton::clicked, this, &MonitorMainWindow::exit_slot);
+        }
+
+        void update_info()
+        {
+            while (!thread_stop)
+            {
+                if (ros::master::check())
+                {
+                    info_label->setText(("[ROS State]  Running\n[Vehicle Count]  " + to_string(nodes.size())).c_str());
+                    info_label->setStyleSheet("color: green; font-size: 14pt;");
+                }
+                else
+                {
+                    info_label->setText("[ROS State]  Not Running\n[Vehicle Count]  0");
+                    info_label->setStyleSheet("color: red; font-size: 14pt;");
+                }
+                sleep(1);
+            }
         }
 
         void update_table(int thread_id)
@@ -298,7 +355,7 @@ class MonitorMainWindow : public QWidget
             model_pos->setItem(thread_id, 9, item_10);
             model_pos->setItem(thread_id, 10, item_11);
             model_pos->setItem(thread_id, 11, item_12);
-            while (ros::ok())
+            while (ros::ok() && !thread_stop)
             {
                 mode = vec->state_mode;
                 if (mode.find_first_not_of("AUTO.") != string::npos)
@@ -355,6 +412,42 @@ class MonitorMainWindow : public QWidget
         void info_window_slot()
         {
             info_win->win->exec();
+        }
+
+        void exit_slot()
+        {
+            bool stop = false;
+            int tmp = 0;
+            thread_stop = true;
+            for (auto item = data.begin(); item != data.end(); item++)
+            {
+                (*item)->thread_stop = true;
+            }
+            while (!stop)
+            {
+                tmp = 0;
+                for (auto item = threads.begin(); item != threads.end(); item++)
+                {
+                    if ((*item)->joinable())
+                    {
+                        continue;
+                    }
+                    tmp++;
+                }
+                for (auto item = data.begin(); item != data.end(); item++)
+                {
+                    if ((*item)->run_thread->joinable())
+                    {
+                        continue;
+                    }
+                    tmp++;
+                }
+                if (tmp == 0)
+                {
+                    stop = true;
+                }
+            }
+            win->close();
         }
 
         // utility functions

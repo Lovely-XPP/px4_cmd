@@ -52,10 +52,12 @@ class vehicle
         QVector<double> roll;
         QVector<double> yaw;
         QStringList sensor_topics;
+        std::thread *run_thread;
         string state_mode;
         string node_name;
         string vehicle_name;
         string sensor_name;
+        bool thread_stop = false;
         void set_node_name(string node);
 };
 
@@ -79,17 +81,18 @@ void vehicle::set_node_name(string node)
     pos_sub = nh.subscribe<geometry_msgs::PoseStamped>((topic_header + "local_position/pose").c_str(), 20, &vehicle::pos_cb, this);
     vel_sub = nh.subscribe<geometry_msgs::TwistStamped>((topic_header + "local_position/velocity_local").c_str(), 20, &vehicle::vel_cb, this);
     state_sub = nh.subscribe<mavros_msgs::State>((topic_header + "state").c_str(), 20, &vehicle::state_cb, this);
-    std::thread ros_thread(&vehicle::ros_thread_fun, this);
-    ros_thread.detach();
     while (!ros::ok())
     {
         ros::Duration(update_time).sleep();
     }
+    std::thread ros_thread(&vehicle::ros_thread_fun, this);
+    ros_thread.detach();
+    run_thread = &ros_thread;
 }
 
 void vehicle::ros_thread_fun()
 {
-    while (ros::ok())
+    while (ros::ok() && !thread_stop)
     {
         ros::Duration(update_time).sleep();
         ros::spinOnce();
@@ -119,7 +122,6 @@ void vehicle::vel_cb(const geometry_msgs::TwistStamped::ConstPtr &msg)
 void vehicle::state_cb(const mavros_msgs::State::ConstPtr &msg)
 {
     state_mode = msg->mode.c_str();
-    ros::Duration(0.5).sleep();
 }
 
 void vehicle::get_sensor_topic()
