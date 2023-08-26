@@ -50,7 +50,7 @@ class MonitorLoadWindow : public QWidget
             // init window
             QIcon *icon = new QIcon(QApplication::style()->standardIcon(QStyle::SP_FileIcon));
             win->setWindowIcon(*icon);
-            win->setFixedSize(900, 130);
+            win->setFixedSize(1080, 130);
             win->setWindowTitle(("PX4 Cmd Simulation Monitor [Version: " + version + "]").c_str());
             win->setStyleSheet("background-color: rgb(255,250,250)");
             
@@ -77,7 +77,7 @@ class MonitorLoadWindow : public QWidget
             vbox->addWidget(label_2);
             vbox->setAlignment(Qt::AlignVCenter);
             vbox->setSpacing(20);
-            hbox->addLayout(vbox, 2);
+            hbox->addLayout(vbox, 3);
 
             // start_button
             start_button = new QPushButton("Start", win);
@@ -87,8 +87,9 @@ class MonitorLoadWindow : public QWidget
             exit_button = new QPushButton("Exit", win);
             exit_button->setStyleSheet("background-color: rgb(255,99,71); font-weight: bold; font-size: 16pt");
             exit_button->setMinimumHeight(70);
-            hbox->addWidget(start_button, 1);
-            hbox->addWidget(exit_button, 1);
+            hbox->addWidget(start_button, 2);
+            hbox->addSpacing(20);
+            hbox->addWidget(exit_button, 2);
 
             // layout
             win->setLayout(hbox);
