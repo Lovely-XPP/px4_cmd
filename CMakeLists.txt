@@ -91,15 +91,12 @@ target_link_libraries(generator jsoncpp)
 target_link_libraries(generator tinyxml2)
 
 # Controller
-add_executable(controller src/gui/generator.cpp)
+add_executable(controller src/gui/controller.cpp)
 target_link_libraries(controller Qt5::Widgets)
-target_link_libraries(controller jsoncpp)
-target_link_libraries(controller tinyxml2)
+target_link_libraries(controller ${catkin_LIBRARIES})
 
 # Monitor
 add_executable(monitor src/gui/monitor.cpp)
 target_link_libraries(monitor ${catkin_LIBRARIES})
 target_link_libraries(monitor Qt5::Widgets)
-target_link_libraries(monitor jsoncpp)
-target_link_libraries(monitor tinyxml2)
 target_link_libraries(monitor qcustomplot)

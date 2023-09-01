@@ -1,3 +1,5 @@
+#ifndef VEHICEL_STATE_H
+#define VEHICEL_STATE_H
 #include <ros/ros.h>
 #include <string>
 #include <QStringList>
@@ -16,7 +18,7 @@
 
 using namespace std;
 
-class vehicle
+class vehicle_state
 {
     private:
         // setting
@@ -58,10 +60,10 @@ class vehicle
         string vehicle_name;
         string sensor_name;
         bool thread_stop = false;
-        void set_node_name(string node);
+        void get_state(string node);
 };
 
-void vehicle::set_node_name(string node)
+void vehicle_state::get_state(string node)
 {
     node_name = node;
     int argc = 0;
@@ -78,19 +80,19 @@ void vehicle::set_node_name(string node)
     ros::param::get(("/" + node_name + "/init_P").c_str(), init_P);
     ros::param::get(("/" + node_name + "/init_Y").c_str(), init_Y);
     get_sensor_topic();
-    pos_sub = nh.subscribe<geometry_msgs::PoseStamped>((topic_header + "local_position/pose").c_str(), 20, &vehicle::pos_cb, this);
-    vel_sub = nh.subscribe<geometry_msgs::TwistStamped>((topic_header + "local_position/velocity_local").c_str(), 20, &vehicle::vel_cb, this);
-    state_sub = nh.subscribe<mavros_msgs::State>((topic_header + "state").c_str(), 20, &vehicle::state_cb, this);
+    pos_sub = nh.subscribe<geometry_msgs::PoseStamped>((topic_header + "local_position/pose").c_str(), 20, &vehicle_state::pos_cb, this);
+    vel_sub = nh.subscribe<geometry_msgs::TwistStamped>((topic_header + "local_position/velocity_local").c_str(), 20, &vehicle_state::vel_cb, this);
+    state_sub = nh.subscribe<mavros_msgs::State>((topic_header + "state").c_str(), 20, &vehicle_state::state_cb, this);
     while (!ros::ok())
     {
         ros::Duration(update_time).sleep();
     }
-    std::thread ros_thread(&vehicle::ros_thread_fun, this);
+    std::thread ros_thread(&vehicle_state::ros_thread_fun, this);
     ros_thread.detach();
     run_thread = &ros_thread;
 }
 
-void vehicle::ros_thread_fun()
+void vehicle_state::ros_thread_fun()
 {
     while (ros::ok() && !thread_stop)
     {
@@ -99,7 +101,7 @@ void vehicle::ros_thread_fun()
     }
 }
 
-void vehicle::pos_cb(const geometry_msgs::PoseStamped::ConstPtr &msg)
+void vehicle_state::pos_cb(const geometry_msgs::PoseStamped::ConstPtr &msg)
 {
     tf::quaternionMsgToTF(msg->pose.orientation, quat);
     // 将旋转矩阵转换为欧拉角
@@ -112,19 +114,19 @@ void vehicle::pos_cb(const geometry_msgs::PoseStamped::ConstPtr &msg)
     yaw.push_back((Y + init_Y) * 180 / PI);
 }
 
-void vehicle::vel_cb(const geometry_msgs::TwistStamped::ConstPtr &msg)
+void vehicle_state::vel_cb(const geometry_msgs::TwistStamped::ConstPtr &msg)
 {
     vx.push_back(msg->twist.linear.x);
     vy.push_back(msg->twist.linear.y);
     vz.push_back(msg->twist.linear.z);
 }
 
-void vehicle::state_cb(const mavros_msgs::State::ConstPtr &msg)
+void vehicle_state::state_cb(const mavros_msgs::State::ConstPtr &msg)
 {
     state_mode = msg->mode.c_str();
 }
 
-void vehicle::get_sensor_topic()
+void vehicle_state::get_sensor_topic()
 {
     QString node = node_name.c_str();
     QString sensor_type = sensor_name.c_str();
@@ -150,3 +152,5 @@ void vehicle::get_sensor_topic()
         }
     }
 }
+
+#endif

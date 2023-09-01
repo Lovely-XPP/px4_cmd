@@ -34,7 +34,7 @@
 #include <gui/monitor/monitor_infowindow.h>
 #include <print_utility/printf_utility.h>
 #include <qcustomplot.h>
-#include <vehicle.h>
+#include <vehicle_state.h>
 
 
 using namespace std;
@@ -65,7 +65,7 @@ class MonitorMainWindow : public QWidget
         QVector<double> x_end = {0};
         QVector<double> y_end = {0};
         QStringList topics;
-        QVector<vehicle *> data;
+        QVector<vehicle_state *> data;
         QVector<std::thread *> threads;
         bool thread_stop = false;
 
@@ -81,14 +81,15 @@ class MonitorMainWindow : public QWidget
         QLabel *info_label;
         QStandardItemModel *model_pos;
         QStandardItemModel *model_topic;
-        QHBoxLayout *hbox = new QHBoxLayout();
-        QVBoxLayout *vbox = new QVBoxLayout();
         QPushButton *signal_button;
         QPushButton *info_button;
         QPushButton *exit_button;
 
         void setup()
         {
+            // layout
+            QHBoxLayout *hbox = new QHBoxLayout();
+            QVBoxLayout *vbox = new QVBoxLayout();
             QIcon *icon = new QIcon(QApplication::style()->standardIcon(QStyle::SP_FileIcon));
             win->setWindowIcon(*icon);
             win->setFixedSize(1280, 750);
@@ -97,12 +98,12 @@ class MonitorMainWindow : public QWidget
             // get data
             for (auto item = nodes.begin(); item != nodes.end(); item++)
             {
-                vehicle *vec = new vehicle();
-                vec->set_node_name((*item).toStdString());
+                vehicle_state *vec = new vehicle_state();
+                vec->get_state((*item).toStdString());
                 data.push_back(vec);
             }
 
-            // add lable
+            // add label
             QLabel *topic_label = new QLabel("[ Vehicle Sensor Topics Information ]", win);
             QLabel *pos_label = new QLabel("[ Vehicle Position & Pose Information ]", win);
             QLabel *plot_label = new QLabel("[ Vehicle Position 2D Plane Plot (x-y Plane) ]", win);
@@ -288,7 +289,7 @@ class MonitorMainWindow : public QWidget
 
         void update_table(int thread_id)
         {
-            vehicle *vec = data[thread_id];
+            vehicle_state *vec = data[thread_id];
             string mode;
             QStandardItem *item_1 = new QStandardItem();
             QStandardItem *item_2 = new QStandardItem();

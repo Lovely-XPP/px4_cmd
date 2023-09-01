@@ -1,14 +1,22 @@
-#include <gui/generator/generator_mainwindow.h>
+#include <gui/controller/controller_mainwindow.h>
+#include <gui/controller/contoller_loadwindow.h>
 #include <QApplication>
 #include <QMainWindow>
 
 int main(int argc, char *argv[])
 {
+    ros::init(argc, argv, "controller");
     // 设置应用程序的 DPI 适应性，这可以使应用程序在高 DPI 屏幕上看起来更清晰
     QGuiApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
     QApplication app(argc, argv);
     app.setStyle("Fusion");
     QMainWindow *main_win;
-    GeneratorMainWindow *generator = new GeneratorMainWindow(main_win);
-    return generator->win->exec(); // 主事件循环
+    ControllerLoadWindow *load_win = new ControllerLoadWindow(main_win);
+    load_win->win->exec();
+    if (load_win->push_button)
+    {
+        ControllerMainWindow *controller = new ControllerMainWindow(main_win, load_win->nodes);
+        return controller->win->exec(); // 主事件循环
+    }
+    return 0;
 }
