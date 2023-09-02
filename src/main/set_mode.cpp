@@ -88,7 +88,6 @@ int main(int argc, char **argv)
         cout << "Current Mode: [" << GREEN << current_state.mode << WHITE << "]  [";
         if (current_state.armed)
         {
-            
             cout << GREEN << "Arm" << WHITE << "]" << endl;
         }
         else

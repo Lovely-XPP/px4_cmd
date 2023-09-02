@@ -2,37 +2,26 @@
 #define CONTROLLERMAINWINDOW_H
 #include <QMainWindow>
 #include <QApplication>
-#include <QMetaType>
 #include <QDialog>
 #include <QMessageBox>
 #include <QLabel>
-#include <QFrame>
-#include <QIcon>
 #include <QVector>
-#include <QPen>
-#include <QColor>
-#include <QLineEdit>
-#include <QCheckBox>
-#include <QComboBox>
 #include <QTableView>
 #include <QPushButton>
 #include <QHeaderView>
 #include <QStandardItem>
 #include <QStandardItemModel>
-#include <QAbstractItemModel>
-#include <QPersistentModelIndex>
 #include <QString>
 #include <QStringList>
-#include <QLine>
 #include <string>
 #include <vector>
 #include <sys/stat.h>
 #include <thread>
-#include <math.h>
 
 #include <ros/ros.h>
 
-#include <gui/controller/contoller_infowindow.h>
+#include <gui/controller/controller_infowindow.h>
+#include <gui/controller/controller_modewindow.h>
 #include <print_utility/printf_utility.h>
 #include <vehicle_command.h>
 
@@ -44,11 +33,10 @@ class ControllerMainWindow : public QWidget
     public:
         QDialog *win = new QDialog();
         ControllerInfoWindow *info_win = new ControllerInfoWindow(win);
+        ControllerModeWindow *mode_win = new ControllerModeWindow(win);
         QWidget *parent;
         ControllerMainWindow(QWidget *parent_widget, QStringList nodes_input)
         {
-            qRegisterMetaType<QList<QPersistentModelIndex>>("QList<QPersistentModelIndex>");
-            qRegisterMetaType<QList<QAbstractItemModel::LayoutChangeHint>>("QList<QAbstractItemModel::LayoutChangeHint>");
             nodes = nodes_input;
             setup();
         }
@@ -60,7 +48,10 @@ class ControllerMainWindow : public QWidget
         double update_time = 0.3;
         vector<string> table_headers_ext_cmd = {"Node", "CMD Mode", "CMD 1", "CMD 2", "CMD 3", "External CMD Topic", "External State"};
 
-        // init vector
+        // init vectors
+        QVector<vehicle_command *> data;
+        QVector<std::thread *> threads;
+        bool thread_stop = false;
         QStringList nodes;
 
         //Widgets
@@ -83,11 +74,20 @@ class ControllerMainWindow : public QWidget
 
         void setup()
         {
+            // set window
             QIcon *icon = new QIcon(QApplication::style()->standardIcon(QStyle::SP_FileIcon));
             win->setWindowIcon(*icon);
             win->setFixedSize(1280, 750);
             win->setWindowTitle(("PX4 Cmd Simulation Controller [Version: " + version + "]").c_str());
             win->setStyleSheet("background-color: rgb(255,250,250)");
+
+            // get data
+            for (auto item = nodes.begin(); item != nodes.end(); item++)
+            {
+                vehicle_command *vec = new vehicle_command();
+                vec->start((*item).toStdString());
+                data.push_back(vec);
+            }
 
             // layout
             QVBoxLayout *vbox = new QVBoxLayout();
@@ -158,6 +158,12 @@ class ControllerMainWindow : public QWidget
             land_button->setMinimumHeight(60);
             return_button->setMinimumHeight(60);
             generate_button->setMinimumHeight(45);
+            manual_button->setEnabled(false);
+            trajectory_button->setEnabled(false);
+            external_button->setEnabled(false);
+            hover_button->setEnabled(false);
+            land_button->setEnabled(false);
+            return_button->setEnabled(false);
             manual_button->setStyleSheet("background-color: rgb(182,228,222); font-size: 16pt");
             trajectory_button->setStyleSheet("background-color: rgb(182,228,222); font-size: 16pt");
             external_button->setStyleSheet("background-color: rgb(182,228,222); font-size: 16pt");
@@ -261,6 +267,61 @@ class ControllerMainWindow : public QWidget
             hbox_buttom->addLayout(vbox_buttom_2, 4);
             vbox->addLayout(hbox_buttom);
             win->setLayout(vbox);
+
+            // connect
+            QObject::connect(about_button, &QPushButton::clicked, this, &ControllerMainWindow::info_window_slot);
+            QObject::connect(mode_button, &QPushButton::clicked, this, &ControllerMainWindow::mode_window_slot);
+            QObject::connect(exit_button, &QPushButton::clicked, this, &ControllerMainWindow::exit_slot);
+        }
+
+        // slot functions
+        void info_window_slot()
+        {
+            info_win->win->exec();
+        }
+
+        void mode_window_slot()
+        {
+            mode_win->set_data(data);
+            mode_win->win->exec();
+        }
+
+        void exit_slot()
+        {
+            bool stop = false;
+            int tmp = 0;
+            thread_stop = true;
+            for (auto item = data.begin(); item != data.end(); item++)
+            {
+                (*item)->thread_stop = true;
+            }
+            while (!stop)
+            {
+                tmp = 0;
+                /*
+                for (auto item = threads.begin(); item != threads.end(); item++)
+                {
+                    if ((*item)->joinable())
+                    {
+                        continue;
+                    }
+                    tmp++;
+                }
+                */
+                for (auto item = data.begin(); item != data.end(); item++)
+                {
+                    if ((*item)->ros_stop)
+                    {
+                        continue;
+                    }
+                    tmp++;
+                }
+                if (tmp == 0)
+                {
+                    stop = true;
+                }
+            }
+            win->close();
         }
 };
 #endif

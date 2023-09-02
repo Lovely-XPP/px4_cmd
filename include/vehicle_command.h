@@ -54,22 +54,11 @@ class vehicle_command
         void ros_thread_fun();
 
     public:
-        QVector<double> x;
-        QVector<double> y;
-        QVector<double> z;
-        QVector<double> vx;
-        QVector<double> vy;
-        QVector<double> vz;
-        QVector<double> pitch;
-        QVector<double> roll;
-        QVector<double> yaw;
-        QStringList sensor_topics;
         std::thread *run_thread;
         string state_mode;
         string node_name;
-        string vehicle_name;
-        string sensor_name;
         bool thread_stop = false;
+        bool ros_stop = false;
         void start(string node);
         string set_mode(string desire_mode);
 };
@@ -77,13 +66,13 @@ class vehicle_command
 void vehicle_command::start(string node)
 {
     node_name = node;
+    pos_setpoint.header.frame_id = 1;
+    pos_setpoint.coordinate_frame = mavros_msgs::PositionTarget::FRAME_LOCAL_NED;
     int argc = 0;
     char **argv;
     string topic_header = "/" + node_name + "/mavros/";
     ros::init(argc, argv, node_name + "_cmd");
     ros::NodeHandle nh;
-    ros::param::get(("/" + node_name + "/vehicle").c_str(), vehicle_name);
-    ros::param::get(("/" + node_name + "/sensor").c_str(), sensor_name);
     ros::param::get(("/" + node_name + "/init_x").c_str(), init_x);
     ros::param::get(("/" + node_name + "/init_y").c_str(), init_y);
     ros::param::get(("/" + node_name + "/init_z").c_str(), init_z);
@@ -96,6 +85,7 @@ void vehicle_command::start(string node)
     }
     controller_cmd_sub = nh.subscribe<px4_cmd::Command>((node_name + "/px4_cmd/control_command").c_str(), 20, &vehicle_command::controller_cmd_cb, this);
     current_pos_sub = nh.subscribe<geometry_msgs::PoseStamped>((topic_header + "local_position/pose").c_str(), 20, &vehicle_command::pos_cb, this);
+    current_state_sub = nh.subscribe<mavros_msgs::State>((topic_header + "state").c_str(), 20, &vehicle_command::state_cb, this);
     setpoint_raw_local_pub = nh.advertise<mavros_msgs::PositionTarget>((topic_header + "setpoint_raw/local").c_str(), 50);
     mode_client = nh.serviceClient<mavros_msgs::SetMode>((topic_header + "set_mode").c_str());
     arming_client = nh.serviceClient<mavros_msgs::CommandBool>((topic_header + "cmd/arming").c_str());
@@ -126,7 +116,7 @@ string vehicle_command::set_mode(string desire_mode)
             {
                 // 执行回调函数
                 ros::spinOnce();
-                sleep(1);
+                ros::Duration(0.1).sleep();
                 if (current_state.armed == desire_arm_cmd)
                 {
                     Info(desire_mode + " Command Sent and " + desire_mode + " Successfully!");
@@ -157,14 +147,15 @@ string vehicle_command::set_mode(string desire_mode)
         {
             if (desire_mode != "AUTO.LAND" && desire_mode != "AUTO.RTL")
             {
-                return "You are in OFFBOARD Mode, you can only change to [Auto.Land] or [Auto.RTL] Mode!";
+                return "In OFFBOARD Mode, you can only change to [Auto.Land] or [Auto.RTL] Mode!";
             }
         }
+
         // 请求更改模式服务
         mode_cmd.request.custom_mode = desire_mode;
         mode_client.call(mode_cmd);
-        sleep(1);
-
+        ros::spinOnce();
+        ros::Duration(0.1).sleep();
         if (mode_cmd.response.mode_sent)
         {
             if (current_state.mode == desire_mode)
@@ -182,6 +173,10 @@ string vehicle_command::set_mode(string desire_mode)
         }
         error_times++;
     }
+    if (current_state.mode == desire_mode)
+    {
+        return "Current Mode is already [" + desire_mode + "]";
+    }
     return err_msg;
 }
 
@@ -193,6 +188,7 @@ void vehicle_command::ros_thread_fun()
         ros::Duration(update_time).sleep();
         ros::spinOnce();
     }
+    ros_stop = true;
 }
 
 void vehicle_command::controller_cmd_cb(const px4_cmd::Command::ConstPtr &msg)
@@ -326,6 +322,7 @@ void vehicle_command::controller_cmd_cb(const px4_cmd::Command::ConstPtr &msg)
 void vehicle_command::state_cb(const mavros_msgs::State::ConstPtr &msg)
 {
     current_state = *msg;
+    state_mode = msg->mode;
 }
 
 // 订阅回调返回位置信息

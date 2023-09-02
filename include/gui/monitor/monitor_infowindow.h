@@ -35,7 +35,7 @@ class MonitorInfoWindow : public QWidget
         {
             // set win
             win->setFixedSize(600, 600);
-            win->setWindowTitle("PX4 Cmd Launch File Generator");
+            win->setWindowTitle("About");
             win->setStyleSheet("background-color: rgb(255,250,250)");
             // set buttons
             programme_info_button->setMinimumSize(200, 40);

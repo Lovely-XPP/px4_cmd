@@ -59,6 +59,7 @@ class vehicle_state
         string node_name;
         string vehicle_name;
         string sensor_name;
+        bool ros_stop = false;
         bool thread_stop = false;
         void get_state(string node);
 };
@@ -99,6 +100,7 @@ void vehicle_state::ros_thread_fun()
         ros::Duration(update_time).sleep();
         ros::spinOnce();
     }
+    ros_stop = true;
 }
 
 void vehicle_state::pos_cb(const geometry_msgs::PoseStamped::ConstPtr &msg)
@@ -123,7 +125,7 @@ void vehicle_state::vel_cb(const geometry_msgs::TwistStamped::ConstPtr &msg)
 
 void vehicle_state::state_cb(const mavros_msgs::State::ConstPtr &msg)
 {
-    state_mode = msg->mode.c_str();
+    state_mode = msg->mode;
 }
 
 void vehicle_state::get_sensor_topic()

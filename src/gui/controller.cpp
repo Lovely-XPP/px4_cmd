@@ -1,5 +1,5 @@
 #include <gui/controller/controller_mainwindow.h>
-#include <gui/controller/contoller_loadwindow.h>
+#include <gui/controller/controller_loadwindow.h>
 #include <QApplication>
 #include <QMainWindow>
 

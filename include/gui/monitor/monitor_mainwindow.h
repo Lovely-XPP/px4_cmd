@@ -437,7 +437,7 @@ class MonitorMainWindow : public QWidget
                 }
                 for (auto item = data.begin(); item != data.end(); item++)
                 {
-                    if ((*item)->run_thread->joinable())
+                    if ((*item)->ros_stop)
                     {
                         continue;
                     }
