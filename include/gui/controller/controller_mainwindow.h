@@ -22,6 +22,7 @@
 
 #include <gui/controller/controller_infowindow.h>
 #include <gui/controller/controller_modewindow.h>
+#include <gui/controller/controller_takeoffwindow.h>
 #include <print_utility/printf_utility.h>
 #include <vehicle_command.h>
 
@@ -34,6 +35,7 @@ class ControllerMainWindow : public QWidget
         QDialog *win = new QDialog();
         ControllerInfoWindow *info_win = new ControllerInfoWindow(win);
         ControllerModeWindow *mode_win = new ControllerModeWindow(win);
+        ControllerTakeoffWindow *takeoff_win = new ControllerTakeoffWindow(win);
         QWidget *parent;
         ControllerMainWindow(QWidget *parent_widget, QStringList nodes_input)
         {
@@ -51,6 +53,8 @@ class ControllerMainWindow : public QWidget
         // init vectors
         QVector<vehicle_command *> data;
         QVector<std::thread *> threads;
+        QVector<px4_cmd::Command> cmds;
+        QVector<ros::Publisher> pubs;
         bool thread_stop = false;
         QStringList nodes;
 
@@ -88,6 +92,32 @@ class ControllerMainWindow : public QWidget
                 vec->start((*item).toStdString());
                 data.push_back(vec);
             }
+
+            // ros setting
+            int argc = 0;
+            char **argv;
+            ros::init(argc, argv, "px4_cmd/px4_controller");
+            ros::NodeHandle nh;
+            for (size_t i = 0; i < nodes.size(); i++)
+            {
+                ros::Publisher pub = nh.advertise<px4_cmd::Command>((nodes[i] + "/px4_cmd/control_command").toStdString().c_str(), 50);
+                pubs.push_back(pub);
+            }
+            for (size_t i = 0; i < data.size(); i++)
+            {
+                px4_cmd::Command cmd;
+                if (data[i]->vehicle_name == "plane")
+                {
+                    cmd.Vehicle = px4_cmd::Command::FixWing;
+                }
+                else
+                {
+                    cmd.Vehicle = px4_cmd::Command::Multicopter;
+                }
+                cmds.push_back(cmd);
+            }
+            std::thread ros_thread(&ControllerMainWindow::ros_thread_func, this);
+            ros_thread.detach();
 
             // layout
             QVBoxLayout *vbox = new QVBoxLayout();
@@ -271,7 +301,22 @@ class ControllerMainWindow : public QWidget
             // connect
             QObject::connect(about_button, &QPushButton::clicked, this, &ControllerMainWindow::info_window_slot);
             QObject::connect(mode_button, &QPushButton::clicked, this, &ControllerMainWindow::mode_window_slot);
+            QObject::connect(takeoff_button, &QPushButton::clicked, this, &ControllerMainWindow::takeoff_window_slot);
             QObject::connect(exit_button, &QPushButton::clicked, this, &ControllerMainWindow::exit_slot);
+        }
+        
+        // ros thread
+        void ros_thread_func()
+        {
+            while (ros::ok() && !thread_stop)
+            {
+                for (size_t i = 0; i < nodes.size(); i++)
+                {
+                    pubs[i].publish(cmds[i]);
+                }
+                ros::spinOnce();
+                ros::Duration(0.02).sleep();
+            }
         }
 
         // slot functions
@@ -284,6 +329,36 @@ class ControllerMainWindow : public QWidget
         {
             mode_win->set_data(data);
             mode_win->win->exec();
+        }
+
+        void takeoff_window_slot()
+        {
+            if (!takeoff_win->set_data(data))
+            {
+                return;
+            }
+            takeoff_win->win->exec();
+            if (takeoff_win->set_height)
+            {
+                for (size_t i = 0; i < nodes.size(); i++)
+                {
+                    cmds[i].Mode = px4_cmd::Command::Move;
+                    cmds[i].Move_frame = px4_cmd::Command::ENU;
+                    if (data[i]->vehicle_name == "plane")
+                    {
+                        cmds[i].Move_mode = px4_cmd::Command::FixWing_POS;
+                    }
+                    else
+                    {
+                        cmds[i].Move_mode = px4_cmd::Command::XYZ_POS;
+                    }
+                    cmds[i].desire_cmd[0] = data[i]->init_x;
+                    cmds[i].desire_cmd[1] = data[i]->init_y;
+                    cmds[i].desire_cmd[2] = data[i]->init_z + takeoff_win->takeoff_height;
+                    cmds[i].yaw_cmd = 0;
+                    data[i]->set_mode("Arm");
+                }
+            }
         }
 
         void exit_slot()

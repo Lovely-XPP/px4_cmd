@@ -25,9 +25,7 @@
 #include <QStringList>
 #include <string>
 #include <vector>
-#include <sys/stat.h>
 #include <thread>
-#include <math.h>
 
 #include <ros/ros.h>
 

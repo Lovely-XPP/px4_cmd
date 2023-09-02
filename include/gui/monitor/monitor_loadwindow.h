@@ -11,7 +11,6 @@
 #include <QHBoxLayout>
 #include <QString>
 #include <QStringList>
-#include <iostream>
 #include <thread>
 
 #include <ros/ros.h>

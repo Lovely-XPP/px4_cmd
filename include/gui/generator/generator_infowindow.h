@@ -17,7 +17,8 @@ class GeneratorInfoWindow : public QWidget
     public:
         QWidget *parent;
         QDialog *win = new QDialog();
-        GeneratorInfoWindow(QWidget *parent_widget){
+        GeneratorInfoWindow(QWidget *parent_widget)
+        {
             setup();
         }
 
@@ -43,7 +44,6 @@ class GeneratorInfoWindow : public QWidget
             topic_name_info_button->setText("About Topics");
             sensors_info_button->setMinimumSize(200, 40);
             sensors_info_button->setText("About Sensors");
-            ;
 
             // set layout
             vbox->addWidget(programme_info_button);

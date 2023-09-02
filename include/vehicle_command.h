@@ -42,9 +42,6 @@ class vehicle_command
         double R;
         double P;
         double Y;
-        double init_x;
-        double init_y;
-        double init_z;
         double init_R;
         double init_P;
         double init_Y;
@@ -57,8 +54,16 @@ class vehicle_command
         std::thread *run_thread;
         string state_mode;
         string node_name;
+        string vehicle_name;
+        bool arm_state = false;
         bool thread_stop = false;
         bool ros_stop = false;
+        double x;
+        double y;
+        double z;
+        double init_x;
+        double init_y;
+        double init_z;
         void start(string node);
         string set_mode(string desire_mode);
 };
@@ -71,8 +76,9 @@ void vehicle_command::start(string node)
     int argc = 0;
     char **argv;
     string topic_header = "/" + node_name + "/mavros/";
-    ros::init(argc, argv, node_name + "_cmd");
+    ros::init(argc, argv, "px4_cmd/" + node_name + "_cmd");
     ros::NodeHandle nh;
+    ros::param::get(("/" + node_name + "/vehicle").c_str(), vehicle_name);
     ros::param::get(("/" + node_name + "/init_x").c_str(), init_x);
     ros::param::get(("/" + node_name + "/init_y").c_str(), init_y);
     ros::param::get(("/" + node_name + "/init_z").c_str(), init_z);
@@ -111,7 +117,6 @@ string vehicle_command::set_mode(string desire_mode)
         while ((current_state.armed != desire_arm_cmd) && error_times < 10)
         {
             arm_cmd.request.value = desire_arm_cmd;
-            Info(desire_mode + "ing...");
             if (arming_client.call(arm_cmd) && arm_cmd.response.success)
             {
                 // 执行回调函数
@@ -119,7 +124,6 @@ string vehicle_command::set_mode(string desire_mode)
                 ros::Duration(0.1).sleep();
                 if (current_state.armed == desire_arm_cmd)
                 {
-                    Info(desire_mode + " Command Sent and " + desire_mode + " Successfully!");
                     return "";
                 }
                 else
@@ -323,12 +327,16 @@ void vehicle_command::state_cb(const mavros_msgs::State::ConstPtr &msg)
 {
     current_state = *msg;
     state_mode = msg->mode;
+    arm_state = msg->armed;
 }
 
 // 订阅回调返回位置信息
 void vehicle_command::pos_cb(const geometry_msgs::PoseStamped::ConstPtr &msg)
 {
     current_pos = *msg;
+    x = msg->pose.position.x;
+    y = msg->pose.position.y;
+    z = msg->pose.position.z;
 }
 
 #endif

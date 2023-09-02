@@ -8,7 +8,6 @@
 #include <QTextBrowser>
 #include <string>
 #include <vector>
-#include <iostream>
 
 #include <print_utility/printf_utility.h>
 
@@ -44,7 +43,6 @@ class MonitorInfoWindow : public QWidget
             topic_name_info_button->setText("About Topics");
             sensors_info_button->setMinimumSize(200, 40);
             sensors_info_button->setText("About Sensors");
-            ;
 
             // set layout
             vbox->addWidget(programme_info_button);

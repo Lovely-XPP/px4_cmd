@@ -11,7 +11,6 @@
 #include <QVector>
 #include <string>
 #include <vector>
-#include <iostream>
 #include <thread>
 
 #include <print_utility/printf_utility.h>
