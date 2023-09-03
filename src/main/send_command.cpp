@@ -100,6 +100,17 @@ void sub_set_cmd_cb(const px4_cmd::Command::ConstPtr &msg)
             pos_setpoint.yaw = set_cmd.yaw_cmd;
             return;
         }
+        
+        if (set_cmd.Mode == px4_cmd::Command::Takeoff)
+        {
+            pos_setpoint.type_mask = 0b100111111000;
+            pos_setpoint.position.x = current_pos.pose.position.x;
+            pos_setpoint.position.y = current_pos.pose.position.y;
+            pos_setpoint.position.z = set_cmd.desire_cmd[2];
+            pos_setpoint.header.frame_id = 1;
+            pos_setpoint.yaw = 0;
+            return;
+        }
 
         switch (set_cmd.Move_mode)
         {
@@ -156,28 +167,26 @@ void sub_set_cmd_cb(const px4_cmd::Command::ConstPtr &msg)
             pos_setpoint.header.frame_id = 1;
             return;
         }
-        
+
+        if (set_cmd.Mode == px4_cmd::Command::Takeoff)
+        {
+            pos_setpoint.type_mask = 4096;
+        }
+
+        if (set_cmd.Mode == px4_cmd::Command::Gliding)
+        {
+            pos_setpoint.type_mask = 0b000100100100;
+        }
+
         switch (set_cmd.Move_mode)
         {
-            case px4_cmd::Command::FixWing_Takeoff:
-            {
-                pos_setpoint.type_mask = 4096;
-                break;
-            }
-
-            case px4_cmd::Command::FixWing_Gliding:
-            {
-                pos_setpoint.type_mask = 0b000100100100;
-                break;
-            }
-
-            case px4_cmd::Command::FixWing_POS:
+            case px4_cmd::Command::XYZ_POS:
             {
                 pos_setpoint.type_mask = 12288;
                 break;
             }
 
-            case px4_cmd::Command::FixWing_REL_POS:
+            case px4_cmd::Command::XYZ_REL_POS:
             {
                 pos_setpoint.type_mask = 12288;
                 break;

@@ -9,16 +9,17 @@
 #include <QStringList>
 #include <QMessageBox>
 #include <QVector>
+#include <QLabel>
 #include <string>
 #include <vector>
 #include <thread>
 
-#include <print_utility/printf_utility.h>
 #include <mavros_msgs/State.h>
 #include <vehicle_command.h>
 
 class ControllerModeWindow : public QWidget
 {
+    Q_OBJECT
     public:
         QWidget *parent;
         QDialog *win = new QDialog();
@@ -31,6 +32,9 @@ class ControllerModeWindow : public QWidget
             data = input;
             update_mode();
         }
+    
+    signals:
+        void change_mode_signal();
 
     private:
         // init widgets
@@ -132,6 +136,7 @@ class ControllerModeWindow : public QWidget
         // slot functions
         void manual_mode_slot()
         {
+            emit change_mode_signal();
             change_mode_txt(mavros_msgs::State::MODE_PX4_MANUAL);
             std::thread ros_thread(&ControllerModeWindow::change_mode, this, mavros_msgs::State::MODE_PX4_MANUAL);
             ros_thread.detach();
@@ -139,6 +144,7 @@ class ControllerModeWindow : public QWidget
 
         void offboard_mode_slot()
         {
+            emit change_mode_signal();
             change_mode_txt(mavros_msgs::State::MODE_PX4_OFFBOARD);
             std::thread ros_thread(&ControllerModeWindow::change_mode, this, mavros_msgs::State::MODE_PX4_OFFBOARD);
             ros_thread.detach();
@@ -153,6 +159,7 @@ class ControllerModeWindow : public QWidget
 
         void pos_mode_slot()
         {
+            emit change_mode_signal();
             change_mode_txt(mavros_msgs::State::MODE_PX4_POSITION);
             std::thread ros_thread(&ControllerModeWindow::change_mode, this, mavros_msgs::State::MODE_PX4_POSITION);
             ros_thread.detach();
@@ -167,6 +174,7 @@ class ControllerModeWindow : public QWidget
 
         void land_mode_slot()
         {
+            emit change_mode_signal();
             change_mode_txt(mavros_msgs::State::MODE_PX4_LAND);
             std::thread ros_thread(&ControllerModeWindow::change_mode, this, mavros_msgs::State::MODE_PX4_LAND);
             ros_thread.detach();
@@ -174,6 +182,7 @@ class ControllerModeWindow : public QWidget
 
         void return_mode_slot()
         {
+            emit change_mode_signal();
             change_mode_txt(mavros_msgs::State::MODE_PX4_RTL);
             std::thread ros_thread(&ControllerModeWindow::change_mode, this, mavros_msgs::State::MODE_PX4_RTL);
             ros_thread.detach();
@@ -232,6 +241,11 @@ class ControllerModeWindow : public QWidget
             land_mode->setEnabled(true);
             return_mode->setEnabled(true);
             exit_mode->setEnabled(true);
+            if (desire_mode == mavros_msgs::State::MODE_PX4_LAND || desire_mode == mavros_msgs::State::MODE_PX4_RTL)
+            {
+                win->close();
+                return;
+            }
         }
 
         void show_error()

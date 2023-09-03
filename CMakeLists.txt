@@ -7,6 +7,7 @@ project(px4_cmd VERSION 1.0.3 LANGUAGES CXX)
 
 # set C++ standard
 set(CMAKE_CXX_FLAGS "-std=c++11")
+set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
 # find package
 find_package(catkin REQUIRED COMPONENTS
@@ -26,7 +27,7 @@ find_package(Qt5 COMPONENTS
     Gui
     Core)
 set(CMAKE_AUTOMOC ON)
-
+    
 # include dir
 include_directories(
     include
@@ -85,18 +86,16 @@ target_link_libraries(ext_cmd ${catkin_LIBRARIES})
 
 ##################  GUI  ###################
 # Generator
+link_libraries(Qt5::Widgets)
 add_executable(generator src/gui/generator.cpp)
-target_link_libraries(generator Qt5::Widgets)
 target_link_libraries(generator jsoncpp)
 target_link_libraries(generator tinyxml2)
 
 # Controller
 add_executable(controller src/gui/controller.cpp)
-target_link_libraries(controller Qt5::Widgets)
 target_link_libraries(controller ${catkin_LIBRARIES})
 
 # Monitor
 add_executable(monitor src/gui/monitor.cpp)
 target_link_libraries(monitor ${catkin_LIBRARIES})
-target_link_libraries(monitor Qt5::Widgets)
 target_link_libraries(monitor qcustomplot)

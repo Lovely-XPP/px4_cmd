@@ -19,13 +19,12 @@
 #include <thread>
 
 #include <ros/ros.h>
+#include <mavros_msgs/State.h>
 
 #include <gui/controller/controller_infowindow.h>
 #include <gui/controller/controller_modewindow.h>
 #include <gui/controller/controller_takeoffwindow.h>
 #include <print_utility/printf_utility.h>
-#include <vehicle_command.h>
-
 
 using namespace std;
 
@@ -56,7 +55,9 @@ class ControllerMainWindow : public QWidget
         QVector<px4_cmd::Command> cmds;
         QVector<ros::Publisher> pubs;
         bool thread_stop = false;
+        bool land_return_operate = false;
         QStringList nodes;
+        QString operating_info;
 
         //Widgets
         QMessageBox *msg_box;
@@ -75,8 +76,15 @@ class ControllerMainWindow : public QWidget
         QPushButton *generate_button;
         QTableView *info_table = new QTableView(win);
         QStandardItemModel *info_model;
+        QLabel *info_label_1;
+        QLabel *info_label_2;
+        QLabel *info_label_3;
+        QLabel *state_label_1;
+        QLabel *state_label_2;
+        QLabel *state_label_3;
 
-        void setup()
+        void
+        setup()
         {
             // set window
             QIcon *icon = new QIcon(QApplication::style()->standardIcon(QStyle::SP_FileIcon));
@@ -133,20 +141,26 @@ class ControllerMainWindow : public QWidget
             QHBoxLayout *hbox_buttom_1 = new QHBoxLayout();
 
             // add labels
-            QLabel *info_label_1 = new QLabel("[ROS State]  Running", win);
-            info_label_1->setStyleSheet("color: green; font-size: 16pt");
-            QLabel *info_label_2 = new QLabel(("[Vehicle Count]  " + to_string(nodes.size())).c_str(), win);
-            info_label_2->setStyleSheet("color: green; font-size: 16pt");
-            QLabel *state_label_1 = new QLabel("[Arm State]  DisArm", win);
-            state_label_1->setStyleSheet("color: orange; font-size: 16pt");
-            QLabel *state_label_2 = new QLabel("[Current CMD]  None", win);
-            state_label_2->setStyleSheet("color: green; font-size: 16pt");
+            info_label_1 = new QLabel("[ROS State]  Running", win);
+            info_label_1->setStyleSheet("color: green; font-size: 14pt");
+            info_label_2 = new QLabel(("[Vehicle Count]  " + to_string(nodes.size())).c_str(), win);
+            info_label_2->setStyleSheet("color: green; font-size: 14pt");
+            info_label_3 = new QLabel(("[Current Mode]  " + data[0]->state_mode).c_str(), win);
+            info_label_3->setStyleSheet("color: green; font-size: 14pt");
+            state_label_1 = new QLabel("[Arm State]  DisArm", win);
+            state_label_1->setStyleSheet("color: orange; font-size: 14pt");
+            state_label_2 = new QLabel("[Current CMD]  None", win);
+            state_label_2->setStyleSheet("color: green; font-size: 14pt");
+            state_label_3 = new QLabel("", win);
+            state_label_3->setStyleSheet("color: orange; font-size: 14pt");
             QLabel *label_1 = new QLabel("[Move CMD Mode]", win);
             label_1->setStyleSheet("color: rgb(0,169,190); font-size: 16pt; font-weight: bold");
             label_1->setAlignment(Qt::AlignmentFlag::AlignCenter);
             QLabel *label_2 = new QLabel("[State CMD Mode]", win);
             label_2->setStyleSheet("color: rgb(209,167,0); font-size: 16pt; font-weight: bold");
             label_2->setAlignment(Qt::AlignmentFlag::AlignCenter);
+            info_label_3->setMinimumWidth(300);
+            state_label_2->setMinimumWidth(300);
 
             // add top buttons
             QPushButton *split_line = new QPushButton("", win);
@@ -264,9 +278,11 @@ class ControllerMainWindow : public QWidget
             hbox_buttom->setSpacing(40);
             vbox_top_1->addWidget(info_label_1);
             vbox_top_1->addWidget(info_label_2);
+            vbox_top_1->addWidget(info_label_3);
             hbox_top->addLayout(vbox_top_1);
             vbox_top_2->addWidget(state_label_1);
             vbox_top_2->addWidget(state_label_2);
+            vbox_top_2->addWidget(state_label_3);
             hbox_top->addLayout(vbox_top_2);
             vbox_top_3->addWidget(mode_button);
             vbox_top_3->addWidget(arm_button);
@@ -302,9 +318,20 @@ class ControllerMainWindow : public QWidget
             QObject::connect(about_button, &QPushButton::clicked, this, &ControllerMainWindow::info_window_slot);
             QObject::connect(mode_button, &QPushButton::clicked, this, &ControllerMainWindow::mode_window_slot);
             QObject::connect(takeoff_button, &QPushButton::clicked, this, &ControllerMainWindow::takeoff_window_slot);
+            QObject::connect(arm_button, &QPushButton::clicked, this, &ControllerMainWindow::arm_slot);
+            QObject::connect(disarm_button, &QPushButton::clicked, this, &ControllerMainWindow::disarm_slot);
             QObject::connect(exit_button, &QPushButton::clicked, this, &ControllerMainWindow::exit_slot);
+            QObject::connect(hover_button, &QPushButton::clicked, this, &ControllerMainWindow::hover_slot);
+            QObject::connect(land_button, &QPushButton::clicked, this, &ControllerMainWindow::land_slot);
+            QObject::connect(return_button, &QPushButton::clicked, this, &ControllerMainWindow::return_slot);
+            QObject::connect(mode_win, &ControllerModeWindow::change_mode_signal, this, &ControllerMainWindow::change_mode_slot);
+            QObject::connect(takeoff_win, &ControllerTakeoffWindow::take_off_info_signal, this, &ControllerMainWindow::take_off_info_slot);
+
+            // thread
+            std::thread update_thread(&ControllerMainWindow::update_info, this);
+            update_thread.detach();
         }
-        
+
         // ros thread
         void ros_thread_func()
         {
@@ -331,6 +358,72 @@ class ControllerMainWindow : public QWidget
             mode_win->win->exec();
         }
 
+        void arm_slot()
+        {
+            operating_info = "Arming...";
+            std::thread arm_thread(&ControllerMainWindow::arm_thread_func, this);
+            arm_thread.detach();
+        }
+
+        void arm_thread_func()
+        {
+            string err = "";
+            for (size_t i = 0; i < nodes.size(); i++)
+            {
+                err = data[i]->set_mode("Arm");
+                if (err != "")
+                {
+                    msg_box = new QMessageBox(win);
+                    msg_box->setIcon(QMessageBox::Icon::Critical);
+                    msg_box->setText("Error");
+                    msg_box->setWindowTitle("Error");
+                    msg_box->setText("Armed Failure, Please Retry.");
+                    msg_box->exec();
+                    for (size_t j = 0; j < nodes.size(); j++)
+                    {
+                        data[i]->set_mode(mavros_msgs::State::MODE_PX4_RTL);
+                    }
+                    operating_info = "";
+                    return;
+                }
+            }
+            operating_info = "";
+            current_cmd = "Arm";
+            arm_button->setEnabled(false);
+            disarm_button->setEnabled(true);
+        }
+
+        void disarm_slot()
+        {
+            operating_info = "DisArming...";
+            std::thread disarm_thread(&ControllerMainWindow::disarm_thread_func, this);
+            disarm_thread.detach();
+        }
+
+        void disarm_thread_func()
+        {
+            string err = "";
+            for (size_t i = 0; i < nodes.size(); i++)
+            {
+                err = data[i]->set_mode("DisArm");
+                if (err != "")
+                {
+                    msg_box = new QMessageBox(win);
+                    msg_box->setIcon(QMessageBox::Icon::Critical);
+                    msg_box->setText("Error");
+                    msg_box->setWindowTitle("Error");
+                    msg_box->setText(err.c_str());
+                    msg_box->exec();
+                    operating_info = "";
+                    return;
+                }
+            }
+            operating_info = "";
+            current_cmd = "DisArm";
+            arm_button->setEnabled(true);
+            disarm_button->setEnabled(false);
+        }
+
         void takeoff_window_slot()
         {
             if (!takeoff_win->set_data(data))
@@ -338,27 +431,121 @@ class ControllerMainWindow : public QWidget
                 return;
             }
             takeoff_win->win->exec();
+            takeoff_button->setEnabled(false);
+            arm_button->setEnabled(false);
+            mode_button->setEnabled(false);
             if (takeoff_win->set_height)
             {
-                for (size_t i = 0; i < nodes.size(); i++)
+                std::thread take_off_thread(&ControllerMainWindow::take_off_thread_func, this);
+                take_off_thread.detach();
+            }
+        }
+
+        void take_off_thread_func()
+        {
+            string err = "";
+            for (size_t i = 0; i < nodes.size(); i++)
+            {
+                cmds[i].Mode = px4_cmd::Command::Takeoff;
+                cmds[i].Move_frame = px4_cmd::Command::ENU;
+                cmds[i].desire_cmd[0] = 0;
+                cmds[i].desire_cmd[1] = 0;
+                cmds[i].desire_cmd[2] = takeoff_win->takeoff_height;
+                cmds[i].yaw_cmd = 0;
+                err = data[i]->set_mode("Arm");
+                if (err != "")
                 {
-                    cmds[i].Mode = px4_cmd::Command::Move;
-                    cmds[i].Move_frame = px4_cmd::Command::ENU;
-                    if (data[i]->vehicle_name == "plane")
+                    msg_box = new QMessageBox(win);
+                    msg_box->setIcon(QMessageBox::Icon::Critical);
+                    msg_box->setText("Error");
+                    msg_box->setWindowTitle("Error");
+                    msg_box->setText("Armed Failure, Please Retry.");
+                    msg_box->exec();
+                    for (size_t j = 0; j < nodes.size(); j++)
                     {
-                        cmds[i].Move_mode = px4_cmd::Command::FixWing_POS;
+                        data[i]->set_mode(mavros_msgs::State::MODE_PX4_RTL);
                     }
-                    else
-                    {
-                        cmds[i].Move_mode = px4_cmd::Command::XYZ_POS;
-                    }
-                    cmds[i].desire_cmd[0] = data[i]->init_x;
-                    cmds[i].desire_cmd[1] = data[i]->init_y;
-                    cmds[i].desire_cmd[2] = data[i]->init_z + takeoff_win->takeoff_height;
-                    cmds[i].yaw_cmd = 0;
-                    data[i]->set_mode("Arm");
+                    operating_info = "";
+                    mode_button->setEnabled(true);
+                    takeoff_button->setEnabled(true);
+                    arm_button->setEnabled(true);
+                    return;
                 }
             }
+            operating_info = "";
+            current_cmd = "Take Off";
+            mode_button->setEnabled(true);
+            takeoff_button->setEnabled(false);
+            arm_button->setEnabled(false);
+            disarm_button->setEnabled(true);
+            manual_button->setEnabled(true);
+            trajectory_button->setEnabled(true);
+            external_button->setEnabled(true);
+            hover_button->setEnabled(true);
+            land_button->setEnabled(true);
+            return_button->setEnabled(true);
+        }
+
+        void hover_slot()
+        {
+            current_cmd = "Hover";
+            std::thread hover_thread(&ControllerMainWindow::hover_thread_func, this);
+            hover_thread.detach();
+        }
+
+        void hover_thread_func()
+        {
+            for (size_t i = 0; i < nodes.size(); i++)
+            {
+                cmds[i].Mode = px4_cmd::Command::Hover;
+            }
+        }
+
+        void land_slot()
+        {
+            current_cmd = "Land";
+            mode_button->setEnabled(false);
+            takeoff_button->setEnabled(false);
+            arm_button->setEnabled(false);
+            manual_button->setEnabled(false);
+            trajectory_button->setEnabled(false);
+            external_button->setEnabled(false);
+            hover_button->setEnabled(false);
+            land_button->setEnabled(false);
+            return_button->setEnabled(false);
+            std::thread land_thread(&ControllerMainWindow::land_thread_func, this);
+            land_thread.detach();
+        }
+
+        void land_thread_func()
+        {
+            for (size_t i = 0; i < nodes.size(); i++)
+            {
+                data[i]->set_mode(mavros_msgs::State::MODE_PX4_LAND);
+            }
+        }
+
+        void return_slot()
+        {
+            for (size_t i = 0; i < nodes.size(); i++)
+            {
+                data[i]->set_mode(mavros_msgs::State::MODE_PX4_RTL);
+            }
+            current_cmd = "Return";
+            mode_button->setEnabled(false);
+            takeoff_button->setEnabled(false);
+            arm_button->setEnabled(false);
+            manual_button->setEnabled(false);
+            trajectory_button->setEnabled(false);
+            external_button->setEnabled(false);
+            hover_button->setEnabled(false);
+            land_button->setEnabled(false);
+            return_button->setEnabled(false);
+        }
+
+        void change_mode_slot()
+        {
+            current_cmd = "Change Mode";
         }
 
         void exit_slot()
@@ -397,6 +584,142 @@ class ControllerMainWindow : public QWidget
                 }
             }
             win->close();
+        }
+
+        void take_off_info_slot()
+        {
+            operating_info = "Take off and Arming...";
+        }
+
+        void update_info()
+        {
+            bool pre_arm_state = false;
+            bool arm_state = false;
+            QString pre_cmd = "None";
+            string current_mode = "";
+            string pre_mode = "";
+            while (!thread_stop)
+            {
+                // ros state
+                if (ros::master::check())
+                {
+                    info_label_1->setText("[ROS State]  Running");
+                    info_label_1->setStyleSheet("color: green; font-size: 14pt");
+                    info_label_2->setText(("[Vehicle Count]  " + to_string(nodes.size())).c_str());
+                    info_label_2->setStyleSheet("color: green; font-size: 14pt");
+                }
+                else
+                {
+                    info_label_1->setText("[ROS State]  Not Running");
+                    info_label_1->setStyleSheet("color: red; font-size: 14pt");
+                    info_label_2->setText("[Vehicle Count]  0");
+                    info_label_2->setStyleSheet("color: green; font-size: 14pt");
+                }
+
+                // arm state
+                arm_state = data[0]->arm_state;
+                current_mode = data[0]->state_mode;
+                if (arm_state != pre_arm_state || current_mode != pre_mode)
+                {
+                    if (arm_state)
+                    {
+                        state_label_1->setText("[Arm State]  Arm");
+                        state_label_1->setStyleSheet("color: green; font-size: 14pt");
+                        arm_button->setEnabled(false);
+                        disarm_button->setEnabled(true);
+                        if (!data[0]->land_state)
+                        {
+                            mode_button->setEnabled(false);
+                            manual_button->setEnabled(true);
+                            trajectory_button->setEnabled(true);
+                            external_button->setEnabled(true);
+                            hover_button->setEnabled(true);
+                            land_button->setEnabled(true);
+                            return_button->setEnabled(true);
+                        }
+                        if ((current_mode == mavros_msgs::State::MODE_PX4_LAND) && (!data[0]->land_state))
+                        {
+                            operating_info = "Landing...";
+                            mode_button->setEnabled(false);
+                            takeoff_button->setEnabled(false);
+                            arm_button->setEnabled(false);
+                            disarm_button->setEnabled(false);
+                            manual_button->setEnabled(false);
+                            trajectory_button->setEnabled(false);
+                            external_button->setEnabled(false);
+                            hover_button->setEnabled(false);
+                            land_button->setEnabled(false);
+                            return_button->setEnabled(false);
+                        }
+                        if ((current_mode == mavros_msgs::State::MODE_PX4_RTL) && (!data[0]->land_state))
+                        {
+                            operating_info = "Returning...";
+                            mode_button->setEnabled(false);
+                            takeoff_button->setEnabled(false);
+                            arm_button->setEnabled(false);
+                            disarm_button->setEnabled(false);
+                            manual_button->setEnabled(false);
+                            trajectory_button->setEnabled(false);
+                            external_button->setEnabled(false);
+                            hover_button->setEnabled(false);
+                            land_button->setEnabled(false);
+                            return_button->setEnabled(false);
+                        }
+                    }
+                    else
+                    {
+                        state_label_1->setText("[Arm State]  DisArm");
+                        state_label_1->setStyleSheet("color: orange; font-size: 14pt");
+                        arm_button->setEnabled(true);
+                        disarm_button->setEnabled(false);
+                        takeoff_button->setEnabled(true);
+                        manual_button->setEnabled(false);
+                        trajectory_button->setEnabled(false);
+                        external_button->setEnabled(false);
+                        hover_button->setEnabled(false);
+                        land_button->setEnabled(false);
+                        return_button->setEnabled(false);
+                        if (current_mode == mavros_msgs::State::MODE_PX4_LAND || current_mode == mavros_msgs::State::MODE_PX4_RTL)
+                        {
+                            mode_button->setEnabled(true);
+                            operating_info = "";
+                        }
+                    }
+                    pre_arm_state = arm_state;
+                }
+
+                // current cmd
+                if (pre_cmd != current_cmd)
+                {
+                    state_label_2->setText("[Current CMD]  " + current_cmd);
+                    pre_cmd = current_cmd;
+                }
+
+                // current mode
+                if (pre_mode != current_mode)
+                {
+                    info_label_3->setText(("[Current Mode]  " + current_mode).c_str());
+                    pre_mode = current_mode;
+                    if (current_mode == mavros_msgs::State::MODE_PX4_LAND)
+                    {
+                        current_cmd = "Land";
+                        state_label_2->setText("[Current CMD]  " + current_cmd);
+                        pre_cmd = current_cmd;
+                    }
+                    if (current_mode == mavros_msgs::State::MODE_PX4_RTL)
+                    {
+                        current_cmd = "Return";
+                        state_label_2->setText("[Current CMD]  " + current_cmd);
+                        pre_cmd = current_cmd;
+                    }
+                }
+
+                // operating info
+                state_label_3->setText(operating_info);
+
+                //sleep
+                ros::Duration(0.1).sleep();
+            }
         }
 };
 #endif

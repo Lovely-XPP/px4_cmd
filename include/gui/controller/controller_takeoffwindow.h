@@ -19,7 +19,8 @@
 #include <mavros_msgs/State.h>
 
 class ControllerTakeoffWindow : public QWidget
-{
+{   
+    Q_OBJECT
     public:
         QWidget *parent;
         QDialog *win = new QDialog();
@@ -46,7 +47,7 @@ class ControllerTakeoffWindow : public QWidget
                     msg_box->exec();
                     return false;
                 }
-                if((*item)->arm_state && (*item)->z > 0.2)
+                if((*item)->arm_state && !(*item)->land_state)
                 {
                     msg_box->setText("Vehicle has Already Taken Off!");
                     msg_box->exec();
@@ -55,6 +56,9 @@ class ControllerTakeoffWindow : public QWidget
             }
             return true;
         }
+
+    signals:
+        void take_off_info_signal();
 
     private:
         // init data
@@ -121,6 +125,7 @@ class ControllerTakeoffWindow : public QWidget
             {
                 return;
             }
+            emit take_off_info_signal();
             takeoff_height = height.toDouble();
             set_height = true;
             win->close();
@@ -164,5 +169,4 @@ class ControllerTakeoffWindow : public QWidget
             return true;
         }
 };
-
 #endif

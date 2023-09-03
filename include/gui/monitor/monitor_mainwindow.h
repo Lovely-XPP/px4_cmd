@@ -281,7 +281,7 @@ class MonitorMainWindow : public QWidget
                     info_label->setText("[ROS State]  Not Running\n[Vehicle Count]  0");
                     info_label->setStyleSheet("color: red; font-size: 14pt;");
                 }
-                sleep(1);
+                ros::Duration(0.2).sleep();
             }
         }
 

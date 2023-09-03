@@ -1,5 +1,7 @@
 #include <gui/controller/controller_mainwindow.h>
 #include <gui/controller/controller_loadwindow.h>
+#include "gui/controller/moc_controller_modewindow.cpp"
+#include "gui/controller/moc_controller_takeoffwindow.cpp"
 #include <QApplication>
 #include <QMainWindow>
 

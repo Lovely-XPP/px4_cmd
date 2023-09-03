@@ -14,6 +14,7 @@
 #include <mavros_msgs/State.h>
 #include <mavros_msgs/PositionTarget.h>
 #include <mavros_msgs/SetMode.h>
+#include <mavros_msgs/ExtendedState.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <px4_cmd/Command.h>
 
@@ -29,6 +30,7 @@ class vehicle_command
         ros::Subscriber controller_cmd_sub;
         ros::Subscriber current_pos_sub;
         ros::Subscriber current_state_sub;
+        ros::Subscriber current_extend_state_sub;
         ros::Publisher setpoint_raw_local_pub;
         ros::ServiceClient mode_client;
         ros::ServiceClient arming_client;
@@ -48,6 +50,7 @@ class vehicle_command
         void controller_cmd_cb(const px4_cmd::Command::ConstPtr &msg);
         void pos_cb(const geometry_msgs::PoseStamped::ConstPtr &msg);
         void state_cb(const mavros_msgs::State::ConstPtr &msg);
+        void extend_state_cb(const mavros_msgs::ExtendedState::ConstPtr &msg);
         void ros_thread_fun();
 
     public:
@@ -56,6 +59,7 @@ class vehicle_command
         string node_name;
         string vehicle_name;
         bool arm_state = false;
+        bool land_state = true;
         bool thread_stop = false;
         bool ros_stop = false;
         double x;
@@ -92,6 +96,7 @@ void vehicle_command::start(string node)
     controller_cmd_sub = nh.subscribe<px4_cmd::Command>((node_name + "/px4_cmd/control_command").c_str(), 20, &vehicle_command::controller_cmd_cb, this);
     current_pos_sub = nh.subscribe<geometry_msgs::PoseStamped>((topic_header + "local_position/pose").c_str(), 20, &vehicle_command::pos_cb, this);
     current_state_sub = nh.subscribe<mavros_msgs::State>((topic_header + "state").c_str(), 20, &vehicle_command::state_cb, this);
+    current_extend_state_sub = nh.subscribe<mavros_msgs::ExtendedState>((topic_header + "extended_state").c_str(), 20, &vehicle_command::extend_state_cb, this);
     setpoint_raw_local_pub = nh.advertise<mavros_msgs::PositionTarget>((topic_header + "setpoint_raw/local").c_str(), 50);
     mode_client = nh.serviceClient<mavros_msgs::SetMode>((topic_header + "set_mode").c_str());
     arming_client = nh.serviceClient<mavros_msgs::CommandBool>((topic_header + "cmd/arming").c_str());
@@ -108,7 +113,7 @@ string vehicle_command::set_mode(string desire_mode)
     if (desire_mode == "Arm" || desire_mode == "DisArm")
     {
         // 如果飞行高度超过20cm则不允许DisArm
-        if (abs(current_pos.pose.position.z) > 0.2 && desire_mode == "DisArm")
+        if (!land_state && desire_mode == "DisArm")
         {
             return "Vehicle is Flying, you can not DisArm!";
         }
@@ -233,43 +238,54 @@ void vehicle_command::controller_cmd_cb(const px4_cmd::Command::ConstPtr &msg)
             return;
         }
 
+        if (controller_cmd.Mode == px4_cmd::Command::Takeoff)
+        {
+            pos_setpoint.type_mask = 0b100111111000;
+            pos_setpoint.position.x = current_pos.pose.position.x;
+            pos_setpoint.position.y = current_pos.pose.position.y;
+            pos_setpoint.position.z = controller_cmd.desire_cmd[2];
+            pos_setpoint.header.frame_id = 1;
+            pos_setpoint.yaw = 0;
+            return;
+        }
+
         switch (controller_cmd.Move_mode)
         {
-        case px4_cmd::Command::XYZ_POS:
-        {
-            pos_setpoint.type_mask = 0b100111111000;
-            pos_setpoint.position.x = controller_cmd.desire_cmd[0];
-            pos_setpoint.position.y = controller_cmd.desire_cmd[1];
-            pos_setpoint.position.z = controller_cmd.desire_cmd[2];
-            break;
-        }
+            case px4_cmd::Command::XYZ_POS:
+            {
+                pos_setpoint.type_mask = 0b100111111000;
+                pos_setpoint.position.x = controller_cmd.desire_cmd[0];
+                pos_setpoint.position.y = controller_cmd.desire_cmd[1];
+                pos_setpoint.position.z = controller_cmd.desire_cmd[2];
+                break;
+            }
 
-        case px4_cmd::Command::XY_VEL_Z_POS:
-        {
-            pos_setpoint.type_mask = 0b100111100011;
-            pos_setpoint.velocity.x = controller_cmd.desire_cmd[0];
-            pos_setpoint.velocity.y = controller_cmd.desire_cmd[1];
-            pos_setpoint.position.z = controller_cmd.desire_cmd[2];
-            break;
-        }
+            case px4_cmd::Command::XY_VEL_Z_POS:
+            {
+                pos_setpoint.type_mask = 0b100111100011;
+                pos_setpoint.velocity.x = controller_cmd.desire_cmd[0];
+                pos_setpoint.velocity.y = controller_cmd.desire_cmd[1];
+                pos_setpoint.position.z = controller_cmd.desire_cmd[2];
+                break;
+            }
 
-        case px4_cmd::Command::XYZ_VEL:
-        {
-            pos_setpoint.type_mask = 0b100111000111;
-            pos_setpoint.velocity.x = controller_cmd.desire_cmd[0];
-            pos_setpoint.velocity.y = controller_cmd.desire_cmd[1];
-            pos_setpoint.velocity.z = controller_cmd.desire_cmd[2];
-            break;
-        }
+            case px4_cmd::Command::XYZ_VEL:
+            {
+                pos_setpoint.type_mask = 0b100111000111;
+                pos_setpoint.velocity.x = controller_cmd.desire_cmd[0];
+                pos_setpoint.velocity.y = controller_cmd.desire_cmd[1];
+                pos_setpoint.velocity.z = controller_cmd.desire_cmd[2];
+                break;
+            }
 
-        case px4_cmd::Command::XYZ_REL_POS:
-        {
-            pos_setpoint.type_mask = 0b100111111000;
-            pos_setpoint.position.x = controller_cmd.desire_cmd[0];
-            pos_setpoint.position.y = controller_cmd.desire_cmd[1];
-            pos_setpoint.position.z = controller_cmd.desire_cmd[2];
-            break;
-        }
+            case px4_cmd::Command::XYZ_REL_POS:
+            {
+                pos_setpoint.type_mask = 0b100111111000;
+                pos_setpoint.position.x = controller_cmd.desire_cmd[0];
+                pos_setpoint.position.y = controller_cmd.desire_cmd[1];
+                pos_setpoint.position.z = controller_cmd.desire_cmd[2];
+                break;
+            }
         }
 
         pos_setpoint.header.frame_id = 1;
@@ -289,31 +305,29 @@ void vehicle_command::controller_cmd_cb(const px4_cmd::Command::ConstPtr &msg)
             return;
         }
 
-        switch (controller_cmd.Move_mode)
-        {
-        case px4_cmd::Command::FixWing_Takeoff:
+        if (controller_cmd.Mode == px4_cmd::Command::Takeoff)
         {
             pos_setpoint.type_mask = 4096;
-            break;
         }
 
-        case px4_cmd::Command::FixWing_Gliding:
+        if (controller_cmd.Mode == px4_cmd::Command::Gliding)
         {
             pos_setpoint.type_mask = 0b000100100100;
-            break;
         }
 
-        case px4_cmd::Command::FixWing_POS:
+        switch (controller_cmd.Move_mode)
         {
-            pos_setpoint.type_mask = 12288;
-            break;
-        }
+            case px4_cmd::Command::XYZ_POS:
+            {
+                pos_setpoint.type_mask = 12288;
+                break;
+            }
 
-        case px4_cmd::Command::FixWing_REL_POS:
-        {
-            pos_setpoint.type_mask = 12288;
-            break;
-        }
+            case px4_cmd::Command::XYZ_REL_POS:
+            {
+                pos_setpoint.type_mask = 12288;
+                break;
+            }
         }
         pos_setpoint.position.x = controller_cmd.desire_cmd[0];
         pos_setpoint.position.y = controller_cmd.desire_cmd[1];
@@ -328,6 +342,18 @@ void vehicle_command::state_cb(const mavros_msgs::State::ConstPtr &msg)
     current_state = *msg;
     state_mode = msg->mode;
     arm_state = msg->armed;
+}
+
+void vehicle_command::extend_state_cb(const mavros_msgs::ExtendedState::ConstPtr &msg)
+{
+    if (msg->landed_state == mavros_msgs::ExtendedState::LANDED_STATE_ON_GROUND)
+    {
+        land_state = true;
+    }
+    else
+    {
+        land_state = false;
+    }
 }
 
 // 订阅回调返回位置信息

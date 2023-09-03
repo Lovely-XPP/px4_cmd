@@ -203,7 +203,7 @@ int main(int argc, char **argv)
                     continue;
                 }
                 cmd.Move_frame = px4_cmd::Command::ENU;
-                cmd.Move_mode = px4_cmd::Command::FixWing_Takeoff;
+                cmd.Move_mode = px4_cmd::Command::Takeoff;
                 cmd.desire_cmd[0] = desire_cmd_value[0];
                 cmd.desire_cmd[1] = desire_cmd_value[1];
                 cmd.desire_cmd[2] = desire_cmd_value[2];

@@ -109,6 +109,9 @@ struct Command_
 #if defined(_WIN32) && defined(User_define)
   #undef User_define
 #endif
+#if defined(_WIN32) && defined(Gliding)
+  #undef Gliding
+#endif
 #if defined(_WIN32) && defined(ENU)
   #undef ENU
 #endif
@@ -127,18 +130,6 @@ struct Command_
 #if defined(_WIN32) && defined(XYZ_REL_POS)
   #undef XYZ_REL_POS
 #endif
-#if defined(_WIN32) && defined(FixWing_Takeoff)
-  #undef FixWing_Takeoff
-#endif
-#if defined(_WIN32) && defined(FixWing_Gliding)
-  #undef FixWing_Gliding
-#endif
-#if defined(_WIN32) && defined(FixWing_POS)
-  #undef FixWing_POS
-#endif
-#if defined(_WIN32) && defined(FixWing_REL_POS)
-  #undef FixWing_REL_POS
-#endif
 
   enum {
     Multicopter = 0u,
@@ -150,16 +141,13 @@ struct Command_
     Loiter = 3u,
     Trajectory = 4u,
     User_define = 5u,
+    Gliding = 6u,
     ENU = 0u,
     BODY = 1u,
     XYZ_POS = 0u,
     XY_VEL_Z_POS = 1u,
     XYZ_VEL = 2u,
     XYZ_REL_POS = 3u,
-    FixWing_Takeoff = 0u,
-    FixWing_Gliding = 1u,
-    FixWing_POS = 2u,
-    FixWing_REL_POS = 3u,
   };
 
 
@@ -174,12 +162,6 @@ typedef boost::shared_ptr< ::px4_cmd::Command > CommandPtr;
 typedef boost::shared_ptr< ::px4_cmd::Command const> CommandConstPtr;
 
 // constants requiring out of line definition
-
-   
-
-   
-
-   
 
    
 
@@ -291,12 +273,12 @@ struct MD5Sum< ::px4_cmd::Command_<ContainerAllocator> >
 {
   static const char* value()
   {
-    return "68c4d2cd4ef88a307781eb41af081cea";
+    return "211bf51948b6ca1e6ae5e6c13161b0e1";
   }
 
   static const char* value(const ::px4_cmd::Command_<ContainerAllocator>&) { return value(); }
-  static const uint64_t static_value1 = 0x68c4d2cd4ef88a30ULL;
-  static const uint64_t static_value2 = 0x7781eb41af081ceaULL;
+  static const uint64_t static_value1 = 0x211bf51948b6ca1eULL;
+  static const uint64_t static_value2 = 0x6ae5e6c13161b0e1ULL;
 };
 
 template<class ContainerAllocator>
@@ -333,7 +315,7 @@ struct Definition< ::px4_cmd::Command_<ContainerAllocator> >
 "uint8 Loiter = 3\n"
 "uint8 Trajectory = 4\n"
 "uint8 User_define = 5\n"
-"\n"
+"uint8 Gliding = 6       ### 固定翼滑行模式\n"
 "\n"
 "## 移动命令坐标系\n"
 "uint8 Move_frame\n"
@@ -344,16 +326,10 @@ struct Definition< ::px4_cmd::Command_<ContainerAllocator> >
 "## 移动命令下的子模式\n"
 "uint8 Move_mode\n"
 "## 移动命令下的子模式枚举\n"
-"# 旋翼机\n"
 "uint8 XYZ_POS = 0       ### 定点控制(绝对位置)\n"
-"uint8 XY_VEL_Z_POS = 1  ### 定高速度控制\n"
-"uint8 XYZ_VEL = 2       ### 速度控制\n"
+"uint8 XY_VEL_Z_POS = 1  ### 定高速度控制 - 仅旋翼\n"
+"uint8 XYZ_VEL = 2       ### 速度控制 - 仅旋翼\n"
 "uint8 XYZ_REL_POS = 3   ### 定点控制(相对位置)\n"
-"# 固定翼\n"
-"uint8 FixWing_Takeoff = 0   ### 起飞模式\n"
-"uint8 FixWing_Gliding = 1   ### 滑行模式\n"
-"uint8 FixWing_POS = 2       ### 定点模式(绝对位置)\n"
-"uint8 FixWing_REL_POS = 3   ### 定点模式(相对位置)\n"
 "\n"
 "## 指令输入\n"
 "float32[3] desire_cmd    ### [m] [m/s] [m/s^2]\n"
