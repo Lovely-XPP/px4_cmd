@@ -30,10 +30,10 @@
 #include <ros/ros.h>
 
 #include <gui/monitor/monitor_infowindow.h>
-#include <print_utility/printf_utility.h>
 #include <qcustomplot.h>
 #include <vehicle_state.h>
 
+#define PI 3.14159265358979323846
 
 using namespace std;
 
@@ -55,7 +55,7 @@ class MonitorMainWindow : public QWidget
         // settings
         string version = "V1.0.0";
         double update_time = 0.3;
-        vector<string> table_headers_pos = {"Vehicle", "Sensor", "Mode", "x", "y", "z", "vx", "vy", "vz", "roll", "pitch", "yaw"};
+        vector<string> table_headers_pos = {"Vehicle", "Sensor", "Mode", "x", "y", "z", "vx", "vy", "vz", "roll (deg)", "pitch (deg)", "yaw (deg)"};
         vector<string> table_headers_topic = {"Node", "Sensor", "Senor Topic"};
 
         // init vector
@@ -339,9 +339,9 @@ class MonitorMainWindow : public QWidget
             item_7->setText(to_string((*(vec->vx.end() - 1))).c_str());
             item_8->setText(to_string((*(vec->vy.end() - 1))).c_str());
             item_9->setText(to_string((*(vec->vz.end() - 1))).c_str());
-            item_10->setText(to_string((*(vec->roll.end() - 1))).c_str());
-            item_11->setText(to_string((*(vec->pitch.end() - 1))).c_str());
-            item_12->setText(to_string((*(vec->yaw.end() - 1))).c_str());
+            item_10->setText(to_string((*(vec->roll.end() - 1) * 180 / PI)).c_str());
+            item_11->setText(to_string((*(vec->pitch.end() - 1) * 180 / PI)).c_str());
+            item_12->setText(to_string((*(vec->yaw.end() - 1) * 180 / PI)).c_str());
             model_pos->setItem(thread_id, 0, item_1);
             model_pos->setItem(thread_id, 1, item_2);
             model_pos->setItem(thread_id, 2, item_3);
@@ -368,9 +368,9 @@ class MonitorMainWindow : public QWidget
                 item_7->setText(to_string((*(vec->vx.end() - 1))).c_str());
                 item_8->setText(to_string((*(vec->vy.end() - 1))).c_str());
                 item_9->setText(to_string((*(vec->vz.end() - 1))).c_str());
-                item_10->setText(to_string((*(vec->roll.end() - 1))).c_str());
-                item_11->setText(to_string((*(vec->pitch.end() - 1))).c_str());
-                item_12->setText(to_string((*(vec->yaw.end() - 1))).c_str());
+                item_10->setText(to_string((*(vec->roll.end() - 1) * 180 / PI)).c_str());
+                item_11->setText(to_string((*(vec->pitch.end() - 1) * 180 / PI)).c_str());
+                item_12->setText(to_string((*(vec->yaw.end() - 1) * 180 / PI)).c_str());
                 if (thread_id == 0)
                 {
                     signal_button->click();

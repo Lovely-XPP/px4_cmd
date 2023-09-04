@@ -88,7 +88,7 @@ char confirm_trajectory = '0';
 float err_x = 0.0;
 float err_y = 0.0;
 float err_z = 0.0;
-// 当前输入的轨迹航点
+// 当前输入的轨迹航点 {cmd_1, cmd_2, cmd_3, yaw_cmd, sleep_time}
 std::vector<float> trajectory_point = {0, 0, 0, 0, 0};
 // 初始化用轨迹航点列表
 std::vector<vector<float>> init_trajectory_points = {trajectory_point};

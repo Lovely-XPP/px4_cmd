@@ -10,8 +10,6 @@
 #include <vector>
 #include <iostream>
 
-#include <print_utility/printf_utility.h>
-
 class GeneratorInfoWindow : public QWidget
 {
     public:

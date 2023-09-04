@@ -9,8 +9,6 @@
 #include <string>
 #include <vector>
 
-#include <print_utility/printf_utility.h>
-
 class MonitorInfoWindow : public QWidget
 {
     public:

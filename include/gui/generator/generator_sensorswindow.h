@@ -15,7 +15,8 @@
 #include <fstream>
 
 #include <json/json.h>
-#include <print_utility/printf_utility.h>
+
+using namespace std;
 
 // structure
 struct sensor_data

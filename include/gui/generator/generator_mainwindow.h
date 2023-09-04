@@ -1201,7 +1201,6 @@ class GeneratorMainWindow : public QWidget
         {
             update_signal = true;
             int numbers = vehicles.size();
-            QStringList list;
             QStandardItem *item_1;
             QStandardItem *item_2;
             QStandardItem *item_3;
@@ -1210,12 +1209,6 @@ class GeneratorMainWindow : public QWidget
             QStandardItem *item_6;
             QStandardItem *item_7;
             QStandardItem *item_8;
-            model->clear();
-            for (auto item = table_headers.begin(); item != table_headers.end(); item++)
-            {
-                list.append(&(*item->c_str()));
-            }
-            model->setHorizontalHeaderLabels(list);
             for (int i = 0; i < numbers; i++)
             {
                 item_1 = new QStandardItem();
@@ -1245,9 +1238,6 @@ class GeneratorMainWindow : public QWidget
                 model->setItem(i, 6, item_7);
                 model->setItem(i, 7, item_8);
             }
-            table->setModel(model);
-            table->horizontalHeader()->setStretchLastSection(true);
-            table->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
             update_signal = false;
         }
 

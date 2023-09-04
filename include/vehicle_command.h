@@ -31,6 +31,7 @@ class vehicle_command
         ros::Subscriber current_pos_sub;
         ros::Subscriber current_state_sub;
         ros::Subscriber current_extend_state_sub;
+        ros::Subscriber ext_cmd_sub;
         ros::Publisher setpoint_raw_local_pub;
         ros::ServiceClient mode_client;
         ros::ServiceClient arming_client;
@@ -47,9 +48,11 @@ class vehicle_command
         double init_R;
         double init_P;
         double init_Y;
+        bool hover = false;
         void controller_cmd_cb(const px4_cmd::Command::ConstPtr &msg);
         void pos_cb(const geometry_msgs::PoseStamped::ConstPtr &msg);
         void state_cb(const mavros_msgs::State::ConstPtr &msg);
+        void ext_cmd_cb(const px4_cmd::Command::ConstPtr &msg);
         void extend_state_cb(const mavros_msgs::ExtendedState::ConstPtr &msg);
         void ros_thread_fun();
 
@@ -58,8 +61,10 @@ class vehicle_command
         string state_mode;
         string node_name;
         string vehicle_name;
+        px4_cmd::Command ext_cmd;
         bool arm_state = false;
         bool land_state = true;
+        bool ext_cmd_state = false;
         bool thread_stop = false;
         bool ros_stop = false;
         double x;
@@ -96,6 +101,7 @@ void vehicle_command::start(string node)
     controller_cmd_sub = nh.subscribe<px4_cmd::Command>((node_name + "/px4_cmd/control_command").c_str(), 20, &vehicle_command::controller_cmd_cb, this);
     current_pos_sub = nh.subscribe<geometry_msgs::PoseStamped>((topic_header + "local_position/pose").c_str(), 20, &vehicle_command::pos_cb, this);
     current_state_sub = nh.subscribe<mavros_msgs::State>((topic_header + "state").c_str(), 20, &vehicle_command::state_cb, this);
+    ext_cmd_sub = nh.subscribe<px4_cmd::Command>((node_name + "/px4_cmd/external_command").c_str(), 50, &vehicle_command::ext_cmd_cb, this);
     current_extend_state_sub = nh.subscribe<mavros_msgs::ExtendedState>((topic_header + "extended_state").c_str(), 20, &vehicle_command::extend_state_cb, this);
     setpoint_raw_local_pub = nh.advertise<mavros_msgs::PositionTarget>((topic_header + "setpoint_raw/local").c_str(), 50);
     mode_client = nh.serviceClient<mavros_msgs::SetMode>((topic_header + "set_mode").c_str());
@@ -193,6 +199,14 @@ void vehicle_command::ros_thread_fun()
 {
     while (ros::ok() && !thread_stop)
     {
+        if (ext_cmd_sub.getNumPublishers() > 0)
+        {
+            ext_cmd_state = true;
+        }
+        else
+        {
+            ext_cmd_state = false;
+        }
         setpoint_raw_local_pub.publish(pos_setpoint);
         ros::Duration(update_time).sleep();
         ros::spinOnce();
@@ -203,6 +217,7 @@ void vehicle_command::ros_thread_fun()
 void vehicle_command::controller_cmd_cb(const px4_cmd::Command::ConstPtr &msg)
 {
     controller_cmd = *msg;
+    vector<double> hover_pos = {0, 0, 0};
 
     // 设定坐标系
     switch (controller_cmd.Move_frame)
@@ -229,20 +244,28 @@ void vehicle_command::controller_cmd_cb(const px4_cmd::Command::ConstPtr &msg)
     {
         if (controller_cmd.Mode == px4_cmd::Command::Hover)
         {
+            if (!hover)
+            {
+                hover_pos[0] = current_pos.pose.position.x;
+                hover_pos[1] = current_pos.pose.position.y;
+                hover_pos[2] = current_pos.pose.position.z;
+                hover = true;
+            }
             pos_setpoint.type_mask = 0b100111111000;
-            pos_setpoint.position.x = current_pos.pose.position.x;
-            pos_setpoint.position.y = current_pos.pose.position.y;
-            pos_setpoint.position.z = current_pos.pose.position.z;
+            pos_setpoint.position.x = hover_pos[0];
+            pos_setpoint.position.y = hover_pos[1];
+            pos_setpoint.position.z = hover_pos[2];
             pos_setpoint.header.frame_id = 1;
-            pos_setpoint.yaw = controller_cmd.yaw_cmd;
+            pos_setpoint.yaw = 0;
             return;
         }
+        hover = false;
 
         if (controller_cmd.Mode == px4_cmd::Command::Takeoff)
         {
             pos_setpoint.type_mask = 0b100111111000;
-            pos_setpoint.position.x = current_pos.pose.position.x;
-            pos_setpoint.position.y = current_pos.pose.position.y;
+            pos_setpoint.position.x = 0;
+            pos_setpoint.position.y = 0;
             pos_setpoint.position.z = controller_cmd.desire_cmd[2];
             pos_setpoint.header.frame_id = 1;
             pos_setpoint.yaw = 0;
@@ -295,19 +318,33 @@ void vehicle_command::controller_cmd_cb(const px4_cmd::Command::ConstPtr &msg)
     // 固定翼信息
     if (controller_cmd.Vehicle == px4_cmd::Command::FixWing)
     {
-        if (controller_cmd.Mode == px4_cmd::Command::Loiter)
+        if (controller_cmd.Mode == px4_cmd::Command::Hover)
         {
+            if (!hover)
+            {
+                hover_pos[0] = current_pos.pose.position.x;
+                hover_pos[1] = current_pos.pose.position.y;
+                hover_pos[2] = current_pos.pose.position.z;
+                hover = true;
+            }
             pos_setpoint.type_mask = 12288;
-            pos_setpoint.position.x = current_pos.pose.position.x;
-            pos_setpoint.position.y = current_pos.pose.position.y;
-            pos_setpoint.position.z = current_pos.pose.position.z;
+            pos_setpoint.position.x = hover_pos[0];
+            pos_setpoint.position.y = hover_pos[1];
+            pos_setpoint.position.z = hover_pos[2];
             pos_setpoint.header.frame_id = 1;
             return;
         }
+        hover = false;
 
         if (controller_cmd.Mode == px4_cmd::Command::Takeoff)
         {
             pos_setpoint.type_mask = 4096;
+            pos_setpoint.position.x = 0;
+            pos_setpoint.position.y = 0;
+            pos_setpoint.position.z = controller_cmd.desire_cmd[2];
+            pos_setpoint.header.frame_id = 1;
+            pos_setpoint.yaw = 0;
+            return;
         }
 
         if (controller_cmd.Mode == px4_cmd::Command::Gliding)
@@ -365,4 +402,8 @@ void vehicle_command::pos_cb(const geometry_msgs::PoseStamped::ConstPtr &msg)
     z = msg->pose.position.z;
 }
 
+void vehicle_command::ext_cmd_cb(const px4_cmd::Command::ConstPtr &msg)
+{
+    ext_cmd = *msg;
+}
 #endif
