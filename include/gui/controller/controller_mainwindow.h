@@ -350,7 +350,6 @@ class ControllerMainWindow : public QWidget
             QObject::connect(land_button, &QPushButton::clicked, this, &ControllerMainWindow::land_slot);
             QObject::connect(return_button, &QPushButton::clicked, this, &ControllerMainWindow::return_slot);
             QObject::connect(manual_button, &QPushButton::clicked, this, &ControllerMainWindow::manual_cmd_slot);
-            QObject::connect(external_button, &QPushButton::clicked, this, &ControllerMainWindow::ext_cmd_slot);
             QObject::connect(signal_button_1, &QPushButton::clicked, this, &ControllerMainWindow::ext_cmd_err_msg_slot);
             QObject::connect(mode_win, &ControllerModeWindow::change_mode_signal, this, &ControllerMainWindow::change_mode_slot);
             QObject::connect(takeoff_win, &ControllerTakeoffWindow::take_off_info_signal, this, &ControllerMainWindow::take_off_info_slot);
