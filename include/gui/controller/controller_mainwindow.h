@@ -993,7 +993,7 @@ class ControllerMainWindow : public QWidget
                 {
                     // update headers
                     // update cmd mode info
-                    if (current_mode == "Take Off")
+                    if (current_cmd == "Take Off")
                     {
                         cmd_mode = "Take Off";
                         table_headers_ext_cmd[3] = "CMD 1  [x]";
@@ -1045,9 +1045,12 @@ class ControllerMainWindow : public QWidget
                             frame = "Body";
                             break;
                     }
-                    item_2->setText("  " + cmd_mode + "  ");
+                    // set frame info
                     item_3->setText("  " + frame + "  ");
                 }
+                
+                // set cmd mode info
+                item_2->setText("  " + cmd_mode + "  ");
 
                 if (current_mode == mavros_msgs::State::MODE_PX4_OFFBOARD)
                 {

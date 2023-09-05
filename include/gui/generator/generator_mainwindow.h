@@ -47,7 +47,7 @@ class GeneratorMainWindow : public QWidget
 
     private:
         // settings
-        string version = "V1.1.3";
+        string version = "V1.1.4";
         int local_port = 34580;
         int remote_port = 14540;
         int sitl_port = 24560;
@@ -643,6 +643,10 @@ class GeneratorMainWindow : public QWidget
             arg_7->SetAttribute("name", "topic_type");
             arg_7->SetAttribute("default", topics_list->currentText().toStdString().c_str());
             root->InsertEndChild(arg_7);
+            XMLElement *arg_8 = doc.NewElement("arg");
+            arg_8->SetAttribute("name", "interactive");
+            arg_8->SetAttribute("default", "true");
+            root->InsertEndChild(arg_8);
 
             // gazebo simulation config
             XMLComment *gazebo_comment = doc.NewComment(" gazebo simulation ");
@@ -710,10 +714,11 @@ class GeneratorMainWindow : public QWidget
             XMLElement *agent_arg_P_param;
             XMLElement *agent_arg_Y_param;
             XMLComment *px4_comment;
-            XMLElement *px4;
+            XMLElement *px4_env_1;
+            XMLElement *px4_env_2;
             XMLElement *px4_arg_1;
             XMLElement *px4_arg_2;
-            XMLElement *px4_arg_3;
+            XMLElement *px4_node;
             XMLComment *spawn_model_comment;
             XMLElement *spawn_model;
             XMLElement *mavros;
@@ -882,21 +887,31 @@ class GeneratorMainWindow : public QWidget
                 // PX4 config
                 px4_comment = doc.NewComment(" px4 ");
                 agent->InsertEndChild(px4_comment);
-                px4 = doc.NewElement("include");
-                px4->SetAttribute("file", "$(find px4)/launch/px4.launch");
-                agent->InsertEndChild(px4);
+                px4_env_1 = doc.NewElement("env");
+                px4_env_1->SetAttribute("name", "PX4_SIM_MODEL");
+                px4_env_1->SetAttribute("value", "$(arg vehicle)");
+                agent->InsertEndChild(px4_env_1);
+                px4_env_2 = doc.NewElement("env");
+                px4_env_2->SetAttribute("name", "PX4_ESTIMATOR");
+                px4_env_2->SetAttribute("value", "$(arg est)");
+                agent->InsertEndChild(px4_env_2);
                 px4_arg_1 = doc.NewElement("arg");
-                px4_arg_1->SetAttribute("name", "est");
-                px4_arg_1->SetAttribute("value", "$(arg est)");
-                px4->InsertEndChild(px4_arg_1);
+                px4_arg_1->SetAttribute("unless", "$(arg interactive)");
+                px4_arg_1->SetAttribute("name", "px4_command_arg1");
+                px4_arg_1->SetAttribute("value", "-d");
+                agent->InsertEndChild(px4_arg_1);
                 px4_arg_2 = doc.NewElement("arg");
-                px4_arg_2->SetAttribute("name", "vehicle");
-                px4_arg_2->SetAttribute("value", vehicle.c_str());
-                px4->InsertEndChild(px4_arg_2);
-                px4_arg_3 = doc.NewElement("arg");
-                px4_arg_3->SetAttribute("name", "ID");
-                px4_arg_3->SetAttribute("value", "$(arg ID)");
-                px4->InsertEndChild(px4_arg_3);
+                px4_arg_2->SetAttribute("if", "$(arg interactive)");
+                px4_arg_2->SetAttribute("name", "px4_command_arg1");
+                px4_arg_2->SetAttribute("value", "");
+                agent->InsertEndChild(px4_arg_2);
+                px4_node = doc.NewElement("node");
+                px4_node->SetAttribute("name", "sitl_$(arg ID)");
+                px4_node->SetAttribute("pkg", "px4");
+                px4_node->SetAttribute("type", "px4");
+                px4_node->SetAttribute("output", "screen");
+                px4_node->SetAttribute("args", ("$(find px4)/build/px4_sitl_default/etc -s etc/init.d-posix/rcS -i $(arg ID) -w " + topic_name + " $(arg px4_command_arg1)").c_str());
+                agent->InsertEndChild(px4_node);
                 // spawn model
                 spawn_model_comment = doc.NewComment(" spawn model ");
                 agent->InsertEndChild(spawn_model_comment);

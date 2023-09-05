@@ -328,9 +328,10 @@ class MonitorMainWindow : public QWidget
             item_1->setText(vec->vehicle_name.c_str());
             item_2->setText(vec->sensor_name.c_str());
             mode = vec->state_mode;
-            if (mode.find_first_not_of("AUTO.") != string::npos)
+            // Remove "AUTO."
+            if (mode.find_first_of(".") != string::npos)
             {
-                mode.erase(0, mode.find_first_not_of("AUTO."));
+                mode.erase(0, 5);
             }
             item_3->setText(mode.c_str());
             item_4->setText(to_string((*(vec->x.end() - 1))).c_str());
@@ -357,9 +358,10 @@ class MonitorMainWindow : public QWidget
             while (ros::ok() && !thread_stop)
             {
                 mode = vec->state_mode;
-                if (mode.find_first_not_of("AUTO.") != string::npos)
+                // Remove "AUTO."
+                if (mode.find_first_of(".") != string::npos)
                 {
-                    mode.erase(0, mode.find_first_not_of("AUTO."));
+                    mode.erase(0, 5);
                 }
                 item_3->setText(mode.c_str());
                 item_4->setText(to_string((*(vec->x.end() - 1))).c_str());
