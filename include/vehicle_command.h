@@ -36,7 +36,6 @@ class vehicle_command
         ros::ServiceClient mode_client;
         ros::ServiceClient arming_client;
         tf::Quaternion quat;
-        px4_cmd::Command controller_cmd;
         mavros_msgs::State current_state;
         mavros_msgs::PositionTarget pos_setpoint;
         mavros_msgs::SetMode mode_cmd;
@@ -61,6 +60,7 @@ class vehicle_command
         string state_mode;
         string node_name;
         string vehicle_name;
+        px4_cmd::Command controller_cmd;
         px4_cmd::Command ext_cmd;
         bool arm_state = false;
         bool land_state = true;

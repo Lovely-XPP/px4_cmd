@@ -45,6 +45,7 @@ class ControllerMainWindow : public QWidget
         {
             qRegisterMetaType<QList<QPersistentModelIndex>>("QList<QPersistentModelIndex>");
             qRegisterMetaType<QList<QAbstractItemModel::LayoutChangeHint>>("QList<QAbstractItemModel::LayoutChangeHint>");
+            qRegisterMetaType<QList<Qt::Orientation>>("QList<Qt::Orientation>");
             nodes = nodes_input;
             setup();
         }
@@ -53,17 +54,12 @@ class ControllerMainWindow : public QWidget
         // settings
         string version = "V1.0.0";
         QString current_cmd = "None";
-        QString cmd_mode = "Loiter";
         double update_time = 0.3;
-        QStringList table_headers_ext_cmd = {"Node", "CMD Mode", "Frame", "CMD 1", "CMD 2", "CMD 3", "CMD Yaw", "External CMD Topic", "External State"};
-        QStringList frames = {"ENU (Global Frame)", "Body (Relative Frame)"};
-        QStringList modes = {"[Postion] x - y - z", "[Relative Position] x - y - z", "[Velocity] vx - vy - vz", "[Velocity with Altitude] vx - vy - z"};
-        vector<int> frames_msg = {px4_cmd::Command::ENU, px4_cmd::Command::BODY};
-        vector<int> modes_msg = {px4_cmd::Command::XYZ_POS, px4_cmd::Command::XYZ_REL_POS, px4_cmd::Command::XYZ_VEL, px4_cmd::Command::XY_VEL_Z_POS};
 
         // init vectors
         QVector<vehicle_command *> data;
         QVector<std::thread *> threads;
+        QVector<std::thread *> ext_cmd_threads;
         QVector<px4_cmd::Command> cmds;
         QVector<px4_cmd::Command> ext_cmds;
         QVector<ros::Publisher> pubs;
@@ -77,6 +73,7 @@ class ControllerMainWindow : public QWidget
         //Widgets
         QMessageBox *msg_box;
         QPushButton *mode_button;
+        QPushButton *signal_button_1;
         QPushButton *arm_button;
         QPushButton *takeoff_button;
         QPushButton *disarm_button;
@@ -103,7 +100,7 @@ class ControllerMainWindow : public QWidget
             // set window
             QIcon *icon = new QIcon(QApplication::style()->standardIcon(QStyle::SP_FileIcon));
             win->setWindowIcon(*icon);
-            win->setFixedSize(1400, 750);
+            win->setFixedSize(1280, 750);
             win->setWindowTitle(("PX4 Cmd Simulation Controller [Version: " + version + "]").c_str());
             win->setStyleSheet("background-color: rgb(255,250,250)");
 
@@ -120,15 +117,7 @@ class ControllerMainWindow : public QWidget
             char **argv;
             ros::init(argc, argv, "px4_cmd/px4_controller");
             ros::NodeHandle nh;
-            px4_cmd::Command cmd;
             for (size_t i = 0; i < nodes.size(); i++)
-            {
-                ros::Publisher pub = nh.advertise<px4_cmd::Command>((nodes[i] + "/px4_cmd/control_command").toStdString().c_str(), 50);
-                pubs.push_back(pub);
-                cmds.push_back(cmd);
-                ext_cmds.push_back(cmd);
-            }
-            for (size_t i = 0; i < data.size(); i++)
             {
                 px4_cmd::Command cmd;
                 if (data[i]->vehicle_name == "plane")
@@ -139,7 +128,13 @@ class ControllerMainWindow : public QWidget
                 {
                     cmd.Vehicle = px4_cmd::Command::Multicopter;
                 }
+                cmd.desire_cmd[0] = data[i]->init_x;
+                cmd.desire_cmd[1] = data[i]->init_y;
+                cmd.desire_cmd[2] = data[i]->init_z;
+                ros::Publisher pub = nh.advertise<px4_cmd::Command>((nodes[i] + "/px4_cmd/control_command").toStdString().c_str(), 50);
+                pubs.push_back(pub);
                 cmds.push_back(cmd);
+                ext_cmds.push_back(cmd);
             }
             std::thread ros_thread(&ControllerMainWindow::ros_thread_func, this);
             ros_thread.detach();
@@ -212,6 +207,8 @@ class ControllerMainWindow : public QWidget
             land_button = new QPushButton("Land", win);
             return_button = new QPushButton("Return", win);
             generate_button = new QPushButton("Generate Template External CMD Code");
+            signal_button_1 = new QPushButton("", win);
+            signal_button_1->setVisible(false);
             manual_button->setMinimumHeight(60);
             trajectory_button->setMinimumHeight(60);
             external_button->setMinimumHeight(60);
@@ -233,7 +230,18 @@ class ControllerMainWindow : public QWidget
             return_button->setStyleSheet("background-color: rgb(255,245,129); font-size: 16pt");
             generate_button->setStyleSheet("background-color: rgb(233,181,177); font-size: 16pt");
 
-            // add buttom table
+            // add table
+            QStringList table_headers_ext_cmd = {
+                "Node",
+                "CMD Mode",
+                "Frame",
+                "CMD 1",
+                "CMD 2",
+                "CMD 3",
+                "CMD 4  [Yaw]",
+                "External State",
+                "External CMD Topic"
+            };
             info_model = new QStandardItemModel(nodes.size(), table_headers_ext_cmd.size(), win);
             info_model->setHorizontalHeaderLabels(table_headers_ext_cmd);
             for (int i = 0; i < nodes.size(); i++)
@@ -247,8 +255,8 @@ class ControllerMainWindow : public QWidget
                 QStandardItem *item_7 = new QStandardItem();
                 QStandardItem *item_8 = new QStandardItem();
                 QStandardItem *item_9 = new QStandardItem();
-                item_1->setText(nodes[i]);
-                item_8->setText((nodes[i] + "/px4_cmd/external_command").toStdString().c_str());
+                item_1->setText("  " + nodes[i] + "  ");
+                item_9->setText((nodes[i] + "/px4_cmd/external_command").toStdString().c_str());
                 item_1->setEditable(false);
                 item_2->setEditable(false);
                 item_3->setEditable(false);
@@ -279,7 +287,7 @@ class ControllerMainWindow : public QWidget
             }
             info_table->setModel(info_model);
             info_table->horizontalHeader()->setStretchLastSection(true);
-            info_table->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
+            info_table->horizontalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
             info_table->setStyleSheet("background-color: rgb(236,245,225)");
 
             // set layout
@@ -327,7 +335,7 @@ class ControllerMainWindow : public QWidget
             hbox_buttom->addLayout(vbox_buttom_1, 1);
             vbox_buttom_2->addWidget(info_table);
             vbox_buttom_2->addWidget(generate_button);
-            hbox_buttom->addLayout(vbox_buttom_2, 4);
+            hbox_buttom->addLayout(vbox_buttom_2, 5);
             vbox->addLayout(hbox_buttom);
             win->setLayout(vbox);
 
@@ -341,6 +349,8 @@ class ControllerMainWindow : public QWidget
             QObject::connect(hover_button, &QPushButton::clicked, this, &ControllerMainWindow::hover_slot);
             QObject::connect(land_button, &QPushButton::clicked, this, &ControllerMainWindow::land_slot);
             QObject::connect(return_button, &QPushButton::clicked, this, &ControllerMainWindow::return_slot);
+            QObject::connect(manual_button, &QPushButton::clicked, this, &ControllerMainWindow::manual_cmd_slot);
+            QObject::connect(signal_button_1, &QPushButton::clicked, this, &ControllerMainWindow::ext_cmd_err_msg_slot);
             QObject::connect(mode_win, &ControllerModeWindow::change_mode_signal, this, &ControllerMainWindow::change_mode_slot);
             QObject::connect(takeoff_win, &ControllerTakeoffWindow::take_off_info_signal, this, &ControllerMainWindow::take_off_info_slot);
 
@@ -471,8 +481,8 @@ class ControllerMainWindow : public QWidget
             {
                 cmds[i].Mode = px4_cmd::Command::Takeoff;
                 cmds[i].Move_frame = px4_cmd::Command::ENU;
-                cmds[i].desire_cmd[0] = 0;
-                cmds[i].desire_cmd[1] = 0;
+                cmds[i].desire_cmd[0] = data[i]->init_x;
+                cmds[i].desire_cmd[1] = data[i]->init_y;
                 cmds[i].desire_cmd[2] = takeoff_win->takeoff_height;
                 cmds[i].yaw_cmd = 0;
                 err = data[i]->set_mode("Arm");
@@ -497,7 +507,6 @@ class ControllerMainWindow : public QWidget
             }
             operating_info = "";
             current_cmd = "Take Off";
-            cmd_mode = "Take Off";
             mode_button->setEnabled(true);
             takeoff_button->setEnabled(false);
             arm_button->setEnabled(false);
@@ -510,10 +519,56 @@ class ControllerMainWindow : public QWidget
             return_button->setEnabled(true);
         }
 
+        void ext_cmd_slot()
+        {
+            if (!ext_cmd_state)
+            {
+                msg_box = new QMessageBox(win);
+                msg_box->setIcon(QMessageBox::Icon::Critical);
+                msg_box->setText("Error");
+                msg_box->setWindowTitle("Error");
+                msg_box->setText("Not Detect External Command Topic, Please Check.");
+                msg_box->exec();
+                return;
+            }
+            current_cmd = "External Command";
+            for (size_t i = 0; i < nodes.size(); i++)
+            {
+                std::thread ext_cmd_thread(&ControllerMainWindow::ext_cmd_thread_func, this, i);
+                ext_cmd_threads.push_back(&ext_cmd_thread);
+            }
+            for (size_t i = 0; i < nodes.size(); i++)
+            {
+                ext_cmd_threads[i]->detach();
+            }
+        }
+
+        void ext_cmd_thread_func(int node_id)
+        {
+            while (ext_cmd_state && (current_cmd == "External Command"))
+            {
+                cmds[node_id] = data[node_id]->ext_cmd;
+                if (cmds[node_id].Move_mode == px4_cmd::Command::XYZ_POS)
+                {
+                    cmds[node_id].desire_cmd[0] = cmds[node_id].desire_cmd[0] - data[node_id]->init_x;
+                    cmds[node_id].desire_cmd[1] = cmds[node_id].desire_cmd[1] - data[node_id]->init_y;
+                    cmds[node_id].desire_cmd[2] = cmds[node_id].desire_cmd[2] - data[node_id]->init_z;
+                }
+                if (cmds[node_id].Move_mode == px4_cmd::Command::XY_VEL_Z_POS)
+                {
+                    cmds[node_id].desire_cmd[2] = cmds[node_id].desire_cmd[2] - data[node_id]->init_z;
+                }
+                cmds[node_id].yaw_cmd = manual_win->cmd_values[0][node_id][3];
+            }
+            if (!ext_cmd_state)
+            {
+                cmds[node_id].Mode = px4_cmd::Command::Hover;
+            }
+        }
+
         void hover_slot()
         {
             current_cmd = "Hover";
-            cmd_mode = "Hover";
             std::thread hover_thread(&ControllerMainWindow::hover_thread_func, this);
             hover_thread.detach();
         }
@@ -593,6 +648,14 @@ class ControllerMainWindow : public QWidget
                     }
                     tmp++;
                 }
+                for (auto item = ext_cmd_threads.begin(); item != ext_cmd_threads.end(); item++)
+                {
+                    if ((*item)->joinable())
+                    {
+                        continue;
+                    }
+                    tmp++;
+                }
                 for (auto item = data.begin(); item != data.end(); item++)
                 {
                     if ((*item)->ros_stop)
@@ -622,7 +685,8 @@ class ControllerMainWindow : public QWidget
             {
                 current_cmd = "Manual CMD";
                 cmd_values = manual_win->cmd_values;
-                update_table_headers(manual_win->set_mode);
+                std::thread manual_cmd_thread(&ControllerMainWindow::manual_cmd_thread_func, this);
+                manual_cmd_thread.detach();
             }
         }
 
@@ -636,14 +700,35 @@ class ControllerMainWindow : public QWidget
                 cmds[i].desire_cmd[0] = manual_win->cmd_values[0][i][0];
                 cmds[i].desire_cmd[1] = manual_win->cmd_values[0][i][1];
                 cmds[i].desire_cmd[2] = manual_win->cmd_values[0][i][2];
+                if (cmds[i].Move_mode == px4_cmd::Command::XYZ_POS)
+                {
+                    cmds[i].desire_cmd[0] = cmds[i].desire_cmd[0] - data[i]->init_x;
+                    cmds[i].desire_cmd[1] = cmds[i].desire_cmd[1] - data[i]->init_y;
+                    cmds[i].desire_cmd[2] = cmds[i].desire_cmd[2] - data[i]->init_z;
+                }
+                if (cmds[i].Move_mode == px4_cmd::Command::XY_VEL_Z_POS)
+                {
+                    cmds[i].desire_cmd[2] = cmds[i].desire_cmd[2] - data[i]->init_z;
+                }
                 cmds[i].yaw_cmd = manual_win->cmd_values[0][i][3];
             }
+        }
+
+        void ext_cmd_err_msg_slot()
+        {
+            msg_box = new QMessageBox(win);
+            msg_box->setIcon(QMessageBox::Icon::Critical);
+            msg_box->setText("Error");
+            msg_box->setWindowTitle("Error");
+            msg_box->setText("Disconnection to External Command Topic, Please Check. Automatically Change to Hover Mode.");
+            msg_box->exec();
         }
 
         void update_info()
         {
             bool pre_arm_state = false;
             bool arm_state = false;
+            bool ext_cmd_state_single = false;
             QString pre_cmd = "None";
             string current_mode = "";
             string pre_mode = "";
@@ -699,7 +784,6 @@ class ControllerMainWindow : public QWidget
                             hover_button->setEnabled(false);
                             land_button->setEnabled(false);
                             return_button->setEnabled(false);
-                            update_table_headers();
                         }
                         if ((current_mode == mavros_msgs::State::MODE_PX4_RTL) && (!data[0]->land_state))
                         {
@@ -714,7 +798,6 @@ class ControllerMainWindow : public QWidget
                             hover_button->setEnabled(false);
                             land_button->setEnabled(false);
                             return_button->setEnabled(false);
-                            update_table_headers();
                         }
                     }
                     else
@@ -745,6 +828,11 @@ class ControllerMainWindow : public QWidget
                     state_label_2->setText("[Current CMD]  " + current_cmd);
                     pre_cmd = current_cmd;
                 }
+                if (current_cmd == "External Command" && !ext_cmd_state)
+                {
+                    current_cmd = "Hover";
+                    signal_button_1->click();
+                }
 
                 // current mode
                 if (pre_mode != current_mode)
@@ -754,14 +842,12 @@ class ControllerMainWindow : public QWidget
                     if (current_mode == mavros_msgs::State::MODE_PX4_LAND)
                     {
                         current_cmd = "Land";
-                        cmd_mode = "Land";
                         state_label_2->setText("[Current CMD]  " + current_cmd);
                         pre_cmd = current_cmd;
                     }
                     if (current_mode == mavros_msgs::State::MODE_PX4_RTL)
                     {
                         current_cmd = "Return";
-                        cmd_mode = "Return";
                         state_label_2->setText("[Current CMD]  " + current_cmd);
                         pre_cmd = current_cmd;
                     }
@@ -770,6 +856,20 @@ class ControllerMainWindow : public QWidget
                 // operating info
                 state_label_3->setText(operating_info);
 
+                // ext_cmd_state
+                ext_cmd_state_single = false;
+                for (size_t i = 0; i < nodes.size(); i++)
+                {
+                    if (data[i]->ext_cmd_state)
+                    {
+                        ext_cmd_state_single = true;
+                        continue;
+                    }
+                    ext_cmd_state_single = false;
+                    break;
+                }
+                ext_cmd_state = ext_cmd_state_single;
+
                 //sleep
                 ros::Duration(0.1).sleep();
             }
@@ -777,35 +877,47 @@ class ControllerMainWindow : public QWidget
 
         void update_table_info(int node_id)
         {
-            bool pre_ext_cmd_state = false;
+            bool ext_cmd_state_single = false;
+            bool pre_ext_cmd_state_single = false;
+            QString cmd_mode = "Loiter";
             QString pre_cmd = "";
             QString frame = "";
             string current_mode = "";
             string pre_mode = "";
-            QString null_str = "----";
+            QString null_str = "  -----------  ";
+            QStringList table_headers_ext_cmd = {
+                "Node",
+                "CMD Mode",
+                "Frame",
+                "CMD 1",
+                "CMD 2",
+                "CMD 3",
+                "CMD 4  [Yaw]",
+                "External State",
+                "External CMD Topic"
+            };
             QStandardItem *item_2 = new QStandardItem();
             QStandardItem *item_3 = new QStandardItem();
             QStandardItem *item_4 = new QStandardItem();
             QStandardItem *item_5 = new QStandardItem();
             QStandardItem *item_6 = new QStandardItem();
             QStandardItem *item_7 = new QStandardItem();
-            QStandardItem *item_9 = new QStandardItem();
+            QStandardItem *item_8 = new QStandardItem();
             item_2->setEditable(false);
             item_3->setEditable(false);
             item_4->setEditable(false);
             item_5->setEditable(false);
             item_6->setEditable(false);
             item_7->setEditable(false);
-            item_9->setEditable(false);
+            item_8->setEditable(false);
             item_2->setTextAlignment(Qt::AlignCenter);
             item_3->setTextAlignment(Qt::AlignCenter);
             item_4->setTextAlignment(Qt::AlignCenter);
             item_5->setTextAlignment(Qt::AlignCenter);
             item_6->setTextAlignment(Qt::AlignCenter);
             item_7->setTextAlignment(Qt::AlignCenter);
-            item_9->setTextAlignment(Qt::AlignCenter);
-            item_9->setText("Deactive");
-            info_model->setData(info_model->index(node_id, 8), QBrush(Qt::red), Qt::TextColorRole);
+            item_8->setTextAlignment(Qt::AlignCenter);
+            item_8->setText("Deactive");
             while (!thread_stop)
             {
                 // current mode
@@ -821,8 +933,10 @@ class ControllerMainWindow : public QWidget
                         item_5->setText(null_str);
                         item_6->setText(null_str);
                         item_7->setText(null_str);
+                        table_headers_ext_cmd[3] = "CMD 1";
+                        table_headers_ext_cmd[4] = "CMD 2";
+                        table_headers_ext_cmd[5] = "CMD 3";
                     }
-                    
                     if (current_mode == mavros_msgs::State::MODE_PX4_LOITER)
                     {
                         cmd_mode = "Loiter";
@@ -851,47 +965,57 @@ class ControllerMainWindow : public QWidget
                     {
                         cmd_mode = "Stabilized";
                     }
-                    item_2->setText(cmd_mode);
                 }
 
                 // ext_cmd_publish_info
-                ext_cmd_state = data[0]->ext_cmd_state;
-                if (pre_ext_cmd_state != ext_cmd_state)
+                ext_cmd_state_single = data[0]->ext_cmd_state;
+                if (pre_ext_cmd_state_single != ext_cmd_state_single)
                 {
                     if (ext_cmd_state)
                     {
-                        item_9->setText("Active");
-                        info_model->setData(info_model->index(node_id, 8), QBrush(Qt::green), Qt::TextColorRole);
+                        item_8->setText("  Active  ");
                     }
                     else
                     {
-                        item_9->setText("Deactive");
-                        info_model->setData(info_model->index(node_id, 8), QBrush(Qt::red), Qt::TextColorRole);
+                        item_8->setText("  Deactive  ");
                     }
                 }
 
                 // table info
                 if (current_mode == mavros_msgs::State::MODE_PX4_OFFBOARD)
                 {
+                    // update headers
                     switch (cmds[0].Move_mode)
                     {
                         case px4_cmd::Command::XYZ_POS:
                             cmd_mode = "Postion";
+                            table_headers_ext_cmd[3] = "CMD 1  [x]";
+                            table_headers_ext_cmd[4] = "CMD 2  [y]";
+                            table_headers_ext_cmd[5] = "CMD 3  [z]";
                             break;
 
                         case px4_cmd::Command::XYZ_REL_POS:
-                            cmd_mode = "Relative Position";
+                            cmd_mode = "Rel Position";
+                            table_headers_ext_cmd[3] = "CMD 1  [Rel x]";
+                            table_headers_ext_cmd[4] = "CMD 2  [Rel y]";
+                            table_headers_ext_cmd[5] = "CMD 3  [Rel z]";
                             break;
 
                         case px4_cmd::Command::XYZ_VEL:
                             cmd_mode = "Velocity";
+                            table_headers_ext_cmd[3] = "CMD 1  [vx]";
+                            table_headers_ext_cmd[4] = "CMD 2  [vy]";
+                            table_headers_ext_cmd[5] = "CMD 3  [vz]";
                             break;
 
                         case px4_cmd::Command::XY_VEL_Z_POS:
                             cmd_mode = "Velocity with Altitude";
+                            table_headers_ext_cmd[3] = "CMD 1  [vx]";
+                            table_headers_ext_cmd[4] = "CMD 2  [vy]";
+                            table_headers_ext_cmd[5] = "CMD 3  [z]";
                             break;
                     }
-                    item_2->setText(cmd_mode);
+                    // update frame info
                     switch (cmds[0].Move_frame)
                     {
                         case px4_cmd::Command::ENU:
@@ -902,15 +1026,36 @@ class ControllerMainWindow : public QWidget
                             frame = "Body";
                             break;
                     }
-                    item_3->setText(frame);
+                    item_3->setText("  " + frame + "  ");
                 }
+                
+                // update cmd mode info
+                item_2->setText("  " + cmd_mode + "  ");
 
                 if (current_mode == mavros_msgs::State::MODE_PX4_OFFBOARD)
                 {
-                    item_4->setText(to_string(cmds[node_id].desire_cmd[0]).c_str());
-                    item_5->setText(to_string(cmds[node_id].desire_cmd[1]).c_str());
-                    item_6->setText(to_string(cmds[node_id].desire_cmd[2]).c_str());
-                    item_7->setText(to_string(cmds[node_id].yaw_cmd).c_str());
+                    if (cmds[node_id].Move_mode == px4_cmd::Command::XYZ_POS)
+                    {
+                        item_4->setText(("  " + to_string(cmds[node_id].desire_cmd[0] + data[node_id]->init_x) + "  ").c_str());
+                        item_5->setText(("  " + to_string(cmds[node_id].desire_cmd[1] + data[node_id]->init_y) + "  ").c_str());
+                        item_6->setText(("  " + to_string(cmds[node_id].desire_cmd[2] + data[node_id]->init_z) + "  ").c_str());
+                    }
+                    else
+                    {
+                        if (cmds[node_id].Move_mode == px4_cmd::Command::XY_VEL_Z_POS)
+                        {
+                            item_4->setText(("  " + to_string(cmds[node_id].desire_cmd[0]) + "  ").c_str());
+                            item_5->setText(("  " + to_string(cmds[node_id].desire_cmd[1]) + "  ").c_str());
+                            item_6->setText(("  " + to_string(cmds[node_id].desire_cmd[2] + data[node_id]->init_z) + "  ").c_str());
+                        }
+                        else
+                        {
+                            item_4->setText(("  " + to_string(cmds[node_id].desire_cmd[0]) + "  ").c_str());
+                            item_5->setText(("  " + to_string(cmds[node_id].desire_cmd[1]) + "  ").c_str());
+                            item_6->setText(("  " + to_string(cmds[node_id].desire_cmd[2]) + "  ").c_str());
+                        }
+                    }
+                    item_7->setText(("  " + to_string(cmds[node_id].yaw_cmd) + "  ").c_str());
                 }
                 info_model->setItem(node_id, 1, item_2);
                 info_model->setItem(node_id, 2, item_3);
@@ -918,50 +1063,19 @@ class ControllerMainWindow : public QWidget
                 info_model->setItem(node_id, 4, item_5);
                 info_model->setItem(node_id, 5, item_6);
                 info_model->setItem(node_id, 6, item_7);
-                info_model->setItem(node_id, 8, item_9);
-
+                info_model->setItem(node_id, 7, item_8);
+                info_model->setHorizontalHeaderLabels(table_headers_ext_cmd);
+                if (ext_cmd_state)
+                {
+                    info_model->setData(info_model->index(node_id, 7), QBrush(Qt::green), Qt::TextColorRole);
+                }
+                else
+                {
+                    info_model->setData(info_model->index(node_id, 7), QBrush(Qt::red), Qt::TextColorRole);
+                }
                 // sleep
-                ros::Duration(0.1).sleep();
+                ros::Duration(0.2).sleep();
             }
-        }
-
-        void update_table_headers()
-        {
-            table_headers_ext_cmd[3] = "CMD 1";
-            table_headers_ext_cmd[4] = "CMD 2";
-            table_headers_ext_cmd[5] = "CMD 3";
-            info_model->setHorizontalHeaderLabels(table_headers_ext_cmd);
-        }
-        
-        void update_table_headers(int mode)
-        {
-            switch (mode)
-            {
-                case px4_cmd::Command::XYZ_POS:
-                    table_headers_ext_cmd[3] = "CMD 1  [x]";
-                    table_headers_ext_cmd[4] = "CMD 2  [y]";
-                    table_headers_ext_cmd[5] = "CMD 3  [z]";
-                    break;
-
-                case px4_cmd::Command::XYZ_REL_POS:
-                    table_headers_ext_cmd[3] = "CMD 1  [Relative x]";
-                    table_headers_ext_cmd[4] = "CMD 2  [Relative y]";
-                    table_headers_ext_cmd[5] = "CMD 3  [Relative z]";
-                    break;
-
-                case px4_cmd::Command::XYZ_VEL:
-                    table_headers_ext_cmd[3] = "CMD 1  [vx]";
-                    table_headers_ext_cmd[4] = "CMD 2  [vy]";
-                    table_headers_ext_cmd[5] = "CMD 3  [vz]";
-                    break;
-
-                case px4_cmd::Command::XY_VEL_Z_POS:
-                    table_headers_ext_cmd[3] = "CMD 1  [vx]";
-                    table_headers_ext_cmd[4] = "CMD 2  [vy]";
-                    table_headers_ext_cmd[5] = "CMD 3  [z]";
-                    break;
-            }
-            info_model->setHorizontalHeaderLabels(table_headers_ext_cmd);
         }
 
         // subsribe function

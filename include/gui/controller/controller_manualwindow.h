@@ -40,15 +40,30 @@ class ControllerManualWindow : public QWidget
 
     private:
         // init vector
-        QStringList frames = {"ENU (Global Frame)", "Body (Relative Frame)"};
-        QStringList modes = {"[Postion] x - y - z", "[Relative Position] x - y - z", "[Velocity] vx - vy - vz", "[Velocity with Altitude] vx - vy - z"};
-        QStringList table_headers = {"Node", "CMD 1  [x]", "CMD 2  [y]", "CMD 3  [z]", "CMD Yaw (deg)"};
+        QStringList frames = {
+            "ENU (Global Frame)",
+            "Body (Relative Frame)"
+        };
+        QStringList modes = {
+            "[Postion] x - y - z",
+            "[Relative Position] x - y - z",
+            "[Velocity] vx - vy - vz",
+            "[Velocity with Altitude] vx - vy - z"
+        };
+        QStringList table_headers = {
+            "Node",
+            "CMD 1  [x]",
+            "CMD 2  [y]",
+            "CMD 3  [z]",
+            "CMD Yaw (deg)"
+        };
         QStringList nodes;
         vector<int> frames_msg = {px4_cmd::Command::ENU, px4_cmd::Command::BODY};
         vector<int> modes_msg = {px4_cmd::Command::XYZ_POS, px4_cmd::Command::XYZ_REL_POS, px4_cmd::Command::XYZ_VEL, px4_cmd::Command::XY_VEL_Z_POS};
 
         // init vars
         bool update_signal = false;
+        bool first = true;
 
         // init widgets
         QMessageBox *msg_box;
@@ -66,6 +81,11 @@ class ControllerManualWindow : public QWidget
         {
             // init
             exec_state = false;
+            if (!first)
+            {
+                return;
+            }
+
             for (auto i = 0; i < (nodes.size() - 1); i++)
             {
                 vector<double> tmp = {0, 0, 0, 0};
@@ -171,6 +191,13 @@ class ControllerManualWindow : public QWidget
             QObject::connect(exec_button, &QPushButton::clicked, this, &ControllerManualWindow::exec_slot);
             QObject::connect(mode_select, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &ControllerManualWindow::mode_change_slot);
             QObject::connect(frame_select, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &ControllerManualWindow::frame_change_slot);
+
+            // first false and skip setup
+            first = false;
+            
+            // init set_mode and set_frame
+            set_mode = modes_msg[mode_select->currentIndex()];
+            set_frame = frames_msg[frame_select->currentIndex()];
         }
 
         // slot functions
@@ -198,8 +225,8 @@ class ControllerManualWindow : public QWidget
 
         void mode_change_slot(int index)
         {
-            int mode = modes_msg[index];
-            switch (mode)
+            set_mode = modes_msg[index];
+            switch (set_mode)
             {
                 case px4_cmd::Command::XYZ_POS:
                     table_headers[1] = "CMD 1  [x]";
@@ -243,7 +270,6 @@ class ControllerManualWindow : public QWidget
                     return;
                     break;
             }
-            
         }
 
         void exit_slot()
