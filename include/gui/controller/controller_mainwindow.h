@@ -350,6 +350,7 @@ class ControllerMainWindow : public QWidget
             QObject::connect(land_button, &QPushButton::clicked, this, &ControllerMainWindow::land_slot);
             QObject::connect(return_button, &QPushButton::clicked, this, &ControllerMainWindow::return_slot);
             QObject::connect(manual_button, &QPushButton::clicked, this, &ControllerMainWindow::manual_cmd_slot);
+            QObject::connect(external_button, &QPushButton::clicked, this, &ControllerMainWindow::ext_cmd_slot);
             QObject::connect(signal_button_1, &QPushButton::clicked, this, &ControllerMainWindow::ext_cmd_err_msg_slot);
             QObject::connect(mode_win, &ControllerModeWindow::change_mode_signal, this, &ControllerMainWindow::change_mode_slot);
             QObject::connect(takeoff_win, &ControllerTakeoffWindow::take_off_info_signal, this, &ControllerMainWindow::take_off_info_slot);
@@ -991,36 +992,48 @@ class ControllerMainWindow : public QWidget
                 if (current_mode == mavros_msgs::State::MODE_PX4_OFFBOARD)
                 {
                     // update headers
-                    switch (cmds[0].Move_mode)
+                    // update cmd mode info
+                    if (current_mode == "Take Off")
                     {
-                        case px4_cmd::Command::XYZ_POS:
-                            cmd_mode = "Postion";
-                            table_headers_ext_cmd[3] = "CMD 1  [x]";
-                            table_headers_ext_cmd[4] = "CMD 2  [y]";
-                            table_headers_ext_cmd[5] = "CMD 3  [z]";
-                            break;
-
-                        case px4_cmd::Command::XYZ_REL_POS:
-                            cmd_mode = "Rel Position";
-                            table_headers_ext_cmd[3] = "CMD 1  [Rel x]";
-                            table_headers_ext_cmd[4] = "CMD 2  [Rel y]";
-                            table_headers_ext_cmd[5] = "CMD 3  [Rel z]";
-                            break;
-
-                        case px4_cmd::Command::XYZ_VEL:
-                            cmd_mode = "Velocity";
-                            table_headers_ext_cmd[3] = "CMD 1  [vx]";
-                            table_headers_ext_cmd[4] = "CMD 2  [vy]";
-                            table_headers_ext_cmd[5] = "CMD 3  [vz]";
-                            break;
-
-                        case px4_cmd::Command::XY_VEL_Z_POS:
-                            cmd_mode = "Velocity with Altitude";
-                            table_headers_ext_cmd[3] = "CMD 1  [vx]";
-                            table_headers_ext_cmd[4] = "CMD 2  [vy]";
-                            table_headers_ext_cmd[5] = "CMD 3  [z]";
-                            break;
+                        cmd_mode = "Take Off";
+                        table_headers_ext_cmd[3] = "CMD 1  [x]";
+                        table_headers_ext_cmd[4] = "CMD 2  [y]";
+                        table_headers_ext_cmd[5] = "CMD 3  [z]";
                     }
+                    else
+                    {
+                        switch (cmds[0].Move_mode)
+                        {
+                            case px4_cmd::Command::XYZ_POS:
+                                cmd_mode = "Postion";
+                                table_headers_ext_cmd[3] = "CMD 1  [x]";
+                                table_headers_ext_cmd[4] = "CMD 2  [y]";
+                                table_headers_ext_cmd[5] = "CMD 3  [z]";
+                                break;
+
+                            case px4_cmd::Command::XYZ_REL_POS:
+                                cmd_mode = "Rel Position";
+                                table_headers_ext_cmd[3] = "CMD 1  [Rel x]";
+                                table_headers_ext_cmd[4] = "CMD 2  [Rel y]";
+                                table_headers_ext_cmd[5] = "CMD 3  [Rel z]";
+                                break;
+
+                            case px4_cmd::Command::XYZ_VEL:
+                                cmd_mode = "Velocity";
+                                table_headers_ext_cmd[3] = "CMD 1  [vx]";
+                                table_headers_ext_cmd[4] = "CMD 2  [vy]";
+                                table_headers_ext_cmd[5] = "CMD 3  [vz]";
+                                break;
+
+                            case px4_cmd::Command::XY_VEL_Z_POS:
+                                cmd_mode = "Velocity with Altitude";
+                                table_headers_ext_cmd[3] = "CMD 1  [vx]";
+                                table_headers_ext_cmd[4] = "CMD 2  [vy]";
+                                table_headers_ext_cmd[5] = "CMD 3  [z]";
+                                break;
+                        }
+                    }
+                    
                     // update frame info
                     switch (cmds[0].Move_frame)
                     {
@@ -1032,11 +1045,9 @@ class ControllerMainWindow : public QWidget
                             frame = "Body";
                             break;
                     }
+                    item_2->setText("  " + cmd_mode + "  ");
                     item_3->setText("  " + frame + "  ");
                 }
-                
-                // update cmd mode info
-                item_2->setText("  " + cmd_mode + "  ");
 
                 if (current_mode == mavros_msgs::State::MODE_PX4_OFFBOARD)
                 {
