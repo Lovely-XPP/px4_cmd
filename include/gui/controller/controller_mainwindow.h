@@ -607,10 +607,6 @@ class ControllerMainWindow : public QWidget
 
         void return_slot()
         {
-            for (size_t i = 0; i < nodes.size(); i++)
-            {
-                data[i]->set_mode(mavros_msgs::State::MODE_PX4_RTL);
-            }
             current_cmd = "Return";
             mode_button->setEnabled(false);
             takeoff_button->setEnabled(false);
@@ -621,6 +617,16 @@ class ControllerMainWindow : public QWidget
             hover_button->setEnabled(false);
             land_button->setEnabled(false);
             return_button->setEnabled(false);
+            std::thread return_thread(&ControllerMainWindow::return_thread_func, this);
+            return_thread.detach();
+        }
+
+        void return_thread_func()
+        {
+            for (size_t i = 0; i < nodes.size(); i++)
+            {
+                data[i]->set_mode(mavros_msgs::State::MODE_PX4_RTL);
+            }
         }
 
         void change_mode_slot()
@@ -1034,7 +1040,7 @@ class ControllerMainWindow : public QWidget
 
                 if (current_mode == mavros_msgs::State::MODE_PX4_OFFBOARD)
                 {
-                    if (cmds[node_id].Move_mode == px4_cmd::Command::XYZ_POS)
+                    if (cmds[node_id].Move_mode == px4_cmd::Command::XYZ_POS && (current_cmd == "Manual Command" || current_cmd == "Trajectory Command" || current_cmd == "External Command"))
                     {
                         item_4->setText(("  " + to_string(cmds[node_id].desire_cmd[0] + data[node_id]->init_x) + "  ").c_str());
                         item_5->setText(("  " + to_string(cmds[node_id].desire_cmd[1] + data[node_id]->init_y) + "  ").c_str());
@@ -1042,7 +1048,7 @@ class ControllerMainWindow : public QWidget
                     }
                     else
                     {
-                        if (cmds[node_id].Move_mode == px4_cmd::Command::XY_VEL_Z_POS)
+                        if (cmds[node_id].Move_mode == px4_cmd::Command::XY_VEL_Z_POS && (current_cmd == "Manual Command" || current_cmd == "Trajectory Command" || current_cmd == "External Command"))
                         {
                             item_4->setText(("  " + to_string(cmds[node_id].desire_cmd[0]) + "  ").c_str());
                             item_5->setText(("  " + to_string(cmds[node_id].desire_cmd[1]) + "  ").c_str());

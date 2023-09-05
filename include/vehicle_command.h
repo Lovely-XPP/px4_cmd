@@ -40,7 +40,6 @@ class vehicle_command
         mavros_msgs::PositionTarget pos_setpoint;
         mavros_msgs::SetMode mode_cmd;
         mavros_msgs::CommandBool arm_cmd;
-        geometry_msgs::PoseStamped current_pos;
         double R;
         double P;
         double Y;
@@ -48,6 +47,7 @@ class vehicle_command
         double init_P;
         double init_Y;
         bool hover = false;
+        vector<double> hover_pos = {0, 0, 0};
         void controller_cmd_cb(const px4_cmd::Command::ConstPtr &msg);
         void pos_cb(const geometry_msgs::PoseStamped::ConstPtr &msg);
         void state_cb(const mavros_msgs::State::ConstPtr &msg);
@@ -217,7 +217,6 @@ void vehicle_command::ros_thread_fun()
 void vehicle_command::controller_cmd_cb(const px4_cmd::Command::ConstPtr &msg)
 {
     controller_cmd = *msg;
-    vector<double> hover_pos = {0, 0, 0};
 
     // 设定坐标系
     switch (controller_cmd.Move_frame)
@@ -246,9 +245,9 @@ void vehicle_command::controller_cmd_cb(const px4_cmd::Command::ConstPtr &msg)
         {
             if (!hover)
             {
-                hover_pos[0] = current_pos.pose.position.x;
-                hover_pos[1] = current_pos.pose.position.y;
-                hover_pos[2] = current_pos.pose.position.z;
+                hover_pos[0] = x;
+                hover_pos[1] = y;
+                hover_pos[2] = z;
                 hover = true;
             }
             pos_setpoint.type_mask = 0b100111111000;
@@ -322,9 +321,9 @@ void vehicle_command::controller_cmd_cb(const px4_cmd::Command::ConstPtr &msg)
         {
             if (!hover)
             {
-                hover_pos[0] = current_pos.pose.position.x;
-                hover_pos[1] = current_pos.pose.position.y;
-                hover_pos[2] = current_pos.pose.position.z;
+                hover_pos[0] = x;
+                hover_pos[1] = y;
+                hover_pos[2] = z;
                 hover = true;
             }
             pos_setpoint.type_mask = 12288;
@@ -396,7 +395,6 @@ void vehicle_command::extend_state_cb(const mavros_msgs::ExtendedState::ConstPtr
 // 订阅回调返回位置信息
 void vehicle_command::pos_cb(const geometry_msgs::PoseStamped::ConstPtr &msg)
 {
-    current_pos = *msg;
     x = msg->pose.position.x;
     y = msg->pose.position.y;
     z = msg->pose.position.z;
