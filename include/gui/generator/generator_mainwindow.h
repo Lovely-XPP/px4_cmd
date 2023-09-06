@@ -21,6 +21,7 @@
 #include <vector>
 #include <iostream>
 #include <sys/stat.h>
+#include <unistd.h>
 
 #include <gui/generator/generator_infowindow.h>
 #include <gui/generator/generator_sensorswindow.h>
@@ -47,7 +48,7 @@ class GeneratorMainWindow : public QWidget
 
     private:
         // settings
-        string version = "V1.1.4";
+        string version = "V1.1.5";
         int local_port = 34580;
         int remote_port = 14540;
         int sitl_port = 24560;
@@ -65,6 +66,7 @@ class GeneratorMainWindow : public QWidget
         vector<sensor_data *> sensor_datas = {};
         // output file string
         string output_file = "";
+        string sim_dir = "";
         bool update_signal = false;
 
         //Widgets
@@ -80,6 +82,7 @@ class GeneratorMainWindow : public QWidget
         QLineEdit *txt_P;
         QLineEdit *txt_Y;
         QLineEdit *txt_dir;
+        QLineEdit *txt_sim_dir;
         QTableView *table;
         QStandardItemModel *model;
         QPushButton *add_button;
@@ -90,7 +93,9 @@ class GeneratorMainWindow : public QWidget
         QPushButton *load_button;
         QPushButton *info_button;
         QPushButton *browse_button;
+        QPushButton *sim_browse_button;
         QCheckBox *gazebo_gui_checkbox;
+        QCheckBox *defalut_sim_dir;
 
         void setup()
         {
@@ -118,6 +123,7 @@ class GeneratorMainWindow : public QWidget
             add_browse_dir();
             add_checkbox();
             QObject::connect(browse_button, &QPushButton::clicked, this, &GeneratorMainWindow::browse_dir_slot);
+            QObject::connect(sim_browse_button, &QPushButton::clicked, this, &GeneratorMainWindow::sim_browse_dir_slot);
             QObject::connect(add_button, &QPushButton::clicked, this, &GeneratorMainWindow::add_vehicle_slot);
             QObject::connect(model, &QStandardItemModel::itemChanged, this, &GeneratorMainWindow::update_edit_table_slot);
             QObject::connect(del_button, &QPushButton::clicked, this, &GeneratorMainWindow::del_vehicle_slot);
@@ -126,6 +132,7 @@ class GeneratorMainWindow : public QWidget
             QObject::connect(sensors_set_button, &QPushButton::clicked, this, &GeneratorMainWindow::sensor_window_slot);
             QObject::connect(generate_button, &QPushButton::clicked, this, &GeneratorMainWindow::generate_launch_slot);
             QObject::connect(load_button, &QPushButton::clicked, this, &GeneratorMainWindow::load_launch_slot);
+            QObject::connect(defalut_sim_dir, &QCheckBox::stateChanged, this, &GeneratorMainWindow::defalut_sim_dir_slot);
         }
 
         string detect_env()
@@ -227,8 +234,8 @@ class GeneratorMainWindow : public QWidget
         {
             float xshift = -20;
             QTableView *ftable = new QTableView(win);
-            ftable->move(50 + xshift, 330);
-            ftable->resize(1020, 400);
+            ftable->move(50 + xshift, 360);
+            ftable->resize(1020, 360);
             ftable->setStyleSheet("background-color: white");
             QStandardItemModel *fmodel = new QStandardItemModel(0, table_headers.size(), win);
             QStringList list;
@@ -360,49 +367,49 @@ class GeneratorMainWindow : public QWidget
             float xshift = 75;
             // add button 
             QPushButton *button1 = new QPushButton("Add Vehicle", win);
-            button1->move(30, 270);
+            button1->move(30, 305);
             button1->resize(190, 40);
             button1->setStyleSheet("background-color: rgb(50,191,255); font-size: 13pt");
             add_button = button1;
 
             // del vehicle button
             QPushButton *button2 = new QPushButton("Del Vehicle", win);
-            button2->move(235, 270);
+            button2->move(235, 305);
             button2->resize(190, 40);
             button2->setStyleSheet("background-color: rgb(255,106,106); font-size: 13pt");
             del_button = button2;
 
             // clear vehicle button
             QPushButton *button3 = new QPushButton("Clear Vehicles", win);
-            button3->move(440, 270);
+            button3->move(440, 305);
             button3->resize(190, 40);
             button3->setStyleSheet("background-color: rgb(224,102,255); font-size: 13pt");
             clc_button = button3;
 
             // generate button
             QPushButton *button4 = new QPushButton("Generate Launch", win);
-            button4->move(780 + xshift, 195);
-            button4->resize(195, 65);
+            button4->move(780 + xshift, 214);
+            button4->resize(195, 75);
             button4->setStyleSheet("background-color: rgb(84,255,159); font-weight: bold; font-size: 16pt");
             generate_button = button4;
 
             // sensors setting
             QPushButton *button5 = new QPushButton("Sensors Setting", win);
-            button5->move(645, 270);
+            button5->move(645, 305);
             button5->resize(195, 40);
             button5->setStyleSheet("background-color: rgb(255,190,155); font-size: 13pt");
             sensors_set_button = button5;
 
             // load button
             QPushButton *button6 = new QPushButton("Load Launch", win);
-            button6->move(780 + xshift, 120);
-            button6->resize(195, 65);
+            button6->move(780 + xshift, 123);
+            button6->resize(195, 75);
             button6->setStyleSheet("background-color: rgb(135,206,235); font-weight: bold; font-size: 16pt");
             load_button = button6;
 
             // information button
             QPushButton *button7 = new QPushButton("About", win);
-            button7->move(855, 270);
+            button7->move(855, 305);
             button7->resize(195, 40);
             button7->setStyleSheet("background-color: rgb(255,227,132); font-size: 13pt");
             info_button = button7;
@@ -411,37 +418,56 @@ class GeneratorMainWindow : public QWidget
         void add_browse_dir()
         {
             float xshift = -20;
-            float yshift = 30 + 45;
+            float yshift = 30 + 42;
             // label
-            QLabel *label = new QLabel("Output Dir", win);
-            label->move(170 + xshift, 140 + yshift);
-            label->resize(100, 35);
+            QLabel *label_1 = new QLabel("Output Dir", win);
+            label_1->move(170 + xshift, 142 + yshift);
+            label_1->resize(100, 33);
+            QLabel *label_2 = new QLabel("Simulation Dir", win);
+            label_2->move(148 + xshift, 185 + yshift);
+            label_2->resize(100, 33);
 
             // show dir
-            QLineEdit *text = new QLineEdit(win);
-            text->setReadOnly(true);
-            text->move(255 + xshift, 140 + yshift);
-            text->resize(480, 35);
-            text->setStyleSheet("background-color: white");
-            txt_dir = text;
+            QLineEdit *text_1 = new QLineEdit(win);
+            text_1->setReadOnly(true);
+            text_1->move(255 + xshift, 142 + yshift);
+            text_1->resize(480, 33);
+            text_1->setStyleSheet("background-color: white");
+            txt_dir = text_1;
+            QLineEdit *text_2 = new QLineEdit("~/.ros/[topic type]", win);
+            text_2->setReadOnly(true);
+            text_2->move(255 + xshift, 185 + yshift);
+            text_2->resize(480, 33);
+            text_2->setStyleSheet("background-color: white");
+            txt_sim_dir = text_2;
 
             // button
-            QPushButton *button = new QPushButton("Browse", win);
-            button->move(750 + xshift, 140 + yshift);
-            button->resize(100, 35);
-            button->setStyleSheet("background-color: rgb(255,235,230)");
-            browse_button = button;
+            QPushButton *button_1 = new QPushButton("Browse", win);
+            button_1->move(750 + xshift, 142 + yshift);
+            button_1->resize(100, 33);
+            button_1->setStyleSheet("background-color: rgb(255,235,230)");
+            browse_button = button_1;
+            QPushButton *button_2 = new QPushButton("Browse", win);
+            button_2->move(750 + xshift, 185 + yshift);
+            button_2->resize(100, 33);
+            button_2->setStyleSheet("background-color: rgb(255,235,230)");
+            button_2->setEnabled(false);
+            sim_browse_button = button_2;
         }
 
         void add_checkbox()
         {
             float xshift = -20;
-            float yshift = 30 + 45;
+            float yshift = 30 + 42;
 
             // check box
             gazebo_gui_checkbox = new QCheckBox("Gazebo GUI", win);
-            gazebo_gui_checkbox->move(50 + xshift, 147 + yshift);
+            gazebo_gui_checkbox->move(50 + xshift, 148 + yshift);
             gazebo_gui_checkbox->setChecked(true);
+
+            defalut_sim_dir = new QCheckBox("Default", win);
+            defalut_sim_dir->move(50 + xshift, 191 + yshift);
+            defalut_sim_dir->setChecked(true);
         }
 
         void get_world_files()
@@ -508,6 +534,21 @@ class GeneratorMainWindow : public QWidget
             filename = filename + ".launch";
             txt_dir->setText(filename.c_str());
             output_file = filename;
+        }
+
+        void sim_browse_dir_slot()
+        {
+            QString qfilename = QFileDialog::getExistingDirectory(win, "Select Simulation Data Directory", "");
+            auto qfilename_split = qfilename.split(".");
+            string filename = qfilename_split[0].toStdString();
+            if (!filename.compare(""))
+            {
+                txt_sim_dir->setText("");
+                sim_dir = "";
+                return;
+            }
+            txt_sim_dir->setText((filename + "/[topic type]").c_str());
+            sim_dir = filename;
         }
 
         void update_edit_table_slot()
@@ -597,7 +638,13 @@ class GeneratorMainWindow : public QWidget
             // no output dir return
             if (output_file == "")
             {
-                msg_box->setInformativeText("Please Browse Output Dir.");
+                msg_box->setInformativeText("Please Browse Output Directory.");
+                msg_box->exec();
+                return;
+            }
+            if (!defalut_sim_dir->isChecked() && sim_dir == "")
+            {
+                msg_box->setInformativeText("Please Browse Simulation Data Directory.");
                 msg_box->exec();
                 return;
             }
@@ -647,6 +694,17 @@ class GeneratorMainWindow : public QWidget
             arg_8->SetAttribute("name", "interactive");
             arg_8->SetAttribute("default", "true");
             root->InsertEndChild(arg_8);
+            XMLElement *arg_9 = doc.NewElement("arg");
+            arg_9->SetAttribute("name", "sim_dir");
+            if (defalut_sim_dir->isChecked())
+            {
+                arg_9->SetAttribute("default", "");
+            }
+            else
+            {
+                arg_9->SetAttribute("default", sim_dir.c_str());
+            }
+            root->InsertEndChild(arg_9);
 
             // gazebo simulation config
             XMLComment *gazebo_comment = doc.NewComment(" gazebo simulation ");
@@ -910,7 +968,15 @@ class GeneratorMainWindow : public QWidget
                 px4_node->SetAttribute("pkg", "px4");
                 px4_node->SetAttribute("type", "px4");
                 px4_node->SetAttribute("output", "screen");
-                px4_node->SetAttribute("args", ("$(find px4)/build/px4_sitl_default/etc -s etc/init.d-posix/rcS -i $(arg ID) -w " + topic_name + " $(arg px4_command_arg1)").c_str());
+                if (defalut_sim_dir->isChecked())
+                {
+                    px4_node->SetAttribute("args", ("$(find px4)/build/px4_sitl_default/etc -s etc/init.d-posix/rcS -i $(arg ID) -w " + topic_name + " $(arg px4_command_arg1)").c_str());
+                }
+                else
+                {
+                    px4_node->SetAttribute("args", ("$(find px4)/build/px4_sitl_default/etc -s etc/init.d-posix/rcS -i $(arg ID) -w " + sim_dir + "/" + topic_name + " $(arg px4_command_arg1)").c_str());
+                }
+                
                 agent->InsertEndChild(px4_node);
                 // spawn model
                 spawn_model_comment = doc.NewComment(" spawn model ");
@@ -963,8 +1029,24 @@ class GeneratorMainWindow : public QWidget
             msg_box->exec();
         }
 
+        void defalut_sim_dir_slot()
+        {
+            if (defalut_sim_dir->isChecked())
+            {
+                txt_sim_dir->setText("~/.ros/[topic type]");
+                sim_browse_button->setEnabled(false);
+            }
+            else
+            {
+                txt_sim_dir->setText("");
+                sim_browse_button->setEnabled(true);
+            }
+        }
+
         void load_launch_slot()
         {
+            // sim dir state
+            bool sim_dir_state = false;
             // show tip for load launch file
             msg_box = new QMessageBox();
             msg_box->setIcon(QMessageBox::Icon::Information);
@@ -999,6 +1081,7 @@ class GeneratorMainWindow : public QWidget
             // get root node
             XMLElement *root = doc.RootElement();
             // get topic type & world file & gui state
+            string sim_dir_load = "";
             string gazebo_gui = "";
             string topic_type = "";
             string world_file = "";
@@ -1037,6 +1120,10 @@ class GeneratorMainWindow : public QWidget
                         msg_box->exec();
                         return;
                     }
+                }
+                if (name == "sim_dir")
+                {
+                    sim_dir_load = element->Attribute("default");
                 }
             }
             // check data
@@ -1158,6 +1245,7 @@ class GeneratorMainWindow : public QWidget
             vehicles = vehicles_load;
             sensors = sensors_load;
             init_pos = init_pos_load;
+            model->clear();
             update_table();
             topics_list->setCurrentText(topic_type.c_str());
             worlds_list->setCurrentText(world_file.c_str());
@@ -1169,8 +1257,36 @@ class GeneratorMainWindow : public QWidget
             {
                 gazebo_gui_checkbox->setChecked(false);
             }
+            sim_dir = sim_dir_load;
+            if (sim_dir != "" && access(sim_dir.c_str(), 0) == -1)
+            {
+                sim_dir_state = false;
+                sim_dir = "";
+            }
+            else
+            {
+                sim_dir_state = true;
+            }
+            if (sim_dir == "")
+            {
+                defalut_sim_dir->setChecked(true);
+                txt_sim_dir->setText("~/.ros/[topic type]");
+            }
+            else
+            {
+                defalut_sim_dir->setChecked(false);
+                txt_sim_dir->setText(sim_dir.c_str());
+            }
             output_file = filename;
             txt_dir->setText(output_file.c_str());
+            if (!sim_dir_state)
+            {
+                msg_box->setIcon(QMessageBox::Icon::Warning);
+                msg_box->setText("Warning");
+                msg_box->setWindowTitle("Warning");
+                msg_box->setInformativeText(("Can not Find Simualtion Data Directory in Launch File: " + sim_dir_load + "\nAutomatically Change to Default.").c_str());
+                msg_box->exec();
+            }
             msg_box->setIcon(QMessageBox::Icon::Information);
             msg_box->setText("Info");
             msg_box->setWindowTitle("Info");
