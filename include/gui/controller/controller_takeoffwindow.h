@@ -37,7 +37,6 @@ class ControllerTakeoffWindow : public QWidget
             QString err = "";
             msg_box = new QMessageBox(win);
             msg_box->setIcon(QMessageBox::Icon::Critical);
-            msg_box->setText("Error");
             msg_box->setWindowTitle("Error");
             for (auto item = data.begin(); item != data.end(); item++)
             {
@@ -142,11 +141,10 @@ class ControllerTakeoffWindow : public QWidget
             double data_double;
             msg_box = new QMessageBox(win);
             msg_box->setIcon(QMessageBox::Icon::Critical);
-            msg_box->setText("Error");
             msg_box->setWindowTitle("Error");
             if (!data.compare(""))
             {
-                msg_box->setInformativeText("Takeoff Height Can not Be Empty!");
+                msg_box->setText("Takeoff Height Can not Be Empty!");
                 msg_box->exec();
                 return false;
             }
@@ -156,13 +154,13 @@ class ControllerTakeoffWindow : public QWidget
             }
             catch (const std::exception &e)
             {
-                msg_box->setInformativeText("Takeoff Height Only Support Positive Float Type!");
+                msg_box->setText("Takeoff Height Only Support Positive Float Type!");
                 msg_box->exec();
                 return false;
             }
             if (data_double <= 0)
             {
-                msg_box->setInformativeText("Takeoff Height Only Support Positive Float Type!");
+                msg_box->setText("Takeoff Height Only Support Positive Float Type!");
                 msg_box->exec();
                 return false;
             }

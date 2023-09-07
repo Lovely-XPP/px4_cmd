@@ -252,7 +252,6 @@ class ControllerModeWindow : public QWidget
         {
             msg_box = new QMessageBox(win);
             msg_box->setIcon(QMessageBox::Icon::Critical);
-            msg_box->setText("Error");
             msg_box->setWindowTitle("Error");
             msg_box->setText(error);
             msg_box->exec();

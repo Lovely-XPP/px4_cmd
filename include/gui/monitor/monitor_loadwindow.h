@@ -59,9 +59,8 @@ class MonitorLoadWindow : public QWidget
             {
                 msg_box = new QMessageBox(win);
                 msg_box->setIcon(QMessageBox::Icon::Critical);
-                msg_box->setText("Error");
                 msg_box->setWindowTitle("Error");
-                msg_box->setInformativeText(err.c_str());
+                msg_box->setText(err.c_str());
                 exit(msg_box->exec());
             }
 

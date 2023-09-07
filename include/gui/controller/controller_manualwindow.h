@@ -58,11 +58,18 @@ class ControllerManualWindow : public QWidget
             "CMD Yaw (deg)"
         };
         QStringList nodes;
-        vector<int> frames_msg = {px4_cmd::Command::ENU, px4_cmd::Command::BODY};
-        vector<int> modes_msg = {px4_cmd::Command::XYZ_POS, px4_cmd::Command::XYZ_REL_POS, px4_cmd::Command::XYZ_VEL, px4_cmd::Command::XY_VEL_Z_POS};
+        vector<int> frames_msg = {
+            px4_cmd::Command::ENU,
+            px4_cmd::Command::BODY
+        };
+        vector<int> modes_msg = {
+            px4_cmd::Command::XYZ_POS,
+            px4_cmd::Command::XYZ_REL_POS,
+            px4_cmd::Command::XYZ_VEL,
+            px4_cmd::Command::XY_VEL_Z_POS
+        };
 
         // init vars
-        bool update_signal = false;
         bool first = true;
 
         // init widgets
@@ -203,10 +210,6 @@ class ControllerManualWindow : public QWidget
         // slot functions
         void update_table_slot()
         {
-            if (update_signal)
-            {
-                return;
-            }
             int row = cmd_table->currentIndex().row();
             int column = cmd_table->currentIndex().column();
             QVariant data = cmd_table->currentIndex().data();
@@ -215,7 +218,6 @@ class ControllerManualWindow : public QWidget
             {
                 cmd_values[0][row][column - 1] = stof(str);
             }
-            update_table();
         }
 
         void frame_change_slot(int index)
@@ -283,11 +285,10 @@ class ControllerManualWindow : public QWidget
             double data_double;
             msg_box = new QMessageBox(win);
             msg_box->setIcon(QMessageBox::Icon::Critical);
-            msg_box->setText("Error");
             msg_box->setWindowTitle("Error");
             if (!data.compare(""))
             {
-                msg_box->setInformativeText("Command Values Can not Be Empty!");
+                msg_box->setText("Command Values Can not Be Empty!");
                 msg_box->exec();
                 return false;
             }
@@ -297,41 +298,11 @@ class ControllerManualWindow : public QWidget
             }
             catch (const std::exception &e)
             {
-                msg_box->setInformativeText("Command Values Only Support Positive Float Type!");
+                msg_box->setText("Command Values Only Support Positive Float Type!");
                 msg_box->exec();
                 return false;
             }
             return true;
-        }
-
-        void update_table()
-        {
-            update_signal = true;
-            int numbers = nodes.size();
-            QStandardItem *item_2;
-            QStandardItem *item_3;
-            QStandardItem *item_4;
-            QStandardItem *item_5;
-            for (int i = 0; i < numbers; i++)
-            {
-                item_2 = new QStandardItem();
-                item_3 = new QStandardItem();
-                item_4 = new QStandardItem();
-                item_5 = new QStandardItem();
-                item_2->setText(to_string(cmd_values[0][i][0]).c_str());
-                item_3->setText(to_string(cmd_values[0][i][1]).c_str());
-                item_4->setText(to_string(cmd_values[0][i][2]).c_str());
-                item_5->setText(to_string(cmd_values[0][i][3]).c_str());
-                item_2->setTextAlignment(Qt::AlignCenter);
-                item_3->setTextAlignment(Qt::AlignCenter);
-                item_4->setTextAlignment(Qt::AlignCenter);
-                item_5->setTextAlignment(Qt::AlignCenter);
-                cmd_model->setItem(i, 1, item_2);
-                cmd_model->setItem(i, 2, item_3);
-                cmd_model->setItem(i, 3, item_4);
-                cmd_model->setItem(i, 4, item_5);
-            }
-            update_signal = false;
         }
 };
 #endif

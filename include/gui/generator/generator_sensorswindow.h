@@ -512,7 +512,7 @@ class GeneratorSensorsWindow : public QWidget
             msg_box->setIcon(QMessageBox::Icon::Information);
             msg_box->setText("Info");
             msg_box->setWindowTitle("Info");
-            msg_box->setInformativeText("The Sensors Configuration is Successfully Saved.");
+            msg_box->setText("The Sensors Configuration is Successfully Saved.");
             msg_box->exec();
         }
 
@@ -559,7 +559,7 @@ class GeneratorSensorsWindow : public QWidget
             msg_box->setIcon(QMessageBox::Icon::Information);
             msg_box->setText("Info");
             msg_box->setWindowTitle("Info");
-            msg_box->setInformativeText(("The Sensors Configuration Json File is Successfully Saved at " + filename).c_str());
+            msg_box->setText(("The Sensors Configuration Json File is Successfully Saved at " + filename).c_str());
             msg_box->exec();
         }
 
@@ -570,7 +570,7 @@ class GeneratorSensorsWindow : public QWidget
             msg_box->setIcon(QMessageBox::Icon::Information);
             msg_box->setText("Info");
             msg_box->setWindowTitle("Info");
-            msg_box->setInformativeText("Load Sensors Configuration Files Will Replace Origin Configuration.");
+            msg_box->setText("Load Sensors Configuration Files Will Replace Origin Configuration.");
             msg_box->exec();
             // get saved filename
             QString qfilename = QFileDialog::getOpenFileName(win, "Select Sensors Config File", "", "Json Files (*.json)");
@@ -585,13 +585,12 @@ class GeneratorSensorsWindow : public QWidget
             // err msg
             msg_box = new QMessageBox();
             msg_box->setIcon(QMessageBox::Icon::Critical);
-            msg_box->setText("Error");
             msg_box->setWindowTitle("Error");
             // open file
             ifstream infile(filename.c_str(), ios::binary);
             if (!infile.is_open())
             {
-                msg_box->setInformativeText("Cannot find the Sensors Configuration Json File.");
+                msg_box->setText("Cannot find the Sensors Configuration Json File.");
                 msg_box->exec();
                 return;
             }
@@ -600,7 +599,7 @@ class GeneratorSensorsWindow : public QWidget
             {
                 if (!root.isArray() || (root.size() != (sensors_types.size() - 1)))
                 {
-                    msg_box->setInformativeText("The Sensors Configuration Json File is Bad, please check the file.");
+                    msg_box->setText("The Sensors Configuration Json File is Bad, please check the file.");
                     msg_box->exec();
                     return;
                 }
@@ -609,7 +608,7 @@ class GeneratorSensorsWindow : public QWidget
                     string name = root[i]["name"].asString();
                     if ((std::find(sensors_types.begin(), sensors_types.end(), name) == sensors_types.end()))
                     {
-                        msg_box->setInformativeText("The Sensors Configuration Json File is Bad, please check the file.");
+                        msg_box->setText("The Sensors Configuration Json File is Bad, please check the file.");
                         msg_box->exec();
                         return;
                     }
@@ -643,7 +642,7 @@ class GeneratorSensorsWindow : public QWidget
                         !check_input_data(samples, 1) ||
                         !check_input_data(update_rate, 1))
                     {
-                        msg_box->setInformativeText("The Sensors Configuration Json File is Bad, please check the file.");
+                        msg_box->setText("The Sensors Configuration Json File is Bad, please check the file.");
                         msg_box->exec();
                         return;
                     }
@@ -670,7 +669,7 @@ class GeneratorSensorsWindow : public QWidget
             msg_box->setIcon(QMessageBox::Icon::Information);
             msg_box->setText("Info");
             msg_box->setWindowTitle("Info");
-            msg_box->setInformativeText("The Sensors Configuration Json File is Successfully Loaded.");
+            msg_box->setText("The Sensors Configuration Json File is Successfully Loaded.");
             msg_box->exec();
         }
 
@@ -680,12 +679,11 @@ class GeneratorSensorsWindow : public QWidget
             string err = "";
             msg_box = new QMessageBox(win);
             msg_box->setIcon(QMessageBox::Icon::Critical);
-            msg_box->setText("Error");
             msg_box->setWindowTitle("Error");
             if (!data.compare(""))
             {
                 err = "Parameter [" + error_msg + "] Can not Be Empty!";
-                msg_box->setInformativeText(err.c_str());
+                msg_box->setText(err.c_str());
                 msg_box->exec();
                 return false;
             }
@@ -699,7 +697,7 @@ class GeneratorSensorsWindow : public QWidget
                 catch (const std::exception &e)
                 {
                     err = "Parameter [" + error_msg + "] Only Support Int Type!";
-                    msg_box->setInformativeText(err.c_str());
+                    msg_box->setText(err.c_str());
                     msg_box->exec();
                     return false;
                 }
@@ -714,7 +712,7 @@ class GeneratorSensorsWindow : public QWidget
                 catch (const std::exception &e)
                 {
                     err = "Parameter [" + error_msg + "] Only Support Float/Double Type!";
-                    msg_box->setInformativeText(err.c_str());
+                    msg_box->setText(err.c_str());
                     msg_box->exec();
                     return false;
                 }

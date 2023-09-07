@@ -28,6 +28,7 @@
 #include <gui/controller/controller_modewindow.h>
 #include <gui/controller/controller_takeoffwindow.h>
 #include <gui/controller/controller_manualwindow.h>
+#include <gui/controller/controller_trajectorywindow.h>
 
 #define PI 3.14159265358979323846
 using namespace std;
@@ -40,6 +41,7 @@ class ControllerMainWindow : public QWidget
         ControllerModeWindow *mode_win = new ControllerModeWindow(win);
         ControllerTakeoffWindow *takeoff_win = new ControllerTakeoffWindow(win);
         ControllerManualWindow *manual_win = new ControllerManualWindow(win);
+        ControllerTrajectoryWindow *trajectory_win = new ControllerTrajectoryWindow(win);
         QWidget *parent;
         ControllerMainWindow(QWidget *parent_widget, QStringList nodes_input)
         {
@@ -63,10 +65,11 @@ class ControllerMainWindow : public QWidget
         QVector<px4_cmd::Command> cmds;
         QVector<px4_cmd::Command> ext_cmds;
         QVector<ros::Publisher> pubs;
-        vector<vector<vector<double>>> cmd_values;
+        vector<vector<double>> cmd_values;
         bool thread_stop = false;
         bool land_return_operate = false;
         bool ext_cmd_state = false;
+        vector<bool> rel_pos;
         QStringList nodes;
         QString operating_info;
 
@@ -128,13 +131,15 @@ class ControllerMainWindow : public QWidget
                 {
                     cmd.Vehicle = px4_cmd::Command::Multicopter;
                 }
-                cmd.desire_cmd[0] = data[i]->init_x;
-                cmd.desire_cmd[1] = data[i]->init_y;
-                cmd.desire_cmd[2] = data[i]->init_z;
+                cmd.desire_cmd[0] = data[i]->home_position[0];
+                cmd.desire_cmd[1] = data[i]->home_position[1];
+                cmd.desire_cmd[2] = 0;
                 ros::Publisher pub = nh.advertise<px4_cmd::Command>((nodes[i] + "/px4_cmd/control_command").toStdString().c_str(), 50);
                 pubs.push_back(pub);
                 cmds.push_back(cmd);
                 ext_cmds.push_back(cmd);
+                cmd_values.push_back({0, 0, 0, 0});
+                rel_pos.push_back(false);
             }
             std::thread ros_thread(&ControllerMainWindow::ros_thread_func, this);
             ros_thread.detach();
@@ -342,7 +347,7 @@ class ControllerMainWindow : public QWidget
             // connect
             QObject::connect(about_button, &QPushButton::clicked, this, &ControllerMainWindow::info_window_slot);
             QObject::connect(mode_button, &QPushButton::clicked, this, &ControllerMainWindow::mode_window_slot);
-            QObject::connect(takeoff_button, &QPushButton::clicked, this, &ControllerMainWindow::takeoff_window_slot);
+            QObject::connect(takeoff_button, &QPushButton::clicked, this, &ControllerMainWindow::take_off_window_slot);
             QObject::connect(arm_button, &QPushButton::clicked, this, &ControllerMainWindow::arm_slot);
             QObject::connect(disarm_button, &QPushButton::clicked, this, &ControllerMainWindow::disarm_slot);
             QObject::connect(exit_button, &QPushButton::clicked, this, &ControllerMainWindow::exit_slot);
@@ -350,6 +355,7 @@ class ControllerMainWindow : public QWidget
             QObject::connect(land_button, &QPushButton::clicked, this, &ControllerMainWindow::land_slot);
             QObject::connect(return_button, &QPushButton::clicked, this, &ControllerMainWindow::return_slot);
             QObject::connect(manual_button, &QPushButton::clicked, this, &ControllerMainWindow::manual_cmd_slot);
+            QObject::connect(trajectory_button, &QPushButton::clicked, this, &ControllerMainWindow::trajectory_cmd_slot);
             QObject::connect(external_button, &QPushButton::clicked, this, &ControllerMainWindow::ext_cmd_slot);
             QObject::connect(signal_button_1, &QPushButton::clicked, this, &ControllerMainWindow::ext_cmd_err_msg_slot);
             QObject::connect(mode_win, &ControllerModeWindow::change_mode_signal, this, &ControllerMainWindow::change_mode_slot);
@@ -409,7 +415,6 @@ class ControllerMainWindow : public QWidget
                 {
                     msg_box = new QMessageBox(win);
                     msg_box->setIcon(QMessageBox::Icon::Critical);
-                    msg_box->setText("Error");
                     msg_box->setWindowTitle("Error");
                     msg_box->setText("Armed Failure, Please Retry.");
                     msg_box->exec();
@@ -444,7 +449,6 @@ class ControllerMainWindow : public QWidget
                 {
                     msg_box = new QMessageBox(win);
                     msg_box->setIcon(QMessageBox::Icon::Critical);
-                    msg_box->setText("Error");
                     msg_box->setWindowTitle("Error");
                     msg_box->setText(err.c_str());
                     msg_box->exec();
@@ -458,7 +462,7 @@ class ControllerMainWindow : public QWidget
             disarm_button->setEnabled(false);
         }
 
-        void takeoff_window_slot()
+        void take_off_window_slot()
         {
             if (!takeoff_win->set_data(data))
             {
@@ -482,16 +486,19 @@ class ControllerMainWindow : public QWidget
             {
                 cmds[i].Mode = px4_cmd::Command::Takeoff;
                 cmds[i].Move_frame = px4_cmd::Command::ENU;
-                cmds[i].desire_cmd[0] = data[i]->init_x;
-                cmds[i].desire_cmd[1] = data[i]->init_y;
-                cmds[i].desire_cmd[2] = takeoff_win->takeoff_height;
-                cmds[i].yaw_cmd = 0;
+                cmd_values[i][0] = data[i]->home_position[0];
+                cmd_values[i][1] = data[i]->home_position[1];
+                cmd_values[i][2] = takeoff_win->takeoff_height;
+                cmd_values[i][3] = 0;
+                cmds[i].desire_cmd[0] = cmd_values[i][0];
+                cmds[i].desire_cmd[1] = cmd_values[i][1];
+                cmds[i].desire_cmd[2] = cmd_values[i][2];
+                cmds[i].yaw_cmd = cmd_values[i][3];
                 err = data[i]->set_mode("Arm");
                 if (err != "")
                 {
                     msg_box = new QMessageBox(win);
                     msg_box->setIcon(QMessageBox::Icon::Critical);
-                    msg_box->setText("Error");
                     msg_box->setWindowTitle("Error");
                     msg_box->setText("Armed Failure, Please Retry.");
                     msg_box->exec();
@@ -520,13 +527,91 @@ class ControllerMainWindow : public QWidget
             return_button->setEnabled(true);
         }
 
+        void trajectory_cmd_slot()
+        {
+            trajectory_win->set_nodes(nodes);
+            trajectory_win->win->exec();
+            if (trajectory_win->exec_state)
+            {
+                current_cmd = "Trajectory CMD";
+                std::thread trajectory_cmd_thread(&ControllerMainWindow::trajectory_cmd_thread_func, this);
+                trajectory_cmd_thread.detach();
+                ros::Duration(0.5).sleep();
+                manual_button->setEnabled(false);
+                external_button->setEnabled(false);
+                trajectory_button->setEnabled(false);
+            }
+        }
+
+        void trajectory_cmd_thread_func()
+        {
+            double sleep_time = trajectory_win->set_time;
+            for (size_t i = 0; i < trajectory_win->cmd_values.size(); i++)
+            {
+                cmd_values = trajectory_win->cmd_values[i];
+                // set cmd
+                for (size_t j = 0; j < cmds.size(); j++)
+                {
+                    cmds[j].Mode = px4_cmd::Command::Move;
+                    cmds[j].Move_mode = trajectory_win->set_mode;
+                    cmds[j].Move_frame = trajectory_win->set_frame;
+                    if (cmds[j].Move_mode == px4_cmd::Command::XYZ_REL_POS)
+                    {
+                        cmds[j].desire_cmd[0] = cmds[j].desire_cmd[0] + cmd_values[j][0];
+                        cmds[j].desire_cmd[1] = cmds[j].desire_cmd[1] + cmd_values[j][1];
+                        cmds[j].desire_cmd[2] = cmds[j].desire_cmd[2] + cmd_values[j][2];
+                        if (!rel_pos[j])
+                        {
+                            cmds[j].desire_cmd[0] = cmds[j].desire_cmd[0] - data[j]->init_x;
+                            cmds[j].desire_cmd[1] = cmds[j].desire_cmd[1] - data[j]->init_y;
+                            cmds[j].desire_cmd[2] = cmds[j].desire_cmd[2] - data[j]->init_z;
+                            rel_pos[j] = true;
+                        }
+                    }
+                    else
+                    {
+                        rel_pos[j] = false;
+                        cmds[j].desire_cmd[0] = cmd_values[j][0];
+                        cmds[j].desire_cmd[1] = cmd_values[j][1];
+                        cmds[j].desire_cmd[2] = cmd_values[j][2];
+                        if (cmds[j].Move_mode == px4_cmd::Command::XYZ_POS)
+                        {
+                            cmds[j].desire_cmd[0] = cmds[j].desire_cmd[0] - data[j]->init_x;
+                            cmds[j].desire_cmd[1] = cmds[j].desire_cmd[1] - data[j]->init_y;
+                            cmds[j].desire_cmd[2] = cmds[j].desire_cmd[2] - data[j]->init_z;
+                        }
+                        else
+                        {
+                            if (cmds[j].Move_mode == px4_cmd::Command::XY_VEL_Z_POS)
+                            {
+                                cmds[j].desire_cmd[2] = cmds[j].desire_cmd[2] - data[j]->init_z;
+                            }
+                        }
+                    }
+                    cmds[j].yaw_cmd = cmd_values[j][3];
+                }
+                operating_info = ("Flying to Trajectory Point [" + to_string(i) + "] ...").c_str();
+                // judge if achieve desire cmd
+                while (!judge_all_achieve_state(true))
+                {
+                    ros::Duration(0.2).sleep();
+                }
+                ros::Duration(sleep_time).sleep();
+            }
+            operating_info = "Trajectory CMD Done. Change to Hover Mode.";
+            sleep(3);
+            manual_button->setEnabled(true);
+            external_button->setEnabled(true);
+            trajectory_button->setEnabled(true);
+            hover_button->click();
+        }
+
         void ext_cmd_slot()
         {
             if (!ext_cmd_state)
             {
                 msg_box = new QMessageBox(win);
                 msg_box->setIcon(QMessageBox::Icon::Critical);
-                msg_box->setText("Error");
                 msg_box->setWindowTitle("Error");
                 msg_box->setText("Not Detect External Command Topic, Please Check.");
                 msg_box->exec();
@@ -542,33 +627,70 @@ class ControllerMainWindow : public QWidget
             {
                 ext_cmd_threads[i]->detach();
             }
+            ros::Duration(0.5).sleep();
+            manual_button->setEnabled(false);
+            trajectory_button->setEnabled(false);
+            external_button->setEnabled(false);
         }
 
         void ext_cmd_thread_func(int node_id)
         {
             while (ext_cmd_state && (current_cmd == "External Command"))
             {
-                cmds[node_id] = data[node_id]->ext_cmd;
-                if (cmds[node_id].Move_mode == px4_cmd::Command::XYZ_POS)
+                cmd_values[node_id][0] = data[node_id]->ext_cmd.desire_cmd[0];
+                cmd_values[node_id][1] = data[node_id]->ext_cmd.desire_cmd[1];
+                cmd_values[node_id][2] = data[node_id]->ext_cmd.desire_cmd[2];
+                cmd_values[node_id][3] = data[node_id]->ext_cmd.yaw_cmd;
+                cmds[node_id].Move_mode = data[node_id]->ext_cmd.Move_mode;
+                cmds[node_id].Move_frame = data[node_id]->ext_cmd.Move_frame;
+                cmds[node_id].Vehicle = data[node_id]->ext_cmd.Vehicle;
+                if (cmds[node_id].Move_mode == px4_cmd::Command::XYZ_REL_POS)
                 {
-                    cmds[node_id].desire_cmd[0] = cmds[node_id].desire_cmd[0] - data[node_id]->init_x;
-                    cmds[node_id].desire_cmd[1] = cmds[node_id].desire_cmd[1] - data[node_id]->init_y;
-                    cmds[node_id].desire_cmd[2] = cmds[node_id].desire_cmd[2] - data[node_id]->init_z;
+                    cmds[node_id].desire_cmd[0] = cmds[node_id].desire_cmd[0] + cmd_values[node_id][0];
+                    cmds[node_id].desire_cmd[1] = cmds[node_id].desire_cmd[1] + cmd_values[node_id][1];
+                    cmds[node_id].desire_cmd[2] = cmds[node_id].desire_cmd[2] + cmd_values[node_id][2];
+                    if (!rel_pos[node_id])
+                    {
+                        cmds[node_id].desire_cmd[0] = cmds[node_id].desire_cmd[0] - data[node_id]->init_x;
+                        cmds[node_id].desire_cmd[1] = cmds[node_id].desire_cmd[1] - data[node_id]->init_y;
+                        cmds[node_id].desire_cmd[2] = cmds[node_id].desire_cmd[2] - data[node_id]->init_z;
+                        rel_pos[node_id] = true;
+                    }
                 }
-                if (cmds[node_id].Move_mode == px4_cmd::Command::XY_VEL_Z_POS)
+                else
                 {
-                    cmds[node_id].desire_cmd[2] = cmds[node_id].desire_cmd[2] - data[node_id]->init_z;
+                    rel_pos[node_id] = false;
+                    cmds[node_id].desire_cmd[0] = cmd_values[node_id][0];
+                    cmds[node_id].desire_cmd[1] = cmd_values[node_id][1];
+                    cmds[node_id].desire_cmd[2] = cmd_values[node_id][2];
+                    if (cmds[node_id].Move_mode == px4_cmd::Command::XYZ_POS)
+                    {
+                        cmds[node_id].desire_cmd[0] = cmds[node_id].desire_cmd[0] - data[node_id]->init_x;
+                        cmds[node_id].desire_cmd[1] = cmds[node_id].desire_cmd[1] - data[node_id]->init_y;
+                        cmds[node_id].desire_cmd[2] = cmds[node_id].desire_cmd[2] - data[node_id]->init_z;
+                    }
+                    else
+                    {
+                        if (cmds[node_id].Move_mode == px4_cmd::Command::XY_VEL_Z_POS)
+                        {
+                            cmds[node_id].desire_cmd[2] = cmds[node_id].desire_cmd[2] - data[node_id]->init_z;
+                        }
+                    }
                 }
-                cmds[node_id].yaw_cmd = manual_win->cmd_values[0][node_id][3];
+                cmds[node_id].yaw_cmd = cmd_values[node_id][3];
             }
             if (!ext_cmd_state)
             {
                 cmds[node_id].Mode = px4_cmd::Command::Hover;
             }
+            manual_button->setEnabled(true);
+            external_button->setEnabled(true);
+            trajectory_button->setEnabled(true);
         }
 
         void hover_slot()
         {
+            operating_info = "";
             current_cmd = "Hover";
             std::thread hover_thread(&ControllerMainWindow::hover_thread_func, this);
             hover_thread.detach();
@@ -691,43 +813,78 @@ class ControllerMainWindow : public QWidget
             if (manual_win->exec_state)
             {
                 current_cmd = "Manual CMD";
-                cmd_values = manual_win->cmd_values;
+                operating_info = "Flying to Set Point...";
                 std::thread manual_cmd_thread(&ControllerMainWindow::manual_cmd_thread_func, this);
                 manual_cmd_thread.detach();
             }
+            manual_button->setEnabled(false);
+            external_button->setEnabled(false);
+            trajectory_button->setEnabled(false);
         }
 
         void manual_cmd_thread_func()
         {
+            bool achieve = false;
+            cmd_values = manual_win->cmd_values[0];
             for (size_t i = 0; i < cmds.size(); i++)
             {
                 cmds[i].Mode = px4_cmd::Command::Move;
                 cmds[i].Move_mode = manual_win->set_mode;
                 cmds[i].Move_frame = manual_win->set_frame;
-                cmds[i].desire_cmd[0] = manual_win->cmd_values[0][i][0];
-                cmds[i].desire_cmd[1] = manual_win->cmd_values[0][i][1];
-                cmds[i].desire_cmd[2] = manual_win->cmd_values[0][i][2];
-                if (cmds[i].Move_mode == px4_cmd::Command::XYZ_POS)
+                if (cmds[i].Move_mode == px4_cmd::Command::XYZ_REL_POS)
                 {
-                    cmds[i].desire_cmd[0] = cmds[i].desire_cmd[0] - data[i]->init_x;
-                    cmds[i].desire_cmd[1] = cmds[i].desire_cmd[1] - data[i]->init_y;
-                    cmds[i].desire_cmd[2] = cmds[i].desire_cmd[2] - data[i]->init_z;
+                    cmds[i].desire_cmd[0] = cmds[i].desire_cmd[0] + cmd_values[i][0];
+                    cmds[i].desire_cmd[1] = cmds[i].desire_cmd[1] + cmd_values[i][1];
+                    cmds[i].desire_cmd[2] = cmds[i].desire_cmd[2] + cmd_values[i][2];
+                    if (!rel_pos[i])
+                    {
+                        cmds[i].desire_cmd[0] = cmds[i].desire_cmd[0] - data[i]->init_x;
+                        cmds[i].desire_cmd[1] = cmds[i].desire_cmd[1] - data[i]->init_y;
+                        cmds[i].desire_cmd[2] = cmds[i].desire_cmd[2] - data[i]->init_z;
+                        rel_pos[i] = true;
+                    }
                 }
-                if (cmds[i].Move_mode == px4_cmd::Command::XY_VEL_Z_POS)
+                else
                 {
-                    cmds[i].desire_cmd[2] = cmds[i].desire_cmd[2] - data[i]->init_z;
+                    rel_pos[i] = false;
+                    cmds[i].desire_cmd[0] = cmd_values[i][0];
+                    cmds[i].desire_cmd[1] = cmd_values[i][1];
+                    cmds[i].desire_cmd[2] = cmd_values[i][2];
+                    if (cmds[i].Move_mode == px4_cmd::Command::XYZ_POS)
+                    {
+                        cmds[i].desire_cmd[0] = cmds[i].desire_cmd[0] - data[i]->init_x;
+                        cmds[i].desire_cmd[1] = cmds[i].desire_cmd[1] - data[i]->init_y;
+                        cmds[i].desire_cmd[2] = cmds[i].desire_cmd[2] - data[i]->init_z;
+                    }
+                    else
+                    {
+                        if (cmds[i].Move_mode == px4_cmd::Command::XY_VEL_Z_POS)
+                        {
+                            cmds[i].desire_cmd[2] = cmds[i].desire_cmd[2] - data[i]->init_z;
+                        }
+                    }
                 }
-                cmds[i].yaw_cmd = manual_win->cmd_values[0][i][3];
+                cmds[i].yaw_cmd = cmd_values[i][3];
             }
+            // judge if achieve desire cmd
+            while (!judge_all_achieve_state(true))
+            {
+                ros::Duration(0.2).sleep();
+            }
+            operating_info = "Manual CMD Done. Change to Hover Mode";
+            sleep(3);
+            manual_button->setEnabled(true);
+            external_button->setEnabled(true);
+            trajectory_button->setEnabled(true);
+            hover_button->click();
         }
 
         void ext_cmd_err_msg_slot()
         {
             msg_box = new QMessageBox(win);
             msg_box->setIcon(QMessageBox::Icon::Critical);
-            msg_box->setText("Error");
             msg_box->setWindowTitle("Error");
-            msg_box->setText("Disconnection to External Command Topic, Please Check. Automatically Change to Hover Mode.");
+            msg_box->setText("Disconnection to External Command Topic, Please Check. Change to Hover Mode.");
             msg_box->exec();
         }
 
@@ -758,8 +915,15 @@ class ControllerMainWindow : public QWidget
                 }
 
                 // arm state
-                arm_state = data[0]->arm_state;
                 current_mode = data[0]->state_mode;
+                if (current_mode == mavros_msgs::State::MODE_PX4_RTL || current_mode == mavros_msgs::State::MODE_PX4_LAND)
+                {
+                    arm_state = judge_all_arm_state(false);
+                }
+                else
+                {
+                    arm_state = judge_all_arm_state(true);
+                }
                 if (arm_state != pre_arm_state || current_mode != pre_mode)
                 {
                     if (arm_state)
@@ -768,9 +932,9 @@ class ControllerMainWindow : public QWidget
                         state_label_1->setStyleSheet("color: green; font-size: 14pt");
                         arm_button->setEnabled(false);
                         disarm_button->setEnabled(true);
-                        if (!data[0]->land_state)
+                        if (judge_all_land_state(false))
                         {
-                            mode_button->setEnabled(false);
+                            mode_button->setEnabled(true);
                             manual_button->setEnabled(true);
                             trajectory_button->setEnabled(true);
                             external_button->setEnabled(true);
@@ -778,7 +942,7 @@ class ControllerMainWindow : public QWidget
                             land_button->setEnabled(true);
                             return_button->setEnabled(true);
                         }
-                        if ((current_mode == mavros_msgs::State::MODE_PX4_LAND) && (!data[0]->land_state))
+                        if ((current_mode == mavros_msgs::State::MODE_PX4_LAND) && !judge_all_land_state(false))
                         {
                             operating_info = "Landing...";
                             mode_button->setEnabled(false);
@@ -792,7 +956,7 @@ class ControllerMainWindow : public QWidget
                             land_button->setEnabled(false);
                             return_button->setEnabled(false);
                         }
-                        if ((current_mode == mavros_msgs::State::MODE_PX4_RTL) && (!data[0]->land_state))
+                        if ((current_mode == mavros_msgs::State::MODE_PX4_RTL) && !judge_all_land_state(false))
                         {
                             operating_info = "Returning...";
                             mode_button->setEnabled(false);
@@ -928,7 +1092,7 @@ class ControllerMainWindow : public QWidget
             while (!thread_stop)
             {
                 // current mode
-                current_mode = data[0]->state_mode;
+                current_mode = data[node_id]->state_mode;
                 if (pre_mode != current_mode || pre_cmd != current_cmd)
                 {
                     pre_mode = current_mode;
@@ -975,7 +1139,7 @@ class ControllerMainWindow : public QWidget
                 }
 
                 // ext_cmd_publish_info
-                ext_cmd_state_single = data[0]->ext_cmd_state;
+                ext_cmd_state_single = data[node_id]->ext_cmd_state;
                 if (pre_ext_cmd_state_single != ext_cmd_state_single)
                 {
                     if (ext_cmd_state)
@@ -1054,28 +1218,10 @@ class ControllerMainWindow : public QWidget
 
                 if (current_mode == mavros_msgs::State::MODE_PX4_OFFBOARD)
                 {
-                    if (cmds[node_id].Move_mode == px4_cmd::Command::XYZ_POS && (current_cmd == "Manual Command" || current_cmd == "Trajectory Command" || current_cmd == "External Command"))
-                    {
-                        item_4->setText(("  " + to_string(cmds[node_id].desire_cmd[0] + data[node_id]->init_x) + "  ").c_str());
-                        item_5->setText(("  " + to_string(cmds[node_id].desire_cmd[1] + data[node_id]->init_y) + "  ").c_str());
-                        item_6->setText(("  " + to_string(cmds[node_id].desire_cmd[2] + data[node_id]->init_z) + "  ").c_str());
-                    }
-                    else
-                    {
-                        if (cmds[node_id].Move_mode == px4_cmd::Command::XY_VEL_Z_POS && (current_cmd == "Manual Command" || current_cmd == "Trajectory Command" || current_cmd == "External Command"))
-                        {
-                            item_4->setText(("  " + to_string(cmds[node_id].desire_cmd[0]) + "  ").c_str());
-                            item_5->setText(("  " + to_string(cmds[node_id].desire_cmd[1]) + "  ").c_str());
-                            item_6->setText(("  " + to_string(cmds[node_id].desire_cmd[2] + data[node_id]->init_z) + "  ").c_str());
-                        }
-                        else
-                        {
-                            item_4->setText(("  " + to_string(cmds[node_id].desire_cmd[0]) + "  ").c_str());
-                            item_5->setText(("  " + to_string(cmds[node_id].desire_cmd[1]) + "  ").c_str());
-                            item_6->setText(("  " + to_string(cmds[node_id].desire_cmd[2]) + "  ").c_str());
-                        }
-                    }
-                    item_7->setText(("  " + to_string(cmds[node_id].yaw_cmd) + "  ").c_str());
+                    item_4->setText(("  " + to_string(cmd_values[node_id][0]) + "  ").c_str());
+                    item_5->setText(("  " + to_string(cmd_values[node_id][1]) + "  ").c_str());
+                    item_6->setText(("  " + to_string(cmd_values[node_id][2]) + "  ").c_str());
+                    item_7->setText(("  " + to_string(cmd_values[node_id][3]) + "  ").c_str());
                 }
                 info_model->setItem(node_id, 1, item_2);
                 info_model->setItem(node_id, 2, item_3);
@@ -1102,6 +1248,43 @@ class ControllerMainWindow : public QWidget
         void ext_cmd_sub_func(px4_cmd::Command::ConstPtr &msg, int i)
         {
             ext_cmds[i] = *msg;
+        }
+
+        // utility functions
+        bool judge_all_arm_state(bool desire)
+        {
+            for (size_t i = 0; i < nodes.size(); i++)
+            {
+                if (data[i]->arm_state != desire)
+                {
+                    return !desire;
+                }
+            }
+            return desire;
+        }
+
+        bool judge_all_land_state(bool desire)
+        {
+            for (size_t i = 0; i < nodes.size(); i++)
+            {
+                if (data[i]->land_state != desire)
+                {
+                    return !desire;
+                }
+            }
+            return desire;
+        }
+
+        bool judge_all_achieve_state(bool desire)
+        {
+            for (size_t i = 0; i < nodes.size(); i++)
+            {
+                if (data[i]->achieve_desire != desire)
+                {
+                    return !desire;
+                }
+            }
+            return desire;
         }
 };
 #endif

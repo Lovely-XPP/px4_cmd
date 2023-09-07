@@ -48,7 +48,7 @@ class GeneratorMainWindow : public QWidget
 
     private:
         // settings
-        string version = "V1.1.5";
+        string version = "V1.1.6";
         int local_port = 34580;
         int remote_port = 14540;
         int sitl_port = 24560;
@@ -56,7 +56,7 @@ class GeneratorMainWindow : public QWidget
         vector<string> topic_types = {"{Vehicle Type}_{ID}", "uav_{ID}"};
         vector<string> vehicle_types = {"iris", "typhoon_h480", "plane"};
         vector<string> sensor_types = {"None", "Lidar", "Depth Camera", "RGB Camera", "Stereo Camera", "Realsense Camera"};
-        vector<string> table_headers = {"Vehicle", "Sensor", "x", "y", "z", "R", "P", "Y"};
+        QStringList table_headers = {"Vehicle", "Sensor", "x", "y", "z", "R", "P", "Y"};
 
         // init vector
         vector<string> vehicles = {};
@@ -109,9 +109,8 @@ class GeneratorMainWindow : public QWidget
             {
                 msg_box = new QMessageBox(win);
                 msg_box->setIcon(QMessageBox::Icon::Critical);
-                msg_box->setText("Error");
                 msg_box->setWindowTitle("Error");
-                msg_box->setInformativeText(err.c_str());
+                msg_box->setText(err.c_str());
                 exit(msg_box->exec());
             }
             sensor_datas = sensors_win->sensors_save_data;
@@ -238,12 +237,7 @@ class GeneratorMainWindow : public QWidget
             ftable->resize(1020, 360);
             ftable->setStyleSheet("background-color: white");
             QStandardItemModel *fmodel = new QStandardItemModel(0, table_headers.size(), win);
-            QStringList list;
-            for (auto item = table_headers.begin(); item != table_headers.end(); item++)
-            {
-                list.append(&(*item->c_str()));
-            }
-            fmodel->setHorizontalHeaderLabels(list);
+            fmodel->setHorizontalHeaderLabels(table_headers);
             ftable->setModel(fmodel);
             ftable->horizontalHeader()->setStretchLastSection(true);
             ftable->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
@@ -517,7 +511,27 @@ class GeneratorMainWindow : public QWidget
             init_pos.push_back(pos);
             vehicles.push_back(vehicles_list->currentText().toStdString());
             sensors.push_back(sensors_list->currentText().toStdString());
-            update_table();
+            // update table
+            update_signal = true;
+            QStandardItem *item_1 = new QStandardItem();
+            QStandardItem *item_2 = new QStandardItem();
+            QStandardItem *item_3 = new QStandardItem();
+            QStandardItem *item_4 = new QStandardItem();
+            QStandardItem *item_5 = new QStandardItem();
+            QStandardItem *item_6 = new QStandardItem();
+            QStandardItem *item_7 = new QStandardItem();
+            QStandardItem *item_8 = new QStandardItem();
+            item_1->setText(vehicles[(vehicles.size() - 1)].c_str());
+            item_2->setText(sensors[(sensors.size() - 1)].c_str());
+            item_3->setText(init_pos[(init_pos.size() - 1)][0].c_str());
+            item_4->setText(init_pos[(init_pos.size() - 1)][1].c_str());
+            item_5->setText(init_pos[(init_pos.size() - 1)][2].c_str());
+            item_6->setText(init_pos[(init_pos.size() - 1)][3].c_str());
+            item_7->setText(init_pos[(init_pos.size() - 1)][4].c_str());
+            item_8->setText(init_pos[(init_pos.size() - 1)][5].c_str());
+            item_1->setEditable(false);
+            item_2->setEditable(false);
+            update_signal = false;
         }
 
         void browse_dir_slot()
@@ -565,11 +579,20 @@ class GeneratorMainWindow : public QWidget
             {
                 init_pos[row][column - 2] = str;
             }
-            update_table();
+            else
+            {
+                update_signal = true;
+                QStandardItem *item = new QStandardItem();
+                item->setText(init_pos[row][column - 2].c_str());
+                item->setTextAlignment(Qt::AlignCenter);
+                model->setItem(row, column, item);
+                update_signal = false;
+            }
         }
 
         void del_vehicle_slot()
         {
+            // get selected index
             QModelIndexList indexes = table->selectionModel()->selectedIndexes();
             if (indexes.length() == 0)
             {
@@ -577,31 +600,41 @@ class GeneratorMainWindow : public QWidget
                 msg_box->setIcon(QMessageBox::Icon::Information);
                 msg_box->setText("Info");
                 msg_box->setWindowTitle("Info");
-                msg_box->setInformativeText("Please Select Vehicle");
+                msg_box->setText("Please Select Vehicle");
                 msg_box->exec();
                 return;
             }
+            // delete selected index
             int num = 0;
             int row = 0;
+            update_signal = true;
             for (auto item = indexes.begin(); item != indexes.end(); item++)
             {
                 QModelIndex i = *item;
                 row = i.row();
                 row = row - num;
                 num++;
+                // remove data
                 vehicles.erase(vehicles.begin() + row);
                 sensors.erase(sensors.begin() + row);
                 init_pos.erase(init_pos.begin() + row);
+                // remove table row
+                model->removeRow(row);
             }
-            update_table();
+            update_signal = false;
         }
 
         void clc_vehicles_slot()
         {
+            // clear data
             vehicles.clear();
             sensors.clear();
             init_pos.clear();
-            update_table();
+            // clear table
+            update_signal = true;
+            model->clear();
+            model->setHorizontalHeaderLabels(table_headers);
+            update_signal = false;
         }
 
         void info_window_slot()
@@ -626,25 +659,24 @@ class GeneratorMainWindow : public QWidget
             // init messagebox
             msg_box = new QMessageBox();
             msg_box->setIcon(QMessageBox::Icon::Critical);
-            msg_box->setText("Error");
             msg_box->setWindowTitle("Error");
             // no vehicles return
             if (vehicles.size() == 0)
             {
-                msg_box->setInformativeText("Please Add Vehicle First.");
+                msg_box->setText("Please Add Vehicle First.");
                 msg_box->exec();
                 return;
             }
             // no output dir return
             if (output_file == "")
             {
-                msg_box->setInformativeText("Please Browse Output Directory.");
+                msg_box->setText("Please Browse Output Directory.");
                 msg_box->exec();
                 return;
             }
             if (!defalut_sim_dir->isChecked() && sim_dir == "")
             {
-                msg_box->setInformativeText("Please Browse Simulation Data Directory.");
+                msg_box->setText("Please Browse Simulation Data Directory.");
                 msg_box->exec();
                 return;
             }
@@ -956,12 +988,12 @@ class GeneratorMainWindow : public QWidget
                 px4_arg_1 = doc.NewElement("arg");
                 px4_arg_1->SetAttribute("unless", "$(arg interactive)");
                 px4_arg_1->SetAttribute("name", "px4_command_arg1");
-                px4_arg_1->SetAttribute("value", "-d");
+                px4_arg_1->SetAttribute("value", "");
                 agent->InsertEndChild(px4_arg_1);
                 px4_arg_2 = doc.NewElement("arg");
                 px4_arg_2->SetAttribute("if", "$(arg interactive)");
                 px4_arg_2->SetAttribute("name", "px4_command_arg1");
-                px4_arg_2->SetAttribute("value", "");
+                px4_arg_2->SetAttribute("value", "-d");
                 agent->InsertEndChild(px4_arg_2);
                 px4_node = doc.NewElement("node");
                 px4_node->SetAttribute("name", "sitl_$(arg ID)");
@@ -1018,14 +1050,14 @@ class GeneratorMainWindow : public QWidget
             // generate
             if (doc.SaveFile(output_file.c_str()) != 0)
             {
-                msg_box->setInformativeText("Fail to save launch file, please retry.");
+                msg_box->setText("Fail to save launch file, please retry.");
                 msg_box->exec();
                 return;
             }
             msg_box->setIcon(QMessageBox::Icon::Information);
             msg_box->setText("Info");
             msg_box->setWindowTitle("Info");
-            msg_box->setInformativeText(("Generate Launch File to " + output_file + " Successfully!").c_str());
+            msg_box->setText(("Generate Launch File to " + output_file + " Successfully!").c_str());
             msg_box->exec();
         }
 
@@ -1052,7 +1084,7 @@ class GeneratorMainWindow : public QWidget
             msg_box->setIcon(QMessageBox::Icon::Information);
             msg_box->setText("Info");
             msg_box->setWindowTitle("Info");
-            msg_box->setInformativeText("Only Support Loading Launch File Generated by the Programme and will replace The Edited One.");
+            msg_box->setText("Only Support Loading Launch File Generated by the Programme and will replace The Edited One.");
             msg_box->exec();
             // get filename by file browser
             QString qfilename = QFileDialog::getOpenFileName(win, "Select  Launch File", "", "Launch Files (*.launch)");
@@ -1060,12 +1092,11 @@ class GeneratorMainWindow : public QWidget
             // err msg
             msg_box = new QMessageBox();
             msg_box->setIcon(QMessageBox::Icon::Critical);
-            msg_box->setText("Error");
             msg_box->setWindowTitle("Error");
             // judge if filename is empty
             if (filename == "")
             {
-                msg_box->setInformativeText("Cannot find the Launch File.");
+                msg_box->setText("Cannot find the Launch File.");
                 msg_box->exec();
                 return;
             }
@@ -1073,11 +1104,11 @@ class GeneratorMainWindow : public QWidget
             XMLDocument doc;
             if (doc.LoadFile(filename.c_str()))
             {
-                msg_box->setInformativeText("Cannot load the Launch File.");
+                msg_box->setText("Cannot load the Launch File.");
                 msg_box->exec();
                 return;
             }
-            msg_box->setInformativeText("The Launch File is bad, please check the file.");
+            msg_box->setText("The Launch File is bad, please check the file.");
             // get root node
             XMLElement *root = doc.RootElement();
             // get topic type & world file & gui state
@@ -1245,91 +1276,8 @@ class GeneratorMainWindow : public QWidget
             vehicles = vehicles_load;
             sensors = sensors_load;
             init_pos = init_pos_load;
+            // update table
             model->clear();
-            update_table();
-            topics_list->setCurrentText(topic_type.c_str());
-            worlds_list->setCurrentText(world_file.c_str());
-            if (gazebo_gui == "true")
-            {
-                gazebo_gui_checkbox->setChecked(true);
-            }
-            else
-            {
-                gazebo_gui_checkbox->setChecked(false);
-            }
-            sim_dir = sim_dir_load;
-            if (sim_dir != "" && access(sim_dir.c_str(), 0) == -1)
-            {
-                sim_dir_state = false;
-                sim_dir = "";
-            }
-            else
-            {
-                sim_dir_state = true;
-            }
-            if (sim_dir == "")
-            {
-                defalut_sim_dir->setChecked(true);
-                txt_sim_dir->setText("~/.ros/[topic type]");
-            }
-            else
-            {
-                defalut_sim_dir->setChecked(false);
-                txt_sim_dir->setText(sim_dir.c_str());
-            }
-            output_file = filename;
-            txt_dir->setText(output_file.c_str());
-            if (!sim_dir_state)
-            {
-                msg_box->setIcon(QMessageBox::Icon::Warning);
-                msg_box->setText("Warning");
-                msg_box->setWindowTitle("Warning");
-                msg_box->setInformativeText(("Can not Find Simualtion Data Directory in Launch File: " + sim_dir_load + "\nAutomatically Change to Default.").c_str());
-                msg_box->exec();
-            }
-            msg_box->setIcon(QMessageBox::Icon::Information);
-            msg_box->setText("Info");
-            msg_box->setWindowTitle("Info");
-            msg_box->setInformativeText(("The Launch File is Loaded Successfully.\nDetected Vehicles Count: " + to_string(count) + "\nFailed Loaded Vehicles Count: " + to_string(count - collect) + "\nSuccessfully Loaded Vehicles Count: " + to_string(collect)).c_str());
-            msg_box->exec();
-        }
-
-        // utility function
-        bool check_input_data(string data, int data_type = 0)
-        {
-            msg_box = new QMessageBox(win);
-            msg_box->setIcon(QMessageBox::Icon::Critical);
-            msg_box->setText("Error");
-            msg_box->setWindowTitle("Error");
-            if (!data.compare(""))
-            {
-                msg_box->setInformativeText("Initial Postion Can not Be Empty!");
-                msg_box->exec();
-                return false;
-            }
-            try
-            {
-                if (data_type == 0)
-                {
-                    stof(data);
-                }
-                if (data_type == 1)
-                {
-                    stoi(data);
-                }
-            }
-            catch(const std::exception& e)
-            {
-                msg_box->setInformativeText("Input Initial Postion Only Support Float Type!");
-                msg_box->exec();
-                return false;
-            }
-            return true;
-        }
-
-        // update table
-        void update_table()
-        {
             update_signal = true;
             int numbers = vehicles.size();
             QStandardItem *item_1;
@@ -1370,6 +1318,84 @@ class GeneratorMainWindow : public QWidget
                 model->setItem(i, 7, item_8);
             }
             update_signal = false;
+            // update settings
+            topics_list->setCurrentText(topic_type.c_str());
+            worlds_list->setCurrentText(world_file.c_str());
+            if (gazebo_gui == "true")
+            {
+                gazebo_gui_checkbox->setChecked(true);
+            }
+            else
+            {
+                gazebo_gui_checkbox->setChecked(false);
+            }
+            sim_dir = sim_dir_load;
+            if (sim_dir != "" && access(sim_dir.c_str(), 0) == -1)
+            {
+                sim_dir_state = false;
+                sim_dir = "";
+            }
+            else
+            {
+                sim_dir_state = true;
+            }
+            if (sim_dir == "")
+            {
+                defalut_sim_dir->setChecked(true);
+                txt_sim_dir->setText("~/.ros/[topic type]");
+            }
+            else
+            {
+                defalut_sim_dir->setChecked(false);
+                txt_sim_dir->setText(sim_dir.c_str());
+            }
+            output_file = filename;
+            txt_dir->setText(output_file.c_str());
+            if (!sim_dir_state)
+            {
+                msg_box->setIcon(QMessageBox::Icon::Warning);
+                msg_box->setText("Warning");
+                msg_box->setWindowTitle("Warning");
+                msg_box->setText(("Can not Find Simualtion Data Directory in Launch File: " + sim_dir_load + "\nAutomatically Change to Default.").c_str());
+                msg_box->exec();
+            }
+            msg_box->setIcon(QMessageBox::Icon::Information);
+            msg_box->setText("Info");
+            msg_box->setWindowTitle("Info");
+            msg_box->setText(("The Launch File is Loaded Successfully.\nDetected Vehicles Count: " + to_string(count) + "\nFailed Loaded Vehicles Count: " + to_string(count - collect) + "\nSuccessfully Loaded Vehicles Count: " + to_string(collect)).c_str());
+            msg_box->exec();
+        }
+
+        // utility function
+        bool check_input_data(string data, int data_type = 0)
+        {
+            msg_box = new QMessageBox(win);
+            msg_box->setIcon(QMessageBox::Icon::Critical);
+            msg_box->setWindowTitle("Error");
+            if (!data.compare(""))
+            {
+                msg_box->setText("Initial Postion Can not Be Empty!");
+                msg_box->exec();
+                return false;
+            }
+            try
+            {
+                if (data_type == 0)
+                {
+                    stof(data);
+                }
+                if (data_type == 1)
+                {
+                    stoi(data);
+                }
+            }
+            catch(const std::exception& e)
+            {
+                msg_box->setText("Input Initial Postion Only Support Float Type!");
+                msg_box->exec();
+                return false;
+            }
+            return true;
         }
 
         bool generate_sdf(string vehicle_name, string sensor_name)
@@ -1409,9 +1435,8 @@ class GeneratorMainWindow : public QWidget
             // err msg
             msg_box = new QMessageBox();
             msg_box->setIcon(QMessageBox::Icon::Critical);
-            msg_box->setText("Error");
             msg_box->setWindowTitle("Error");
-            msg_box->setInformativeText(("Fail to load sensor model sdf file :" + sensor_origin_sdf_dir + "\nPlease check the integrity of px4_cmd package.").c_str());
+            msg_box->setText(("Fail to load sensor model sdf file :" + sensor_origin_sdf_dir + "\nPlease check the integrity of px4_cmd package.").c_str());
             // read and edit sensor sdf file
             // init doc
             XMLDocument doc;
@@ -1577,7 +1602,7 @@ class GeneratorMainWindow : public QWidget
             }
             if (doc.SaveFile(sensor_sdf_dir.c_str()) != 0)
             {
-                msg_box->setInformativeText("Fail to save sensor sdf file, please retry.");
+                msg_box->setText("Fail to save sensor sdf file, please retry.");
                 msg_box->exec();
                 return false;
             }
@@ -1589,9 +1614,8 @@ class GeneratorMainWindow : public QWidget
             string model_sdf_dir = model_sdf_folder + "/" + model_name + ".sdf.jinja";
             string model_config_dir = model_sdf_folder + "/" + "model.config";
             mkdir(model_sdf_folder.c_str(), 0777);
-            msg_box->setText("Error");
             msg_box->setWindowTitle("Error");
-            msg_box->setInformativeText(("Fail to load vehicle model sdf file :" + vehicle_sdf_dir + "\nPlease check the integrity of px4_cmd package.").c_str());
+            msg_box->setText(("Fail to load vehicle model sdf file :" + vehicle_sdf_dir + "\nPlease check the integrity of px4_cmd package.").c_str());
             if (doc.LoadFile(vehicle_sdf_dir.c_str()))
             {
                 msg_box->exec();
@@ -1671,7 +1695,7 @@ class GeneratorMainWindow : public QWidget
             }
             if (doc.SaveFile(model_sdf_dir.c_str()) != 0)
             {
-                msg_box->setInformativeText("Fail to save model sdf file, please retry.");
+                msg_box->setText("Fail to save model sdf file, please retry.");
                 msg_box->exec();
                 return false;
             }
@@ -1703,7 +1727,7 @@ class GeneratorMainWindow : public QWidget
             root->InsertEndChild(ele_7);
             if (doc.SaveFile(model_config_dir.c_str()) != 0)
             {
-                msg_box->setInformativeText("Fail to save model sdf file, please retry.");
+                msg_box->setText("Fail to save model sdf file, please retry.");
                 msg_box->exec();
                 return false;
             }
