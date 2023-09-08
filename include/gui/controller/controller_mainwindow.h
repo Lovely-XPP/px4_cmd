@@ -488,6 +488,7 @@ class ControllerMainWindow : public QWidget
                 cmds[i].Move_frame = px4_cmd::Command::ENU;
                 cmd_values[i][0] = data[i]->home_position[0];
                 cmd_values[i][1] = data[i]->home_position[1];
+                cout << data[i]->home_position[0] << data[i]->home_position[1] << endl;
                 cmd_values[i][2] = takeoff_win->takeoff_height;
                 cmd_values[i][3] = 0;
                 cmds[i].desire_cmd[0] = cmd_values[i][0];

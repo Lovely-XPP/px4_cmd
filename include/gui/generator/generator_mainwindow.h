@@ -531,6 +531,7 @@ class GeneratorMainWindow : public QWidget
             item_8->setText(init_pos[(init_pos.size() - 1)][5].c_str());
             item_1->setEditable(false);
             item_2->setEditable(false);
+            model->appendRow({item_1, item_2, item_3, item_4, item_5, item_6, item_7, item_8});
             update_signal = false;
         }
 
