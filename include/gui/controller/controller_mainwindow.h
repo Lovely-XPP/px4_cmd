@@ -69,7 +69,6 @@ class ControllerMainWindow : public QWidget
         bool thread_stop = false;
         bool land_return_operate = false;
         bool ext_cmd_state = false;
-        vector<bool> rel_pos;
         QStringList nodes;
         QString operating_info;
 
@@ -131,15 +130,14 @@ class ControllerMainWindow : public QWidget
                 {
                     cmd.Vehicle = px4_cmd::Command::Multicopter;
                 }
-                cmd.desire_cmd[0] = data[i]->home_position[0];
-                cmd.desire_cmd[1] = data[i]->home_position[1];
+                cmd.desire_cmd[0] = data[i]->init_x;
+                cmd.desire_cmd[1] = data[i]->init_y;
                 cmd.desire_cmd[2] = 0;
                 ros::Publisher pub = nh.advertise<px4_cmd::Command>((nodes[i] + "/px4_cmd/control_command").toStdString().c_str(), 50);
                 pubs.push_back(pub);
                 cmds.push_back(cmd);
                 ext_cmds.push_back(cmd);
                 cmd_values.push_back({0, 0, 0, 0});
-                rel_pos.push_back(false);
             }
             std::thread ros_thread(&ControllerMainWindow::ros_thread_func, this);
             ros_thread.detach();
@@ -469,11 +467,11 @@ class ControllerMainWindow : public QWidget
                 return;
             }
             takeoff_win->win->exec();
-            takeoff_button->setEnabled(false);
-            arm_button->setEnabled(false);
-            mode_button->setEnabled(false);
             if (takeoff_win->set_height)
             {
+                takeoff_button->setEnabled(false);
+                arm_button->setEnabled(false);
+                mode_button->setEnabled(false);
                 std::thread take_off_thread(&ControllerMainWindow::take_off_thread_func, this);
                 take_off_thread.detach();
             }
@@ -486,12 +484,12 @@ class ControllerMainWindow : public QWidget
             {
                 cmds[i].Mode = px4_cmd::Command::Takeoff;
                 cmds[i].Move_frame = px4_cmd::Command::ENU;
-                cmd_values[i][0] = data[i]->home_position[0];
-                cmd_values[i][1] = data[i]->home_position[1];
+                cmd_values[i][0] = data[i]->home_position[0] + data[i]->init_x;
+                cmd_values[i][1] = data[i]->home_position[1] + data[i]->init_y;
                 cmd_values[i][2] = takeoff_win->takeoff_height;
                 cmd_values[i][3] = 0;
-                cmds[i].desire_cmd[0] = cmd_values[i][0];
-                cmds[i].desire_cmd[1] = cmd_values[i][1];
+                cmds[i].desire_cmd[0] = data[i]->home_position[0];
+                cmds[i].desire_cmd[1] = data[i]->home_position[1];
                 cmds[i].desire_cmd[2] = cmd_values[i][2];
                 cmds[i].yaw_cmd = cmd_values[i][3];
                 err = data[i]->set_mode("Arm");
@@ -557,20 +555,12 @@ class ControllerMainWindow : public QWidget
                     cmds[j].Move_frame = trajectory_win->set_frame;
                     if (cmds[j].Move_mode == px4_cmd::Command::XYZ_REL_POS)
                     {
-                        cmds[j].desire_cmd[0] = cmds[j].desire_cmd[0] + cmd_values[j][0];
-                        cmds[j].desire_cmd[1] = cmds[j].desire_cmd[1] + cmd_values[j][1];
+                        cmds[j].desire_cmd[0] = cmds[j].desire_cmd[0] + cmd_values[j][0] + data[j]->home_position[0];
+                        cmds[j].desire_cmd[1] = cmds[j].desire_cmd[1] + cmd_values[j][1] + data[j]->home_position[1];
                         cmds[j].desire_cmd[2] = cmds[j].desire_cmd[2] + cmd_values[j][2];
-                        if (!rel_pos[j])
-                        {
-                            cmds[j].desire_cmd[0] = cmds[j].desire_cmd[0] - data[j]->init_x;
-                            cmds[j].desire_cmd[1] = cmds[j].desire_cmd[1] - data[j]->init_y;
-                            cmds[j].desire_cmd[2] = cmds[j].desire_cmd[2] - data[j]->init_z;
-                            rel_pos[j] = true;
-                        }
                     }
                     else
                     {
-                        rel_pos[j] = false;
                         cmds[j].desire_cmd[0] = cmd_values[j][0];
                         cmds[j].desire_cmd[1] = cmd_values[j][1];
                         cmds[j].desire_cmd[2] = cmd_values[j][2];
@@ -592,6 +582,7 @@ class ControllerMainWindow : public QWidget
                 }
                 operating_info = ("Flying to Trajectory Point [" + to_string(i) + "] ...").c_str();
                 // judge if achieve desire cmd
+                sleep(1);
                 while (!judge_all_achieve_state(true))
                 {
                     ros::Duration(0.2).sleep();
@@ -646,20 +637,12 @@ class ControllerMainWindow : public QWidget
                 cmds[node_id].Vehicle = data[node_id]->ext_cmd.Vehicle;
                 if (cmds[node_id].Move_mode == px4_cmd::Command::XYZ_REL_POS)
                 {
-                    cmds[node_id].desire_cmd[0] = cmds[node_id].desire_cmd[0] + cmd_values[node_id][0];
-                    cmds[node_id].desire_cmd[1] = cmds[node_id].desire_cmd[1] + cmd_values[node_id][1];
+                    cmds[node_id].desire_cmd[0] = cmds[node_id].desire_cmd[0] + cmd_values[node_id][0] + data[node_id]->home_position[0];
+                    cmds[node_id].desire_cmd[1] = cmds[node_id].desire_cmd[1] + cmd_values[node_id][1] + data[node_id]->home_position[1];
                     cmds[node_id].desire_cmd[2] = cmds[node_id].desire_cmd[2] + cmd_values[node_id][2];
-                    if (!rel_pos[node_id])
-                    {
-                        cmds[node_id].desire_cmd[0] = cmds[node_id].desire_cmd[0] - data[node_id]->init_x;
-                        cmds[node_id].desire_cmd[1] = cmds[node_id].desire_cmd[1] - data[node_id]->init_y;
-                        cmds[node_id].desire_cmd[2] = cmds[node_id].desire_cmd[2] - data[node_id]->init_z;
-                        rel_pos[node_id] = true;
-                    }
                 }
                 else
                 {
-                    rel_pos[node_id] = false;
                     cmds[node_id].desire_cmd[0] = cmd_values[node_id][0];
                     cmds[node_id].desire_cmd[1] = cmd_values[node_id][1];
                     cmds[node_id].desire_cmd[2] = cmd_values[node_id][2];
@@ -766,38 +749,7 @@ class ControllerMainWindow : public QWidget
             {
                 (*item)->thread_stop = true;
             }
-            while (!stop)
-            {
-                tmp = 0;
-                for (auto item = threads.begin(); item != threads.end(); item++)
-                {
-                    if ((*item)->joinable())
-                    {
-                        continue;
-                    }
-                    tmp++;
-                }
-                for (auto item = ext_cmd_threads.begin(); item != ext_cmd_threads.end(); item++)
-                {
-                    if ((*item)->joinable())
-                    {
-                        continue;
-                    }
-                    tmp++;
-                }
-                for (auto item = data.begin(); item != data.end(); item++)
-                {
-                    if ((*item)->ros_stop)
-                    {
-                        continue;
-                    }
-                    tmp++;
-                }
-                if (tmp == 0)
-                {
-                    stop = true;
-                }
-            }
+            ros::Duration(0.2).sleep();
             win->close();
         }
 
@@ -816,10 +768,10 @@ class ControllerMainWindow : public QWidget
                 operating_info = "Flying to Set Point...";
                 std::thread manual_cmd_thread(&ControllerMainWindow::manual_cmd_thread_func, this);
                 manual_cmd_thread.detach();
+                manual_button->setEnabled(false);
+                external_button->setEnabled(false);
+                trajectory_button->setEnabled(false);
             }
-            manual_button->setEnabled(false);
-            external_button->setEnabled(false);
-            trajectory_button->setEnabled(false);
         }
 
         void manual_cmd_thread_func()
@@ -836,17 +788,9 @@ class ControllerMainWindow : public QWidget
                     cmds[i].desire_cmd[0] = cmds[i].desire_cmd[0] + cmd_values[i][0];
                     cmds[i].desire_cmd[1] = cmds[i].desire_cmd[1] + cmd_values[i][1];
                     cmds[i].desire_cmd[2] = cmds[i].desire_cmd[2] + cmd_values[i][2];
-                    if (!rel_pos[i])
-                    {
-                        cmds[i].desire_cmd[0] = cmds[i].desire_cmd[0] - data[i]->init_x;
-                        cmds[i].desire_cmd[1] = cmds[i].desire_cmd[1] - data[i]->init_y;
-                        cmds[i].desire_cmd[2] = cmds[i].desire_cmd[2] - data[i]->init_z;
-                        rel_pos[i] = true;
-                    }
                 }
                 else
                 {
-                    rel_pos[i] = false;
                     cmds[i].desire_cmd[0] = cmd_values[i][0];
                     cmds[i].desire_cmd[1] = cmd_values[i][1];
                     cmds[i].desire_cmd[2] = cmd_values[i][2];
@@ -867,6 +811,7 @@ class ControllerMainWindow : public QWidget
                 cmds[i].yaw_cmd = cmd_values[i][3];
             }
             // judge if achieve desire cmd
+            sleep(1);
             while (!judge_all_achieve_state(true))
             {
                 ros::Duration(0.2).sleep();
@@ -896,6 +841,16 @@ class ControllerMainWindow : public QWidget
             QString pre_cmd = "None";
             string current_mode = "";
             string pre_mode = "";
+            QStringList table_headers_ext_cmd = {
+                "Node",
+                "CMD Mode",
+                "Frame",
+                "CMD 1",
+                "CMD 2",
+                "CMD 3",
+                "CMD 4  [Yaw]",
+                "External State",
+                "External CMD Topic"};
             while (!thread_stop)
             {
                 // ros state
@@ -1005,6 +960,54 @@ class ControllerMainWindow : public QWidget
                     signal_button_1->click();
                 }
 
+                // update headers
+                // update cmd mode info
+                if (current_mode == mavros_msgs::State::MODE_PX4_OFFBOARD)
+                {
+                    if (current_cmd == "Take Off")
+                    {
+                        table_headers_ext_cmd[3] = "CMD 1  [x]";
+                        table_headers_ext_cmd[4] = "CMD 2  [y]";
+                        table_headers_ext_cmd[5] = "CMD 3  [z]";
+                    }
+                    else
+                    {
+                        switch (cmds[0].Move_mode)
+                        {
+                            case px4_cmd::Command::XYZ_POS:
+                                table_headers_ext_cmd[3] = "CMD 1  [x]";
+                                table_headers_ext_cmd[4] = "CMD 2  [y]";
+                                table_headers_ext_cmd[5] = "CMD 3  [z]";
+                                break;
+
+                            case px4_cmd::Command::XYZ_REL_POS:
+                                table_headers_ext_cmd[3] = "CMD 1  [Rel x]";
+                                table_headers_ext_cmd[4] = "CMD 2  [Rel y]";
+                                table_headers_ext_cmd[5] = "CMD 3  [Rel z]";
+                                break;
+
+                            case px4_cmd::Command::XYZ_VEL:
+                                table_headers_ext_cmd[3] = "CMD 1  [vx]";
+                                table_headers_ext_cmd[4] = "CMD 2  [vy]";
+                                table_headers_ext_cmd[5] = "CMD 3  [vz]";
+                                break;
+
+                            case px4_cmd::Command::XY_VEL_Z_POS:
+                                table_headers_ext_cmd[3] = "CMD 1  [vx]";
+                                table_headers_ext_cmd[4] = "CMD 2  [vy]";
+                                table_headers_ext_cmd[5] = "CMD 3  [z]";
+                                break;
+                        }
+                    }
+                }
+                else
+                {
+                    table_headers_ext_cmd[3] = "CMD 1";
+                    table_headers_ext_cmd[4] = "CMD 2";
+                    table_headers_ext_cmd[5] = "CMD 3";
+                }
+                info_model->setHorizontalHeaderLabels(table_headers_ext_cmd);
+
                 // current mode
                 if (pre_mode != current_mode)
                 {
@@ -1041,7 +1044,7 @@ class ControllerMainWindow : public QWidget
                 }
                 ext_cmd_state = ext_cmd_state_single;
 
-                //sleep
+                // sleep
                 ros::Duration(0.1).sleep();
             }
         }
@@ -1056,17 +1059,6 @@ class ControllerMainWindow : public QWidget
             string current_mode = "";
             string pre_mode = "";
             QString null_str = "  -----------  ";
-            QStringList table_headers_ext_cmd = {
-                "Node",
-                "CMD Mode",
-                "Frame",
-                "CMD 1",
-                "CMD 2",
-                "CMD 3",
-                "CMD 4  [Yaw]",
-                "External State",
-                "External CMD Topic"
-            };
             QStandardItem *item_2 = new QStandardItem();
             QStandardItem *item_3 = new QStandardItem();
             QStandardItem *item_4 = new QStandardItem();
@@ -1089,7 +1081,7 @@ class ControllerMainWindow : public QWidget
             item_7->setTextAlignment(Qt::AlignCenter);
             item_8->setTextAlignment(Qt::AlignCenter);
             item_8->setText("Deactive");
-            while (!thread_stop)
+            while (ros::master::check() && !thread_stop)
             {
                 // current mode
                 current_mode = data[node_id]->state_mode;
@@ -1104,9 +1096,6 @@ class ControllerMainWindow : public QWidget
                         item_5->setText(null_str);
                         item_6->setText(null_str);
                         item_7->setText(null_str);
-                        table_headers_ext_cmd[3] = "CMD 1";
-                        table_headers_ext_cmd[4] = "CMD 2";
-                        table_headers_ext_cmd[5] = "CMD 3";
                     }
                     if (current_mode == mavros_msgs::State::MODE_PX4_LOITER)
                     {
@@ -1155,14 +1144,10 @@ class ControllerMainWindow : public QWidget
                 // table info
                 if (current_mode == mavros_msgs::State::MODE_PX4_OFFBOARD)
                 {
-                    // update headers
-                    // update cmd mode info
+                    // update cmd mode
                     if (current_cmd == "Take Off")
                     {
                         cmd_mode = "Take Off";
-                        table_headers_ext_cmd[3] = "CMD 1  [x]";
-                        table_headers_ext_cmd[4] = "CMD 2  [y]";
-                        table_headers_ext_cmd[5] = "CMD 3  [z]";
                     }
                     else
                     {
@@ -1170,34 +1155,22 @@ class ControllerMainWindow : public QWidget
                         {
                             case px4_cmd::Command::XYZ_POS:
                                 cmd_mode = "Postion";
-                                table_headers_ext_cmd[3] = "CMD 1  [x]";
-                                table_headers_ext_cmd[4] = "CMD 2  [y]";
-                                table_headers_ext_cmd[5] = "CMD 3  [z]";
                                 break;
 
                             case px4_cmd::Command::XYZ_REL_POS:
                                 cmd_mode = "Rel Position";
-                                table_headers_ext_cmd[3] = "CMD 1  [Rel x]";
-                                table_headers_ext_cmd[4] = "CMD 2  [Rel y]";
-                                table_headers_ext_cmd[5] = "CMD 3  [Rel z]";
                                 break;
 
                             case px4_cmd::Command::XYZ_VEL:
                                 cmd_mode = "Velocity";
-                                table_headers_ext_cmd[3] = "CMD 1  [vx]";
-                                table_headers_ext_cmd[4] = "CMD 2  [vy]";
-                                table_headers_ext_cmd[5] = "CMD 3  [vz]";
                                 break;
 
                             case px4_cmd::Command::XY_VEL_Z_POS:
                                 cmd_mode = "Velocity with Altitude";
-                                table_headers_ext_cmd[3] = "CMD 1  [vx]";
-                                table_headers_ext_cmd[4] = "CMD 2  [vy]";
-                                table_headers_ext_cmd[5] = "CMD 3  [z]";
                                 break;
                         }
                     }
-                    
+
                     // update frame info
                     switch (cmds[0].Move_frame)
                     {
@@ -1230,7 +1203,6 @@ class ControllerMainWindow : public QWidget
                 info_model->setItem(node_id, 5, item_6);
                 info_model->setItem(node_id, 6, item_7);
                 info_model->setItem(node_id, 7, item_8);
-                info_model->setHorizontalHeaderLabels(table_headers_ext_cmd);
                 if (ext_cmd_state)
                 {
                     info_model->setData(info_model->index(node_id, 7), QBrush(Qt::green), Qt::TextColorRole);

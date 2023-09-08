@@ -424,30 +424,7 @@ class MonitorMainWindow : public QWidget
             {
                 (*item)->thread_stop = true;
             }
-            while (!stop)
-            {
-                tmp = 0;
-                for (auto item = threads.begin(); item != threads.end(); item++)
-                {
-                    if ((*item)->joinable())
-                    {
-                        continue;
-                    }
-                    tmp++;
-                }
-                for (auto item = data.begin(); item != data.end(); item++)
-                {
-                    if ((*item)->ros_stop)
-                    {
-                        continue;
-                    }
-                    tmp++;
-                }
-                if (tmp == 0)
-                {
-                    stop = true;
-                }
-            }
+            ros::Duration(0.2).sleep();
             win->close();
         }
 

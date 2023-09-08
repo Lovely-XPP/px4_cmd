@@ -46,6 +46,7 @@ class vehicle_command
         double init_R;
         double init_P;
         double init_Y;
+        int desire_time = 0;
         bool hover = false;
         vector<double> hover_pos = {0, 0, 0};
         void controller_cmd_cb(const px4_cmd::Command::ConstPtr &msg);
@@ -68,14 +69,14 @@ class vehicle_command
         bool thread_stop = false;
         bool ros_stop = false;
         bool achieve_desire = false;
-        double sigma = 0.5;
-        vector<double> home_position = {0, 0};
+        double sigma = 0.1;
         double x;
         double y;
         double z;
         double init_x;
         double init_y;
         double init_z;
+        vector<double> home_position = {0, 0};
         void start(string node);
         string set_mode(string desire_mode);
 };
@@ -97,8 +98,6 @@ void vehicle_command::start(string node)
     ros::param::get(("/" + node_name + "/init_R").c_str(), init_R);
     ros::param::get(("/" + node_name + "/init_P").c_str(), init_P);
     ros::param::get(("/" + node_name + "/init_Y").c_str(), init_Y);
-    home_position[0] = init_x;
-    home_position[1] = init_y;
     while (!ros::ok())
     {
         ros::Duration(update_time).sleep();
@@ -222,6 +221,31 @@ void vehicle_command::ros_thread_fun()
 void vehicle_command::controller_cmd_cb(const px4_cmd::Command::ConstPtr &msg)
 {
     controller_cmd = *msg;
+    // judge if achieve desire cmd
+    double dx = x - controller_cmd.desire_cmd[0];
+    double dy = y - controller_cmd.desire_cmd[1];
+    double dz = z - controller_cmd.desire_cmd[2];
+    if (msg->Mode == px4_cmd::Command::Move && state_mode == mavros_msgs::State::MODE_PX4_OFFBOARD)
+    {
+        if (abs(dx) < sigma && abs(dy) < sigma && abs(dz) < sigma)
+        {
+            desire_time++;
+        }
+        else
+        {
+            achieve_desire = false;
+            desire_time = 0;
+        }
+        if (desire_time >= 5)
+        {
+            achieve_desire = true;
+        }
+    }
+    else
+    {
+        desire_time = 0;
+    }
+    // reset home position when land
     if (state_mode == mavros_msgs::State::MODE_PX4_LAND && !arm_state && (msg->Move_mode == px4_cmd::Command::XYZ_POS || msg->Move_mode == px4_cmd::Command::XYZ_REL_POS))
     {
         home_position[0] = msg->desire_cmd[0];
@@ -272,8 +296,8 @@ void vehicle_command::controller_cmd_cb(const px4_cmd::Command::ConstPtr &msg)
         if (controller_cmd.Mode == px4_cmd::Command::Takeoff)
         {
             pos_setpoint.type_mask = 0b100111111000;
-            pos_setpoint.position.x = 0;
-            pos_setpoint.position.y = 0;
+            pos_setpoint.position.x = home_position[0];
+            pos_setpoint.position.y = home_position[1];
             pos_setpoint.position.z = controller_cmd.desire_cmd[2];
             pos_setpoint.header.frame_id = 1;
             pos_setpoint.yaw = 0;
@@ -347,8 +371,8 @@ void vehicle_command::controller_cmd_cb(const px4_cmd::Command::ConstPtr &msg)
         if (controller_cmd.Mode == px4_cmd::Command::Takeoff)
         {
             pos_setpoint.type_mask = 4096;
-            pos_setpoint.position.x = 0;
-            pos_setpoint.position.y = 0;
+            pos_setpoint.position.x = home_position[0];
+            pos_setpoint.position.y = home_position[1];
             pos_setpoint.position.z = controller_cmd.desire_cmd[2];
             pos_setpoint.header.frame_id = 1;
             pos_setpoint.yaw = 0;
@@ -407,18 +431,6 @@ void vehicle_command::pos_cb(const geometry_msgs::PoseStamped::ConstPtr &msg)
     x = msg->pose.position.x;
     y = msg->pose.position.y;
     z = msg->pose.position.z;
-    // judge if achieve desire cmd
-    double dx = x - controller_cmd.desire_cmd[0];
-    double dy = y - controller_cmd.desire_cmd[1];
-    double dz = z - controller_cmd.desire_cmd[2];
-    if (abs(dx) < sigma && abs(dy) < sigma && abs(dz) < sigma)
-    {
-        achieve_desire = true;
-    }
-    else
-    {
-        achieve_desire = false;
-    }
 }
 
 void vehicle_command::ext_cmd_cb(const px4_cmd::Command::ConstPtr &msg)

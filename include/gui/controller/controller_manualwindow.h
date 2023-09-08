@@ -71,6 +71,7 @@ class ControllerManualWindow : public QWidget
 
         // init vars
         bool first = true;
+        bool update_signal = false;
 
         // init widgets
         QMessageBox *msg_box;
@@ -210,6 +211,10 @@ class ControllerManualWindow : public QWidget
         // slot functions
         void update_table_slot()
         {
+            if (update_signal)
+            {
+                return;
+            }
             int row = cmd_table->currentIndex().row();
             int column = cmd_table->currentIndex().column();
             QVariant data = cmd_table->currentIndex().data();
@@ -217,6 +222,15 @@ class ControllerManualWindow : public QWidget
             if (check_input_data(str))
             {
                 cmd_values[0][row][column - 1] = stof(str);
+            }
+            else
+            {
+                update_signal = true;
+                QStandardItem *item = new QStandardItem();
+                item->setText(to_string(cmd_values[0][row][column - 1]).c_str());
+                item->setTextAlignment(Qt::AlignCenter);
+                cmd_model->setItem(row, column, item);
+                update_signal = false;
             }
         }
 
