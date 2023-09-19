@@ -37,6 +37,7 @@ class vehicle_state
         double init_R;
         double init_P;
         double init_Y;
+        double t_count;
         void get_sensor_topic();
         void pos_cb(const geometry_msgs::PoseStamped::ConstPtr &msg);
         void vel_cb(const geometry_msgs::TwistStamped::ConstPtr &msg);
@@ -44,6 +45,7 @@ class vehicle_state
         void ros_thread_fun();
 
     public:
+        QVector<double> t;
         QVector<double> x;
         QVector<double> y;
         QVector<double> z;
@@ -67,6 +69,7 @@ class vehicle_state
 void vehicle_state::get_state(string node)
 {
     node_name = node;
+    t_count = 0;
     int argc = 0;
     char **argv;
     string topic_header = "/" + node_name + "/mavros/";
@@ -108,12 +111,14 @@ void vehicle_state::pos_cb(const geometry_msgs::PoseStamped::ConstPtr &msg)
     tf::quaternionMsgToTF(msg->pose.orientation, quat);
     // 将旋转矩阵转换为欧拉角
     tf::Matrix3x3(quat).getRPY(R, P, Y);
+    t.push_back(t_count);
     x.push_back(msg->pose.position.x + init_x);
     y.push_back(msg->pose.position.y + init_y);
     z.push_back(msg->pose.position.z + init_z);
     pitch.push_back((P + init_P) * 180 / PI);
     roll.push_back((R + init_R) * 180 / PI);
     yaw.push_back((Y + init_Y) * 180 / PI);
+    t_count++;
 }
 
 void vehicle_state::vel_cb(const geometry_msgs::TwistStamped::ConstPtr &msg)

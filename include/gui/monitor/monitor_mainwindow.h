@@ -65,6 +65,7 @@ class MonitorMainWindow : public QWidget
         QStringList topics;
         QVector<vehicle_state *> data;
         QVector<std::thread *> threads;
+        QVector<QCPCurve *> curves;
         bool thread_stop = false;
 
         // output file string
@@ -192,10 +193,11 @@ class MonitorMainWindow : public QWidget
             for (int i = 0; i < count; i++)
             {
                 pen.setColor(QColor::fromRgb(gen_rand(255), gen_rand(255), gen_rand(255)));
-                plot->addGraph()->setName("");
-                plot->legend->removeItem(0);
-                plot->graph()->setPen(pen);
-                plot->graph()->setAntialiasedFill(true);
+                QCPCurve *curve = new QCPCurve(plot->xAxis, plot->yAxis);
+                curve->setPen(pen);
+                curve->removeFromLegend();
+                curve->setAntialiasedFill(true);
+                curves.push_back(curve);   
             }
             for (int i = 0; i < count; i++)
             {
@@ -386,19 +388,15 @@ class MonitorMainWindow : public QWidget
             int i = 0;
             for (auto item = data.begin(); item != data.end(); item++)
             {
-                plot->graph(i)->setData((*item)->x, (*item)->y);
+                curves[i]->setData((*item)->t, (*item)->x, (*item)->y);
                 if (i == 0)
                 {
-                    plot->graph(i)->rescaleAxes();
+                    curves[i]->rescaleAxes();
                 }
                 else
                 {
-                    plot->graph(i)->rescaleAxes(true);
+                    curves[i]->rescaleAxes(true);
                 }
-                i++;
-            }
-            for (auto item = data.begin(); item != data.end(); item++)
-            {
                 x_end[0] = *((*item)->x.end() - 1);
                 y_end[0] = *((*item)->y.end() - 1);
                 plot->graph(i)->setData(x_end, y_end);

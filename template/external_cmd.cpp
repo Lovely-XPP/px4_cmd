@@ -44,14 +44,14 @@ int main(int argc, char *argv[])
         vec->start((*item).toStdString());
         data.push_back(vec);
     }
-
+    Info(("External Command Start! Vehicle Count: " + to_string(nodes.size())).c_str());
     /************************ Edit  Here ************************/
     double t = 0;
     while (ros::ok())
     {
         for (size_t i = 0; i < nodes.size(); i++)
         {
-            data[i]->set_position(data[i]->init_x + 3 * sin(0.1 * t), data[i]->init_y + 3 * cos(0.1 * t), 3, px4_cmd::Command::ENU);
+            data[i]->set_position(data[i]->init_x + 2 * sin(0.4 * t), data[i]->init_y + 2 * cos(0.4 * t), 3, px4_cmd::Command::ENU);
         }
         ros::Duration(0.02).sleep();
         t += 0.02;
