@@ -2,6 +2,7 @@
 #include <QVector>
 #include <QString>
 #include <QStringList>
+#include <math.h>
 
 #include <px4_cmd/Command.h>
 #include <print_utility/printf_utility.h>
@@ -44,11 +45,18 @@ int main(int argc, char *argv[])
         data.push_back(vec);
     }
 
+    /************************ Edit  Here ************************/
+    double t = 0;
     while (ros::ok())
     {
-        data[0]->set_position(1, 1, 1, px4_cmd::Command::BODY);
-        ros::Duration(10).sleep();
+        for (size_t i = 0; i < nodes.size(); i++)
+        {
+            data[i]->set_position(data[i]->init_x + 3 * sin(0.1 * t), data[i]->init_y + 3 * cos(0.1 * t), 3, px4_cmd::Command::ENU);
+        }
+        ros::Duration(0.02).sleep();
+        t += 0.02;
     }
+    return 0;
 
     // Example to get initial position for uavs
     data[0]->init_x;
@@ -68,9 +76,9 @@ int main(int argc, char *argv[])
     data[0]->set_position(1, 1, 1, px4_cmd::Command::BODY);
 
     // set desired velocity to [1, 1, 1] of uav 0, use global ENU frame
-    //data[0]->set_velocity(1, 1, 1, px4_cmd::Command::ENU);
+    data[0]->set_velocity(1, 1, 1, px4_cmd::Command::ENU);
     // set desired velocity with height to [1, 1, 1] of uav 0, use global ENU frame 
-    //data[0]->set_velocity_with_height(1, 1, 1, px4_cmd::Command::ENU);
+    data[0]->set_velocity_with_height(1, 1, 1, px4_cmd::Command::ENU);
 
     return 0;
 }

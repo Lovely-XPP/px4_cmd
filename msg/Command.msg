@@ -13,10 +13,10 @@ uint8 Idle = 0
 uint8 Takeoff = 1
 uint8 Move = 2
 uint8 Hover = 3
-uint8 Loiter = 3
-uint8 Trajectory = 4
-uint8 User_define = 5
-uint8 Gliding = 6       ### 固定翼滑行模式
+uint8 Loiter = 4
+uint8 Trajectory = 5
+uint8 User_define = 6
+uint8 Gliding = 7       ### 固定翼滑行模式
 
 ## 移动命令坐标系
 uint8 Move_frame

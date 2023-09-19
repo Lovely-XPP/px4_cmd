@@ -616,11 +616,8 @@ class ControllerMainWindow : public QWidget
             for (size_t i = 0; i < nodes.size(); i++)
             {
                 std::thread ext_cmd_thread(&ControllerMainWindow::ext_cmd_thread_func, this, i);
+                ext_cmd_thread.detach();
                 ext_cmd_threads.push_back(&ext_cmd_thread);
-            }
-            for (size_t i = 0; i < nodes.size(); i++)
-            {
-                ext_cmd_threads[i]->detach();
             }
             ros::Duration(0.5).sleep();
             manual_button->setEnabled(false);
@@ -636,6 +633,7 @@ class ControllerMainWindow : public QWidget
                 cmd_values[node_id][1] = data[node_id]->ext_cmd.desire_cmd[1];
                 cmd_values[node_id][2] = data[node_id]->ext_cmd.desire_cmd[2];
                 cmd_values[node_id][3] = data[node_id]->ext_cmd.yaw_cmd;
+                cmds[node_id].Mode = data[node_id]->ext_cmd.Mode;
                 cmds[node_id].Move_mode = data[node_id]->ext_cmd.Move_mode;
                 cmds[node_id].Move_frame = data[node_id]->ext_cmd.Move_frame;
                 cmds[node_id].Vehicle = data[node_id]->ext_cmd.Vehicle;
@@ -665,6 +663,8 @@ class ControllerMainWindow : public QWidget
                     }
                 }
                 cmds[node_id].yaw_cmd = cmd_values[node_id][3];
+                pubs[node_id].publish(cmds[node_id]);
+                ros::Duration(0.02).sleep();
             }
             if (!ext_cmd_state)
             {
@@ -1060,8 +1060,6 @@ class ControllerMainWindow : public QWidget
 
         void update_table_info(int node_id)
         {
-            bool ext_cmd_state_single = false;
-            bool pre_ext_cmd_state_single = false;
             QString cmd_mode = "Loiter";
             QString pre_cmd = "";
             QString frame = "";
@@ -1137,18 +1135,13 @@ class ControllerMainWindow : public QWidget
                 }
 
                 // ext_cmd_publish_info
-                ext_cmd_state_single = data[node_id]->ext_cmd_state;
-                if (pre_ext_cmd_state_single != ext_cmd_state_single)
+                if (ext_cmd_state)
                 {
-                    if (ext_cmd_state)
-                    {
-                        item_8->setText("  Active  ");
-                    }
-                    else
-                    {
-                        item_8->setText("  Deactive  ");
-                    }
-                    pre_ext_cmd_state_single = ext_cmd_state_single;
+                    item_8->setText("  Active  ");
+                }
+                else
+                {
+                    item_8->setText("  Deactive  ");
                 }
 
                 // table info
@@ -1224,12 +1217,6 @@ class ControllerMainWindow : public QWidget
                 // sleep
                 ros::Duration(0.2).sleep();
             }
-        }
-
-        // subsribe function
-        void ext_cmd_sub_func(px4_cmd::Command::ConstPtr &msg, int i)
-        {
-            ext_cmds[i] = *msg;
         }
 
         // utility functions
