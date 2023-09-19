@@ -7,6 +7,7 @@
 #include <QLabel>
 #include <QVector>
 #include <QBrush>
+#include <QColor>
 #include <QTableView>
 #include <QPushButton>
 #include <QHeaderView>
@@ -29,6 +30,7 @@
 #include <gui/controller/controller_takeoffwindow.h>
 #include <gui/controller/controller_manualwindow.h>
 #include <gui/controller/controller_trajectorywindow.h>
+#include <gui/controller/controller_generatewindow.h>
 
 #define PI 3.14159265358979323846
 using namespace std;
@@ -42,6 +44,7 @@ class ControllerMainWindow : public QWidget
         ControllerTakeoffWindow *takeoff_win = new ControllerTakeoffWindow(win);
         ControllerManualWindow *manual_win = new ControllerManualWindow(win);
         ControllerTrajectoryWindow *trajectory_win = new ControllerTrajectoryWindow(win);
+        ControllerGenerateWindow *generate_win = new ControllerGenerateWindow(win);
         QWidget *parent;
         ControllerMainWindow(QWidget *parent_widget, QStringList nodes_input)
         {
@@ -358,6 +361,7 @@ class ControllerMainWindow : public QWidget
             QObject::connect(signal_button_1, &QPushButton::clicked, this, &ControllerMainWindow::ext_cmd_err_msg_slot);
             QObject::connect(mode_win, &ControllerModeWindow::change_mode_signal, this, &ControllerMainWindow::change_mode_slot);
             QObject::connect(takeoff_win, &ControllerTakeoffWindow::take_off_info_signal, this, &ControllerMainWindow::take_off_info_slot);
+            QObject::connect(generate_button, &QPushButton::clicked, this, &ControllerMainWindow::ext_cmd_generate_slot);
 
             // thread
             for (size_t i = 0; i < nodes.size(); i++)
@@ -833,6 +837,11 @@ class ControllerMainWindow : public QWidget
             msg_box->exec();
         }
 
+        void ext_cmd_generate_slot()
+        {
+            generate_win->win->exec();
+        }
+
         void update_info()
         {
             bool pre_arm_state = false;
@@ -1139,6 +1148,7 @@ class ControllerMainWindow : public QWidget
                     {
                         item_8->setText("  Deactive  ");
                     }
+                    pre_ext_cmd_state_single = ext_cmd_state_single;
                 }
 
                 // table info
@@ -1205,7 +1215,7 @@ class ControllerMainWindow : public QWidget
                 info_model->setItem(node_id, 7, item_8);
                 if (ext_cmd_state)
                 {
-                    info_model->setData(info_model->index(node_id, 7), QBrush(Qt::green), Qt::TextColorRole);
+                    info_model->setData(info_model->index(node_id, 7), QBrush(QColor(0,150,0)), Qt::TextColorRole);
                 }
                 else
                 {

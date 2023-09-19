@@ -88,14 +88,27 @@ target_link_libraries(ext_cmd ${catkin_LIBRARIES})
 # Generator
 link_libraries(Qt5::Widgets)
 add_executable(generator src/gui/generator.cpp)
+add_dependencies(generator ${${PROJECT_NAME}_EXPORTED_TARGETS})
 target_link_libraries(generator jsoncpp)
 target_link_libraries(generator tinyxml2)
 
 # Controller
 add_executable(controller src/gui/controller.cpp)
+add_dependencies(controller ${${PROJECT_NAME}_EXPORTED_TARGETS})
 target_link_libraries(controller ${catkin_LIBRARIES})
 
 # Monitor
 add_executable(monitor src/gui/monitor.cpp)
+add_dependencies(monitor ${${PROJECT_NAME}_EXPORTED_TARGETS})
 target_link_libraries(monitor ${catkin_LIBRARIES})
 target_link_libraries(monitor qcustomplot)
+
+# debug
+add_executable(debug src/debug.cpp)
+add_dependencies(debug ${${PROJECT_NAME}_EXPORTED_TARGETS})
+target_link_libraries(debug ${catkin_LIBRARIES})
+
+################## External cmd ##################
+add_executable(external_cmd template/external_cmd)
+add_dependencies(external_cmd ${${PROJECT_NAME}_EXPORTED_TARGETS})
+target_link_libraries(external_cmd ${catkin_LIBRARIES})

@@ -70,7 +70,7 @@ void vehicle_state::get_state(string node)
     int argc = 0;
     char **argv;
     string topic_header = "/" + node_name + "/mavros/";
-    ros::init(argc, argv, "px4_cmd" + node_name + "_info");
+    ros::init(argc, argv, "px4_cmd/" + node_name + "_state");
     ros::NodeHandle nh;
     ros::param::get(("/" + node_name + "/vehicle").c_str(), vehicle_name);
     ros::param::get(("/" + node_name + "/sensor").c_str(), sensor_name);

@@ -87,6 +87,7 @@ int main(int argc, char **argv)
         // 发布指令
         cmd_pub.publish(cmd);
     }
+    return 0;
 }
 
 // 订阅回调函数,获取设置的指令信息
