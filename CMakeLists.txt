@@ -13,6 +13,7 @@ set(CMAKE_INCLUDE_CURRENT_DIR ON)
 find_package(catkin REQUIRED COMPONENTS
     cv_bridge
     roscpp
+    rospy
     std_msgs
     mavros_msgs
     geometry_msgs
@@ -112,3 +113,9 @@ target_link_libraries(debug ${catkin_LIBRARIES})
 add_executable(external_cmd template/external_cmd)
 add_dependencies(external_cmd ${${PROJECT_NAME}_EXPORTED_TARGETS})
 target_link_libraries(external_cmd ${catkin_LIBRARIES})
+
+catkin_install_python(PROGRAMS
+    template/external_cmd.py
+    template/vehicle_external_command.py
+    DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
