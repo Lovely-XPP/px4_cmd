@@ -171,6 +171,11 @@ void sub_set_cmd_cb(const px4_cmd::Command::ConstPtr &msg)
         if (set_cmd.Mode == px4_cmd::Command::Takeoff)
         {
             pos_setpoint.type_mask = 4096;
+            pos_setpoint.position.x = set_cmd.desire_cmd[0];
+            pos_setpoint.position.y = set_cmd.desire_cmd[1];
+            pos_setpoint.position.z = set_cmd.desire_cmd[2];
+            pos_setpoint.header.frame_id = 1;
+            return;
         }
 
         if (set_cmd.Mode == px4_cmd::Command::Gliding)

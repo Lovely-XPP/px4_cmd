@@ -48,7 +48,7 @@ class GeneratorMainWindow : public QWidget
 
     private:
         // settings
-        string version = "V1.1.6";
+        string version = "V1.1.7";
         int local_port = 34580;
         int remote_port = 14540;
         int sitl_port = 24560;
@@ -1653,7 +1653,7 @@ class GeneratorMainWindow : public QWidget
             XMLElement *joint_axis = doc.NewElement("axis");
             joint->InsertEndChild(joint_axis);
             XMLElement *xyz = doc.NewElement("xyz");
-            xyz->SetText("0 0 0");
+            xyz->SetText("1 0 0");
             joint_axis->InsertEndChild(xyz);
             XMLElement *lim = doc.NewElement("limit");
             joint_axis->InsertEndChild(lim);

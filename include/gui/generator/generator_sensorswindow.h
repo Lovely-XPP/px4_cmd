@@ -53,6 +53,7 @@ class GeneratorSensorsWindow : public QWidget
         sensor_data rgb_cam;
         sensor_data stereo_cam;
         sensor_data realsense_cam;
+        vector<sensor_data> load_data;
         vector<string> sensors_types = {"--- Select Sensor Type ---", "Lidar", "Depth Camera", "RGB Camera", "Stereo Camera", "Realsense Camera"};
 
         // init widgets
@@ -497,12 +498,12 @@ class GeneratorSensorsWindow : public QWidget
             }
             // save position data
             select_data->position[0] = x;
-            select_data->position[0] = y;
-            select_data->position[0] = z;
+            select_data->position[1] = y;
+            select_data->position[2] = z;
             // save pose data
             select_data->pose[0] = R;
-            select_data->pose[0] = P;
-            select_data->pose[0] = Y;
+            select_data->pose[1] = P;
+            select_data->pose[2] = Y;
         }
 
         void save_slot()
@@ -581,7 +582,6 @@ class GeneratorSensorsWindow : public QWidget
             Json::Reader json_reader;
             Json::Value root;
             sensor_data load_single_data;
-            vector<sensor_data> load_data;
             // err msg
             msg_box = new QMessageBox();
             msg_box->setIcon(QMessageBox::Icon::Critical);
@@ -646,6 +646,7 @@ class GeneratorSensorsWindow : public QWidget
                         msg_box->exec();
                         return;
                     }
+                    load_single_data.name = name;
                     load_single_data.position = {x, y, z};
                     load_single_data.pose = {R, P, Y};
                     load_single_data.samples = samples;

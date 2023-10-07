@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<sdf version='1.7'>
+<sdf version='1.5'>
   <model name='plane'>
     <pose>0 0 0.246 0 0 0</pose>
     <link name='base_link'>
@@ -738,15 +738,14 @@
         </channel>
       </control_channels>
     </plugin>
-    <!--fixedwing catapult-->
+    <static>0</static>
     <plugin name='catapult_plugin' filename='libgazebo_catapult_plugin.so'>
       <robotNamespace/>
-      <link_name>plane::base_link</link_name>
+      <link_name>base_link</link_name>
       <commandSubTopic>/gazebo/command/motor_speed</commandSubTopic>
       <motorNumber>4</motorNumber>
       <force>50.0</force>
       <duration>0.5</duration>
     </plugin>
-    <static>0</static>
   </model>
 </sdf>

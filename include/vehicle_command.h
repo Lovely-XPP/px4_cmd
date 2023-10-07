@@ -129,14 +129,20 @@ string vehicle_command::set_mode(string desire_mode)
         }
 
         bool desire_arm_cmd = (desire_mode == "Arm") ? true : false;
-        while ((current_state.armed != desire_arm_cmd) && error_times < 10)
+        while (error_times < 10)
         {
+            ros::spinOnce();
+            ros::Duration(0.2).sleep();
+            if (current_state.armed == desire_arm_cmd)
+            {
+                return "";
+            }
             arm_cmd.request.value = desire_arm_cmd;
             if (arming_client.call(arm_cmd) && arm_cmd.response.success)
             {
                 // 执行回调函数
                 ros::spinOnce();
-                ros::Duration(0.1).sleep();
+                ros::Duration(0.2).sleep();
                 if (current_state.armed == desire_arm_cmd)
                 {
                     return "";
@@ -161,6 +167,7 @@ string vehicle_command::set_mode(string desire_mode)
     // 更改模式
     while (current_state.mode != desire_mode && error_times < 10)
     {
+        err_msg = "";
         // 处于OFFBOARD模式时，只能改为AUTO模式
         if (current_state.mode == "OFFBOARD")
         {
@@ -174,7 +181,7 @@ string vehicle_command::set_mode(string desire_mode)
         mode_cmd.request.custom_mode = desire_mode;
         mode_client.call(mode_cmd);
         ros::spinOnce();
-        ros::Duration(0.1).sleep();
+        ros::Duration(0.2).sleep();
         if (mode_cmd.response.mode_sent)
         {
             if (current_state.mode == desire_mode)
@@ -375,7 +382,6 @@ void vehicle_command::controller_cmd_cb(const px4_cmd::Command::ConstPtr &msg)
             pos_setpoint.position.y = home_position[1];
             pos_setpoint.position.z = controller_cmd.desire_cmd[2];
             pos_setpoint.header.frame_id = 1;
-            pos_setpoint.yaw = 0;
             return;
         }
 

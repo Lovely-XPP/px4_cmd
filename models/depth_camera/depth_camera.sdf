@@ -1,7 +1,7 @@
 <?xml version="1.0" ?>
 <sdf version="1.5">
     <model name="depth_camera">
-        <pose>0.0 0.0 0.0 0.0 0.0 0.0 </pose>
+        <pose>0.1 0.0 0.0 0.0 0.0 0.0 </pose>
         <link name="link">
             <inertial>
                 <pose>0.01 0.025 0.025 0 0 0</pose>
@@ -30,7 +30,7 @@
                     <image>
                         <format>R8G8B8</format>
                         <width>640</width>
-                        <height>480</height>
+                        <height>640</height>
                     </image>
                     <clip>
                         <near>0.5</near>

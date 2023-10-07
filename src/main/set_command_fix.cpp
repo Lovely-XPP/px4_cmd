@@ -126,6 +126,7 @@ int main(int argc, char **argv)
 
     // 广播初始化
     cmd_pub = nh.advertise<px4_cmd::Command>("/px4_cmd/control_command", 10);
+    ext_on_pub = nh.advertise<std_msgs::Bool>("/px4_cmd/ext_on", 20);
 
     // 命令信息
     desire_cmd_value[0] = 0.0;

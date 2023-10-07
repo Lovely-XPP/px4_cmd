@@ -104,12 +104,7 @@ add_dependencies(monitor ${${PROJECT_NAME}_EXPORTED_TARGETS})
 target_link_libraries(monitor ${catkin_LIBRARIES})
 target_link_libraries(monitor qcustomplot)
 
-# debug
-add_executable(debug src/debug.cpp)
-add_dependencies(debug ${${PROJECT_NAME}_EXPORTED_TARGETS})
-target_link_libraries(debug ${catkin_LIBRARIES})
-
-################## External cmd ##################
+################## External cmd for Controller GUI ##################
 add_executable(external_cmd template/external_cmd)
 add_dependencies(external_cmd ${${PROJECT_NAME}_EXPORTED_TARGETS})
 target_link_libraries(external_cmd ${catkin_LIBRARIES})

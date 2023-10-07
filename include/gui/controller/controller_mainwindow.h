@@ -57,7 +57,7 @@ class ControllerMainWindow : public QWidget
 
     private:
         // settings
-        string version = "V1.0.0";
+        string version = "V1.0.1";
         QString current_cmd = "None";
         double update_time = 0.3;
 
@@ -79,6 +79,7 @@ class ControllerMainWindow : public QWidget
         QMessageBox *msg_box;
         QPushButton *mode_button;
         QPushButton *signal_button_1;
+        QPushButton *signal_button_2;
         QPushButton *arm_button;
         QPushButton *takeoff_button;
         QPushButton *disarm_button;
@@ -214,7 +215,9 @@ class ControllerMainWindow : public QWidget
             return_button = new QPushButton("Return", win);
             generate_button = new QPushButton("Generate Template External CMD Code");
             signal_button_1 = new QPushButton("", win);
+            signal_button_2 = new QPushButton("", win);
             signal_button_1->setVisible(false);
+            signal_button_2->setVisible(false);
             manual_button->setMinimumHeight(60);
             trajectory_button->setMinimumHeight(60);
             external_button->setMinimumHeight(60);
@@ -359,6 +362,7 @@ class ControllerMainWindow : public QWidget
             QObject::connect(trajectory_button, &QPushButton::clicked, this, &ControllerMainWindow::trajectory_cmd_slot);
             QObject::connect(external_button, &QPushButton::clicked, this, &ControllerMainWindow::ext_cmd_slot);
             QObject::connect(signal_button_1, &QPushButton::clicked, this, &ControllerMainWindow::ext_cmd_err_msg_slot);
+            QObject::connect(signal_button_2, &QPushButton::clicked, this, &ControllerMainWindow::arm_fail_slot);
             QObject::connect(mode_win, &ControllerModeWindow::change_mode_signal, this, &ControllerMainWindow::change_mode_slot);
             QObject::connect(takeoff_win, &ControllerTakeoffWindow::take_off_info_signal, this, &ControllerMainWindow::take_off_info_slot);
             QObject::connect(generate_button, &QPushButton::clicked, this, &ControllerMainWindow::ext_cmd_generate_slot);
@@ -502,16 +506,14 @@ class ControllerMainWindow : public QWidget
                     msg_box = new QMessageBox(win);
                     msg_box->setIcon(QMessageBox::Icon::Critical);
                     msg_box->setWindowTitle("Error");
-                    msg_box->setText("Armed Failure, Please Retry.");
+                    msg_box->setText(("Armed Failure:" + err + "\nPlease Retry...").c_str());
                     msg_box->exec();
                     for (size_t j = 0; j < nodes.size(); j++)
                     {
                         data[i]->set_mode(mavros_msgs::State::MODE_PX4_RTL);
                     }
                     operating_info = "";
-                    mode_button->setEnabled(true);
-                    takeoff_button->setEnabled(true);
-                    arm_button->setEnabled(true);
+                    signal_button_2->click();
                     return;
                 }
             }
@@ -840,6 +842,13 @@ class ControllerMainWindow : public QWidget
         void ext_cmd_generate_slot()
         {
             generate_win->win->exec();
+        }
+
+        void arm_fail_slot()
+        {
+            mode_button->setEnabled(true);
+            takeoff_button->setEnabled(true);
+            arm_button->setEnabled(true);
         }
 
         void update_info()
