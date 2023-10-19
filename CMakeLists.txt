@@ -10,6 +10,9 @@ set(CMAKE_CXX_FLAGS "-std=c++11")
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
 # find package
+# opencv
+find_package(OpenCV REQUIRED)
+# catkin package
 find_package(catkin REQUIRED COMPONENTS
     cv_bridge
     roscpp
@@ -33,6 +36,7 @@ set(CMAKE_AUTOMOC ON)
 include_directories(
     include
     ${catkin_INCLUDE_DIRS}
+    ${OpenCV_INCLUDE_DIRS}
 )
 
 # third party lib
@@ -62,7 +66,7 @@ target_link_libraries(set_mode ${catkin_LIBRARIES})
 # set_command
 add_executable(set_cmd src/main/set_command.cpp)
 add_dependencies(set_cmd ${${PROJECT_NAME}_EXPORTED_TARGETS})
-target_link_libraries(set_cmd ${catkin_LIBRARIES})
+target_link_libraries(set_cmd ${catkin_LIBRARIES} ${OpenCV_LIBS})
 
 # send_command
 add_executable(send_cmd src/main/send_command.cpp)
@@ -78,7 +82,7 @@ target_link_libraries(set_cmd_fix ${catkin_LIBRARIES})
 # recieve camera image
 add_executable(recieve_video src/main/recieve_video.cpp)
 add_dependencies(recieve_video ${${PROJECT_NAME}_EXPORTED_TARGETS})
-target_link_libraries(recieve_video ${catkin_LIBRARIES})
+target_link_libraries(recieve_video ${catkin_LIBRARIES} ${OpenCV_LIBS})
 
 # External Cmd example
 add_executable(ext_cmd src/main/ext_command.cpp)

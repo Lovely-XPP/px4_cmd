@@ -3,6 +3,8 @@
 #include <thread>
 #include <iostream>
 #include <string>
+#include <stdio.h>
+#include <termio.h>
 
 #include <mavros_msgs/State.h>
 #include <geometry_msgs/PoseStamped.h>
@@ -22,13 +24,19 @@ ros::Publisher cmd_pub;
 ros::Publisher ext_on_pub;
 ros::Subscriber state_sub;
 ros::Subscriber cmd_sub;
+ros::Subscriber mode_sub;
 
 // 订阅信息
 geometry_msgs::PoseStamped current_state;
 std_msgs::Bool ext_on_msg;
-void state_cb(const geometry_msgs::PoseStamped::ConstPtr &msg);
 px4_cmd::Command external_cmd;
+string state_mode;
+bool arm_state;
+
+// 声明回调函数
+void state_cb(const geometry_msgs::PoseStamped::ConstPtr &msg);
 void external_cmd_cb(const px4_cmd::Command::ConstPtr &msg);
+void mode_cb(const mavros_msgs::State::ConstPtr &msg);
 
 // 初始化命令
 px4_cmd::Command cmd;
@@ -79,6 +87,7 @@ int switch_trajectory_mode = 0;
 string confirm_exec = "0";
 bool correct = false;
 const int cmd_len = command_list.size();
+double home_position[2] = {0};
 
 // 轨迹模式专用
 // 判断是否继续增加航点
@@ -97,6 +106,7 @@ std::vector<vector<float>> trajectory_points = {trajectory_point};
 
 // 外部命令模式专用
 std::vector<string> null_string;
+bool ext_exit = false;
 
 // 初始化命令信息
 float desire_cmd_value[3];
@@ -108,7 +118,7 @@ void print_current_cmd(px4_cmd::Command cmd, string topic, bool topic_state);
 void pub_thread_fun();
 void print_trajectory_info(int mode, vector<float> point, std::vector<vector<float>> points, int start);
 bool input_cmd(string msg1, string msg2, string msg3, int other_msg, ...);
-
+void judge_esc_thread_func();
 
 /*     主函数      */
 int main(int argc, char **argv)
@@ -128,6 +138,7 @@ int main(int argc, char **argv)
     // 订阅
     state_sub = nh.subscribe<geometry_msgs::PoseStamped>("/mavros/local_position/pose", 10, state_cb);
     cmd_sub = nh.subscribe<px4_cmd::Command>(topic_name, 20, external_cmd_cb);
+    mode_sub = nh.subscribe<mavros_msgs::State>("/mavros/state", 20, mode_cb);
 
     // 广播初始化
     cmd_pub = nh.advertise<px4_cmd::Command>("/px4_cmd/control_command", 10);
@@ -153,6 +164,11 @@ int main(int argc, char **argv)
     // 主循环
     while (ros::ok())
     {
+        if (state_mode == mavros_msgs::State::MODE_PX4_LAND && !arm_state && (cmd.Move_mode == px4_cmd::Command::XYZ_POS || cmd.Move_mode == px4_cmd::Command::XYZ_REL_POS))
+        {
+            home_position[0] = cmd.desire_cmd[0];
+            home_position[1] = cmd.desire_cmd[1];
+        }
         // 清屏及初始化
         system("clear");
         cout << POINTER;
@@ -210,8 +226,8 @@ int main(int argc, char **argv)
                 desire_cmd_value[2] = abs(desire_cmd_value[2]);
                 cmd.Move_frame = px4_cmd::Command::ENU;
                 cmd.Move_mode = px4_cmd::Command::XYZ_POS;
-                desire_cmd_value[0] = current_state.pose.position.x;
-                desire_cmd_value[1] = current_state.pose.position.y;
+                desire_cmd_value[0] = home_position[0];
+                desire_cmd_value[1] = home_position[1];
                 cmd.desire_cmd[0] = desire_cmd_value[0];
                 cmd.desire_cmd[1] = desire_cmd_value[1];
                 cmd.desire_cmd[2] = desire_cmd_value[2];
@@ -491,7 +507,9 @@ int main(int argc, char **argv)
                 }
                 Info("Trajectory Executed Done, Automatically changed to Hover Command!");
                 cmd.Mode = px4_cmd::Command::Hover;
+                cmd.Move_frame = px4_cmd::Command::ENU;
                 sleep(2);
+                break;
             }
 
             // 外部命令模式
@@ -500,7 +518,9 @@ int main(int argc, char **argv)
                 cmd.Mode = external_cmd.Mode;
                 cmd.Move_frame = external_cmd.Move_frame;
                 cmd.Move_mode = external_cmd.Move_mode;
-                while (true)
+                std::thread judge_esc_thread(judge_esc_thread_func);
+                judge_esc_thread.detach();
+                while (true) // 按ESC退出
                 {
                     ext_on = true;
                     ext_on_msg.data = ext_on;
@@ -511,25 +531,47 @@ int main(int argc, char **argv)
                     {
                         system("clear");
                         print_title("PX4 External Command", null_string);
-                        cout << RED << "[ERROR] Outside Cmd Topic Disconneted!" << WHITE << endl;
-                        sleep(2);
+                        cout << RED << "[ERROR] External Cmd Topic Disconneted!" << WHITE << endl;
+                        cout << "\nPress [ESC] to exit." << endl;
                         cmd.Mode = px4_cmd::Command::Hover;
+                        cmd.Move_frame = px4_cmd::Command::ENU;
+                        switch_cmd = px4_cmd::Command::Hover;
                         ext_on = false;
                         ext_on_msg.data = ext_on;
                         ext_on_pub.publish(ext_on_msg);
+                        while (!ext_exit)
+                        {
+                            ros::Duration(0.2).sleep();
+                        }
+                        ext_exit = false;
+                        break;
+                    }
+                    if (ext_exit)
+                    {
+                        system("clear");
+                        print_title("PX4 External Command", null_string);
+                        cout << YELLOW << "[INFO] User Terminate External Cmd!" << WHITE << endl;
+                        sleep(2);
+                        cmd.Mode = px4_cmd::Command::Hover;
+                        cmd.Move_frame = px4_cmd::Command::ENU;
+                        switch_cmd = px4_cmd::Command::Hover;
+                        ext_on = false;
+                        ext_on_msg.data = ext_on;
+                        ext_on_pub.publish(ext_on_msg);
+                        ext_exit = false;
                         break;
                     }
                     cmd.desire_cmd[0] = external_cmd.desire_cmd[0];
                     cmd.desire_cmd[1] = external_cmd.desire_cmd[1];
                     cmd.desire_cmd[2] = external_cmd.desire_cmd[2];
                     cmd.yaw_cmd = external_cmd.yaw_cmd;
-                    cmd.Move_mode = external_cmd.Move_mode;
-                    cmd.Move_frame = external_cmd.Move_frame;
                     system("clear");
                     print_title("PX4 External Command", null_string);
+                    cout << "Exit: Press [ESC]" << endl;
                     cout << "Time: " << fixed << setprecision(2) << external_cmd.ext_time << "/" << external_cmd.ext_total_time << endl;
                     print_current_cmd(cmd, "", false);
                 }
+                break;
             }
             // 刷新
             default:
@@ -590,6 +632,12 @@ void state_cb(const geometry_msgs::PoseStamped::ConstPtr &msg)
 void external_cmd_cb(const px4_cmd::Command::ConstPtr &msg)
 {
     external_cmd = *msg;
+}
+
+void mode_cb(const mavros_msgs::State::ConstPtr &msg)
+{
+    state_mode = msg->mode;
+    arm_state = msg->armed;
 }
 
 // 轨迹标题输出
@@ -659,4 +707,30 @@ bool input_cmd(string msg1, string msg2, string msg3, int other_msg, ...)
         exec = false;
     }
     return exec;
+}
+
+void judge_esc_thread_func()
+{
+    int in;
+    while (cmd_sub.getNumPublishers() > 0)
+    {
+        struct termios new_settings;
+        struct termios stored_settings;
+        tcgetattr(0, &stored_settings); // 读取原始配置信息
+        new_settings = stored_settings;
+        new_settings.c_lflag &= (~ICANON); // 屏蔽整行缓存，不需要回车，输入单个字符即可输出
+        new_settings.c_cc[VTIME] = 0;
+        new_settings.c_cc[VMIN] = 1;
+        tcsetattr(0, TCSANOW, &new_settings); // 设置新的配置信息
+
+        in = getchar();
+
+        tcsetattr(0, TCSANOW, &stored_settings); // 恢复原始配置信息
+
+        if (in == 27)
+        {
+            ext_exit = true;
+            break;
+        }
+    }
 }

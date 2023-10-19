@@ -74,6 +74,7 @@ class ControllerMainWindow : public QWidget
         bool ext_cmd_state = false;
         QStringList nodes;
         QString operating_info;
+        bool fix_wing_include = false;
 
         //Widgets
         QMessageBox *msg_box;
@@ -129,6 +130,7 @@ class ControllerMainWindow : public QWidget
                 if (data[i]->vehicle_name == "plane")
                 {
                     cmd.Vehicle = px4_cmd::Command::FixWing;
+                    fix_wing_include = true;
                 }
                 else
                 {
@@ -728,6 +730,11 @@ class ControllerMainWindow : public QWidget
             external_button->setEnabled(false);
             hover_button->setEnabled(false);
             land_button->setEnabled(false);
+            // fix wing need to land manually
+            if (fix_wing_include)
+            {
+                land_button->setEnabled(true);
+            }
             return_button->setEnabled(false);
             std::thread return_thread(&ControllerMainWindow::return_thread_func, this);
             return_thread.detach();
@@ -941,6 +948,11 @@ class ControllerMainWindow : public QWidget
                             external_button->setEnabled(false);
                             hover_button->setEnabled(false);
                             land_button->setEnabled(false);
+                            // fix wing need to land manually
+                            if (fix_wing_include)
+                            {
+                                land_button->setEnabled(true);
+                            }
                             return_button->setEnabled(false);
                         }
                     }
