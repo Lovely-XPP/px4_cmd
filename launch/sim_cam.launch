@@ -1,5 +1,7 @@
 <?xml version="1.0"?>
 <launch>
+    <arg name="video_show" default="true"/>
+
     <!-- PX4 sim -->
     <include file="$(find px4_cmd)/launch/sim.launch">
         <arg name="vehicle" value="iris"/>
@@ -9,6 +11,6 @@
     <!-- Video Recieve -->
     <include file="$(find px4_cmd)/launch/video.launch">
         <arg name="camera_topic" value="/iris/usb_cam/image_raw"/>
-        <arg name="video_show" value="true"/>
+        <arg name="video_show" value="$(arg video_show)"/>
     </include>
 </launch>

@@ -515,9 +515,6 @@ int main(int argc, char **argv)
             // 外部命令模式
             case px4_cmd::Command::User_define:
             {
-                cmd.Mode = external_cmd.Mode;
-                cmd.Move_frame = external_cmd.Move_frame;
-                cmd.Move_mode = external_cmd.Move_mode;
                 std::thread judge_esc_thread(judge_esc_thread_func);
                 judge_esc_thread.detach();
                 while (true) // 按ESC退出
@@ -539,6 +536,7 @@ int main(int argc, char **argv)
                         ext_on = false;
                         ext_on_msg.data = ext_on;
                         ext_on_pub.publish(ext_on_msg);
+                        ros::Duration(1).sleep();
                         while (!ext_exit)
                         {
                             ros::Duration(0.2).sleep();
@@ -551,7 +549,7 @@ int main(int argc, char **argv)
                         system("clear");
                         print_title("PX4 External Command", null_string);
                         cout << YELLOW << "[INFO] User Terminate External Cmd!" << WHITE << endl;
-                        sleep(2);
+                        ros::Duration(1).sleep();
                         cmd.Mode = px4_cmd::Command::Hover;
                         cmd.Move_frame = px4_cmd::Command::ENU;
                         switch_cmd = px4_cmd::Command::Hover;
@@ -561,6 +559,9 @@ int main(int argc, char **argv)
                         ext_exit = false;
                         break;
                     }
+                    cmd.Mode = external_cmd.Mode;
+                    cmd.Move_frame = external_cmd.Move_frame;
+                    cmd.Move_mode = external_cmd.Move_mode;
                     cmd.desire_cmd[0] = external_cmd.desire_cmd[0];
                     cmd.desire_cmd[1] = external_cmd.desire_cmd[1];
                     cmd.desire_cmd[2] = external_cmd.desire_cmd[2];
