@@ -216,13 +216,13 @@ void sub_set_cmd_cb(const px4_cmd::Command::ConstPtr &msg)
         {
             case px4_cmd::Command::XYZ_POS:
             {
-                pos_setpoint.type_mask = 12288;
+                pos_setpoint.type_mask = 0b100111111000;
                 break;
             }
 
             case px4_cmd::Command::XYZ_REL_POS:
             {
-                pos_setpoint.type_mask = 12288;
+                pos_setpoint.type_mask = 0b100111111000;
                 break;
             }
         }

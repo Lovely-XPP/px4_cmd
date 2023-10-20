@@ -357,7 +357,7 @@ void vehicle_command::controller_cmd_cb(const px4_cmd::Command::ConstPtr &msg)
     // 固定翼信息
     if (controller_cmd.Vehicle == px4_cmd::Command::FixWing)
     {
-        if (controller_cmd.Mode == px4_cmd::Command::Hover)
+        if (controller_cmd.Mode == px4_cmd::Command::Loiter)
         {
             if (!hover)
             {
@@ -394,13 +394,13 @@ void vehicle_command::controller_cmd_cb(const px4_cmd::Command::ConstPtr &msg)
         {
             case px4_cmd::Command::XYZ_POS:
             {
-                pos_setpoint.type_mask = 12288;
+                pos_setpoint.type_mask = 0b100111111000;
                 break;
             }
 
             case px4_cmd::Command::XYZ_REL_POS:
             {
-                pos_setpoint.type_mask = 12288;
+                pos_setpoint.type_mask = 0b100111111000;
                 break;
             }
         }

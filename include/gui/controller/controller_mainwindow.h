@@ -212,7 +212,7 @@ class ControllerMainWindow : public QWidget
             manual_button = new QPushButton("Manual CMD", win);
             trajectory_button = new QPushButton("Trajectory CMD", win);
             external_button = new QPushButton("External CMD", win);
-            hover_button = new QPushButton("Hover", win);
+            hover_button = new QPushButton("Hover / Loiter", win);
             land_button = new QPushButton("Land", win);
             return_button = new QPushButton("Return", win);
             generate_button = new QPushButton("Generate Template External CMD Code");
@@ -544,9 +544,6 @@ class ControllerMainWindow : public QWidget
                 std::thread trajectory_cmd_thread(&ControllerMainWindow::trajectory_cmd_thread_func, this);
                 trajectory_cmd_thread.detach();
                 ros::Duration(0.5).sleep();
-                manual_button->setEnabled(false);
-                external_button->setEnabled(false);
-                trajectory_button->setEnabled(false);
             }
         }
 
@@ -600,9 +597,6 @@ class ControllerMainWindow : public QWidget
             }
             operating_info = "Trajectory CMD Done. Change to Hover Mode.";
             sleep(3);
-            manual_button->setEnabled(true);
-            external_button->setEnabled(true);
-            trajectory_button->setEnabled(true);
             hover_button->click();
         }
 
@@ -673,7 +667,14 @@ class ControllerMainWindow : public QWidget
             }
             if (!ext_cmd_state)
             {
-                cmds[node_id].Mode = px4_cmd::Command::Hover;
+                if (data[node_id]->vehicle_name == "plane")
+                {
+                    cmds[node_id].Mode = px4_cmd::Command::Loiter;
+                }
+                else
+                {
+                    cmds[node_id].Mode = px4_cmd::Command::Hover;
+                }
             }
             manual_button->setEnabled(true);
             external_button->setEnabled(true);
@@ -692,6 +693,11 @@ class ControllerMainWindow : public QWidget
         {
             for (size_t i = 0; i < nodes.size(); i++)
             {
+                if (data[i]->vehicle_name == "plane")
+                {
+                    cmds[i].Mode = px4_cmd::Command::Loiter;
+                    continue;
+                }
                 cmds[i].Mode = px4_cmd::Command::Hover;
             }
         }
@@ -782,9 +788,6 @@ class ControllerMainWindow : public QWidget
                 operating_info = "Flying to Set Point...";
                 std::thread manual_cmd_thread(&ControllerMainWindow::manual_cmd_thread_func, this);
                 manual_cmd_thread.detach();
-                manual_button->setEnabled(false);
-                external_button->setEnabled(false);
-                trajectory_button->setEnabled(false);
             }
         }
 
@@ -832,9 +835,6 @@ class ControllerMainWindow : public QWidget
             }
             operating_info = "Manual CMD Done. Change to Hover Mode";
             sleep(3);
-            manual_button->setEnabled(true);
-            external_button->setEnabled(true);
-            trajectory_button->setEnabled(true);
             hover_button->click();
         }
 
