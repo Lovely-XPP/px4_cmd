@@ -1,6 +1,6 @@
 import rospy
 from px4_cmd.msg import Command
-from vehicle_external_command import vehicle_external_command
+from px4_cmd.vehicle_external_command import vehicle_external_command
 import os, time, math
 
 def detect_px4() -> "list[str]":

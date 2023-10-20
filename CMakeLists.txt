@@ -1,7 +1,5 @@
 cmake_minimum_required(VERSION 3.11)
-if(POLICY CMP0079)
-    cmake_policy(SET CMP0079 NEW)
-endif(POLICY CMP0079)
+
 # project name version languages
 project(px4_cmd VERSION 1.0.3 LANGUAGES CXX)
 
@@ -54,6 +52,7 @@ generate_messages(DEPENDENCIES std_msgs)
 
 catkin_package(
     INCLUDE_DIRS include
+    LIBRARIES vehicle_external_cmd single_vehicle_external_cmd
     CATKIN_DEPENDS message_runtime std_msgs
 )
 
@@ -84,11 +83,6 @@ add_executable(recieve_video src/main/recieve_video.cpp)
 add_dependencies(recieve_video ${${PROJECT_NAME}_EXPORTED_TARGETS})
 target_link_libraries(recieve_video ${catkin_LIBRARIES} ${OpenCV_LIBS})
 
-# External Cmd example
-add_executable(ext_cmd src/main/ext_command.cpp)
-add_dependencies(ext_cmd ${${PROJECT_NAME}_EXPORTED_TARGETS})
-target_link_libraries(ext_cmd ${catkin_LIBRARIES})
-
 ##################  GUI  ###################
 # Generator
 link_libraries(Qt5::Widgets)
@@ -108,13 +102,26 @@ add_dependencies(monitor ${${PROJECT_NAME}_EXPORTED_TARGETS})
 target_link_libraries(monitor ${catkin_LIBRARIES})
 target_link_libraries(monitor qcustomplot)
 
-################## External cmd for Controller GUI ##################
-add_executable(external_cmd template/external_cmd)
-add_dependencies(external_cmd ${${PROJECT_NAME}_EXPORTED_TARGETS})
-target_link_libraries(external_cmd ${catkin_LIBRARIES})
+################## External cmd  ##################
+add_library(vehicle_external_cmd src/template/vehicle_external_command.cpp)
+add_dependencies(vehicle_external_cmd ${${PROJECT_NAME}_EXPORTED_TARGETS})
+target_link_libraries(vehicle_external_cmd ${catkin_LIBRARIES})
 
-catkin_install_python(PROGRAMS
-    template/external_cmd.py
-    template/vehicle_external_command.py
-    DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+add_library(single_vehicle_external_cmd src/template/single_external_command.cpp)
+add_dependencies(single_vehicle_external_cmd ${${PROJECT_NAME}_EXPORTED_TARGETS})
+target_link_libraries(single_vehicle_external_cmd ${catkin_LIBRARIES})
+
+install(
+    DIRECTORY include/template
+    DESTINATION ${CATKIN_DEVEL_PREFIX}/include/${PROJECT_NAME}
+)
+
+install(
+    TARGETS vehicle_external_cmd single_vehicle_external_cmd
+    LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+)
+
+install(
+    FILES scripts/template/vehicle_external_command.py scripts/template/single_vehicle_external_command.py
+    DESTINATION ${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_PYTHON_DESTINATION}
 )

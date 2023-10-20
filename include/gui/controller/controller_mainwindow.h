@@ -216,6 +216,7 @@ class ControllerMainWindow : public QWidget
             land_button = new QPushButton("Land", win);
             return_button = new QPushButton("Return", win);
             generate_button = new QPushButton("Generate Template External CMD Code");
+            generate_button->setVisible(false);
             signal_button_1 = new QPushButton("", win);
             signal_button_2 = new QPushButton("", win);
             signal_button_1->setVisible(false);
@@ -345,7 +346,7 @@ class ControllerMainWindow : public QWidget
             vbox_buttom_1->addWidget(return_button);
             hbox_buttom->addLayout(vbox_buttom_1, 1);
             vbox_buttom_2->addWidget(info_table);
-            vbox_buttom_2->addWidget(generate_button);
+            //vbox_buttom_2->addWidget(generate_button);
             hbox_buttom->addLayout(vbox_buttom_2, 5);
             vbox->addLayout(hbox_buttom);
             win->setLayout(vbox);

@@ -115,9 +115,9 @@ void vehicle_state::pos_cb(const geometry_msgs::PoseStamped::ConstPtr &msg)
     x.push_back(msg->pose.position.x + init_x);
     y.push_back(msg->pose.position.y + init_y);
     z.push_back(msg->pose.position.z + init_z);
-    pitch.push_back((P + init_P) * 180 / PI);
-    roll.push_back((R + init_R) * 180 / PI);
-    yaw.push_back((Y + init_Y) * 180 / PI);
+    pitch.push_back(P + init_P);
+    roll.push_back(R + init_R);
+    yaw.push_back(Y + init_Y);
     t_count++;
 }
 

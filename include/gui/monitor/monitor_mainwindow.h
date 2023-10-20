@@ -273,7 +273,7 @@ class MonitorMainWindow : public QWidget
         {
             while (!thread_stop)
             {
-                if (ros::master::check())
+                if (ros::ok())
                 {
                     info_label->setText(("[ROS State]  Running\n[Vehicle Count]  " + to_string(nodes.size())).c_str());
                     info_label->setStyleSheet("color: green; font-size: 14pt;");
