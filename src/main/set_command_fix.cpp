@@ -181,14 +181,12 @@ int main(int argc, char **argv)
             return 0;
         }
 
-        // 更改模式
-        cmd.Mode = switch_cmd;
-
         switch (switch_cmd)
         {
             // 待机模式
             case px4_cmd::Command::Idle:
             {
+                cmd.Mode = switch_cmd;
                 cmd.Move_frame = px4_cmd::Command::ENU;
                 cmd.Move_mode = px4_cmd::Command::XYZ_POS;
                 desire_cmd_value[0] = current_state.pose.position.x;
@@ -208,6 +206,7 @@ int main(int argc, char **argv)
                 {
                     continue;
                 }
+                cmd.Mode = switch_cmd;
                 cmd.Move_frame = px4_cmd::Command::ENU;
                 cmd.Move_mode = px4_cmd::Command::Takeoff;
                 cmd.desire_cmd[0] = desire_cmd_value[0];
@@ -281,6 +280,7 @@ int main(int argc, char **argv)
                     
 
                 // 修改命令
+                cmd.Mode = switch_cmd;
                 cmd.Move_frame = switch_frame;
                 cmd.Move_mode = switch_cmd_mode;
 
@@ -305,6 +305,7 @@ int main(int argc, char **argv)
             // 盘旋模式
             case px4_cmd::Command::Loiter:
             {
+                cmd.Mode = switch_cmd;
                 break;
             }
 
@@ -409,6 +410,7 @@ int main(int argc, char **argv)
                 print_trajectory_info(switch_trajectory_mode, trajectory_point, trajectory_points, 0);
                 cout << "\n" << endl;
                 Info("Trajectory Mode is Running...");
+                cmd.Mode = switch_cmd;
                 cmd.Move_frame = px4_cmd::Command::ENU;
                 cmd.Move_mode = px4_cmd::Command::XYZ_POS;
                 for (int i = 0; i < trajectory_points.size(); i++)

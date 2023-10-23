@@ -21,6 +21,7 @@ using namespace std;
 class vehicle_external_command
 {
     private:
+        bool ros_shutdown_flag = false;
         double update_time = 0.1;
         double init_R;
         double init_P;
@@ -52,5 +53,6 @@ class vehicle_external_command
         void set_velocity(double vx, double vy, double vz, double yaw, int frame);
         void set_velocity_with_height(double vx, double vy, double z, int frame);
         void set_velocity_with_height(double vx, double vy, double z, double yaw, int frame);
+        void shutdown();
 };
 #endif

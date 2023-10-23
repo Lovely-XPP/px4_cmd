@@ -18,6 +18,7 @@ using namespace std;
 class single_vehicle_external_command
 {
     private:
+        bool ros_shutdown = false;
         double update_time = 0.1;
         tf::Quaternion quat;
         px4_cmd::Command external_cmd;
@@ -44,5 +45,8 @@ class single_vehicle_external_command
         void set_velocity(double vx, double vy, double vz, double yaw_cmd, int frame);
         void set_velocity_with_height(double vx, double vy, double z, int frame);
         void set_velocity_with_height(double vx, double vy, double z, double yaw_cmd, int frame);
+        void set_hover();
+        void set_hover(double yaw);
+        void shutdown();
 };
 #endif

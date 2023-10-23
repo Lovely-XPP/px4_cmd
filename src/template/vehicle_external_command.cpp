@@ -43,7 +43,7 @@ void vehicle_external_command::start(string node)
 
 void vehicle_external_command::ros_thread_fun()
 {
-    while (ros::ok())
+    while (ros::ok() && !ros_shutdown_flag)
     {
         ext_cmd_pub.publish(external_cmd);
         ros::Duration(update_time).sleep();
@@ -134,4 +134,9 @@ void vehicle_external_command::set_velocity_with_height(double vx, double vy, do
     external_cmd.desire_cmd[1] = vy;
     external_cmd.desire_cmd[2] = z;
     external_cmd.yaw_cmd = yaw - init_Y;
+};
+
+void vehicle_external_command::shutdown()
+{
+    ros_shutdown_flag = true;
 };

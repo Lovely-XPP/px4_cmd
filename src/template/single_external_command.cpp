@@ -39,7 +39,7 @@ void single_vehicle_external_command::start()
 void single_vehicle_external_command::ros_thread_fun()
 {
     double t = 0;
-    while (ros::ok())
+    while (ros::ok() && !ros_shutdown)
     {
         while (ext_cmd_pub.getNumSubscribers() < 1)
         {
@@ -54,6 +54,7 @@ void single_vehicle_external_command::ros_thread_fun()
         ros::Duration(update_time).sleep();
         ros::spinOnce();
     }
+    ros::shutdown();
 };
 
 void single_vehicle_external_command::pos_cb(const geometry_msgs::PoseStamped::ConstPtr &msg)
@@ -141,4 +142,24 @@ void single_vehicle_external_command::set_velocity_with_height(double vx, double
     external_cmd.desire_cmd[1] = vy;
     external_cmd.desire_cmd[2] = z;
     external_cmd.yaw_cmd = yaw;
+};
+
+void single_vehicle_external_command::set_hover()
+{
+    external_cmd.Mode = px4_cmd::Command::Hover;
+    external_cmd.Move_frame = px4_cmd::Command::ENU;
+    external_cmd.Move_mode = px4_cmd::Command::XYZ_POS;
+};
+
+void single_vehicle_external_command::set_hover(double yaw)
+{
+    external_cmd.Mode = px4_cmd::Command::Hover;
+    external_cmd.Move_frame = px4_cmd::Command::ENU;
+    external_cmd.Move_mode = px4_cmd::Command::XYZ_POS;
+    external_cmd.yaw_cmd = yaw;
+};
+
+void single_vehicle_external_command::shutdown()
+{
+    ros_shutdown = true;
 };
