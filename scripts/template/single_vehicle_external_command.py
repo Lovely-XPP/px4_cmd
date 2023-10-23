@@ -1,6 +1,7 @@
 import time
 import rospy
 import threading
+from typing import overload
 from px4_cmd.msg import Command
 from tf.transformations import euler_from_quaternion
 from geometry_msgs.msg import PoseStamped
@@ -68,7 +69,7 @@ class single_vehicle_external_command:
         self.angle_rate[1] = msg.twist.angular.y
         self.angle_rate[2] = msg.twist.angular.z
 
-
+    @overload
     def set_position(self, x: float, y: float, z: float, frame: int = Command.ENU):
         self.external_cmd.Mode = Command.Move
         self.external_cmd.Move_frame = frame
@@ -77,6 +78,7 @@ class single_vehicle_external_command:
         self.external_cmd.desire_cmd[1] = y
         self.external_cmd.desire_cmd[2] = z
 
+    @overload
     def set_position(self, x: float, y: float, z: float, yaw: float, frame: int = Command.ENU):
         self.external_cmd.Mode = Command.Move
         self.external_cmd.Move_frame = frame
@@ -86,6 +88,7 @@ class single_vehicle_external_command:
         self.external_cmd.desire_cmd[2] = z
         self.external_cmd.yaw_cmd = yaw
 
+    @overload
     def set_velocity(self, vx: float, vy: float, vz: float, frame: int = Command.ENU):
         self.external_cmd.Mode = Command.Move
         self.external_cmd.Move_frame = frame
@@ -94,6 +97,7 @@ class single_vehicle_external_command:
         self.external_cmd.desire_cmd[1] = vy
         self.external_cmd.desire_cmd[2] = vz
     
+    @overload
     def set_velocity(self, vx: float, vy: float, vz: float, yaw: float, frame: int = Command.ENU):
         self.external_cmd.Mode = Command.Move
         self.external_cmd.Move_frame = frame
@@ -103,6 +107,16 @@ class single_vehicle_external_command:
         self.external_cmd.desire_cmd[2] = vz
         self.external_cmd.yaw_cmd = yaw
 
+    @overload
+    def set_velocity_with_height(self, vx: float, vy: float, z: float, frame: int = Command.ENU):
+        self.external_cmd.Mode = Command.Move
+        self.external_cmd.Move_frame = frame
+        self.external_cmd.Move_mode = Command.XY_VEL_Z_POS
+        self.external_cmd.desire_cmd[0] = vx
+        self.external_cmd.desire_cmd[1] = vy
+        self.external_cmd.desire_cmd[2] = z
+    
+    @overload
     def set_velocity_with_height(self, vx: float, vy: float, z: float, yaw: float, frame: int = Command.ENU):
         self.external_cmd.Mode = Command.Move
         self.external_cmd.Move_frame = frame
