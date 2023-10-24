@@ -155,4 +155,3 @@ Therefore, even if we provide stable Offboard Command (publish to `/mavros/setpo
 ## Credits
 - [PX4-Autopilot](https://github.com/PX4/PX4-Autopilot)
 - [PX4 Guide](https://docs.px4.io/main)
-- [XTDrone](https://github.com/robin-shaun/XTDrone) for providing various models
