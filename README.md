@@ -1,14 +1,16 @@
 # PX4 command
 
 ## Introduction
-PX4 command sent via terminal (based on mavlink), for whom wants to control vehicle by themselves, e.g. setting points.
+PX4 command sent via terminal and Qt (based on mavlink), providing simple API to set user-define Command to PX4 for simulation and hardware.
+
+## Documents
+
+- [External Command API](./docs/External_Command_doc.md)
+- [Qt](./docs/Qt_doc.md)
 
 ## Todo
-- [x] Support Fix-Wing
-- [x] Support Video Recieving
-- [x] Provide API for User-Define External Command
-- [x] Add Models
-- [x] Support Launch Generators
+
+- [ ] Update Models to support muti-vehicles simulation
 
 ## Installation
 ```bash
@@ -20,7 +22,7 @@ catkin_init_workspace
 git clone https://github.com/Lovely-XPP/PX4_cmd.git
 # make
 cd ..
-catkin_make
+catkin_make install
 # Add Source for the project
 echo "source ~/px4_ws/devel/setup.bash" >> ~/.bashrc
 # update terminal
@@ -79,7 +81,7 @@ You can set desire height for takeoff.
 And support `yaw command [deg]` input for both frames.
 
 #### External Command
-See `ext_command.cpp` for detail.
+Using `single_vehicle_external_command.hpp` as API.
 
 ### Fix Wing
 
@@ -107,7 +109,7 @@ For fix wing, you need to set x,y,z position for takeoff.
 </div>
 
 #### External Command
-See `ext_command.cpp` for detail.
+Using `single_vehicle_external_command.hpp` as API.
 
 ## Required Packages
 ```
