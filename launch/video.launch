@@ -1,9 +1,0 @@
-<?xml version="1.0"?>
-<launch>
-    <arg name="camera_topic" default=""/>
-    <arg name="video_show" default="true"/>
-    <node name="recieve_video" pkg="px4_cmd" type="recieve_video">
-    	<param name="camera_topic" value="$(arg camera_topic)"/>
-    	<param name="show_video" value="$(arg video_show)"/>
-    </node>
-</launch>

@@ -22,13 +22,6 @@ find_package(catkin REQUIRED COMPONENTS
     tf
 )
 find_package(Boost REQUIRED COMPONENTS system)
-
-# Qt depend
-find_package(Qt5 COMPONENTS 
-    Widgets
-    Gui
-    Core)
-set(CMAKE_AUTOMOC ON)
     
 # include dir
 include_directories(
@@ -36,11 +29,6 @@ include_directories(
     ${catkin_INCLUDE_DIRS}
     ${OpenCV_INCLUDE_DIRS}
 )
-
-# third party lib
-add_subdirectory(third_party/jsoncpp)
-add_subdirectory(third_party/tinyxml2)
-add_subdirectory(third_party/qcustomplot)
 
 # message generation
 add_message_files(
@@ -83,30 +71,8 @@ add_executable(recieve_video src/main/recieve_video.cpp)
 add_dependencies(recieve_video ${${PROJECT_NAME}_EXPORTED_TARGETS})
 target_link_libraries(recieve_video ${catkin_LIBRARIES} ${OpenCV_LIBS})
 
-##################  GUI  ###################
-# Generator
-link_libraries(Qt5::Widgets)
-add_executable(generator src/gui/generator.cpp)
-add_dependencies(generator ${${PROJECT_NAME}_EXPORTED_TARGETS})
-target_link_libraries(generator jsoncpp)
-target_link_libraries(generator tinyxml2)
-
-# Controller
-add_executable(controller src/gui/controller.cpp)
-add_dependencies(controller ${${PROJECT_NAME}_EXPORTED_TARGETS})
-target_link_libraries(controller ${catkin_LIBRARIES})
-
-# Monitor
-add_executable(monitor src/gui/monitor.cpp)
-add_dependencies(monitor ${${PROJECT_NAME}_EXPORTED_TARGETS})
-target_link_libraries(monitor ${catkin_LIBRARIES})
-target_link_libraries(monitor qcustomplot)
 
 ################## External cmd  ##################
-add_library(vehicle_external_cmd src/template/vehicle_external_command.cpp)
-add_dependencies(vehicle_external_cmd ${${PROJECT_NAME}_EXPORTED_TARGETS})
-target_link_libraries(vehicle_external_cmd ${catkin_LIBRARIES})
-
 add_library(single_vehicle_external_cmd src/template/single_external_command.cpp)
 add_dependencies(single_vehicle_external_cmd ${${PROJECT_NAME}_EXPORTED_TARGETS})
 target_link_libraries(single_vehicle_external_cmd ${catkin_LIBRARIES})
@@ -117,11 +83,11 @@ install(
 )
 
 install(
-    TARGETS vehicle_external_cmd single_vehicle_external_cmd
+    TARGETS single_vehicle_external_cmd
     LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 )
 
 install(
-    FILES scripts/template/vehicle_external_command.py scripts/template/single_vehicle_external_command.py
+    FILES scripts/template/single_vehicle_external_command.py
     DESTINATION ${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_PYTHON_DESTINATION}
 )
