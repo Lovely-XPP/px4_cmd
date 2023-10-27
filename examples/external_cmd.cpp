@@ -6,7 +6,7 @@
 
 #include <px4_cmd/Command.h>
 #include <print_utility/printf_utility.h>
-#include <vehicle_external_command.h>
+#include <px4_cmd/vehicle_external_command>
 
 using namespace std;
 
