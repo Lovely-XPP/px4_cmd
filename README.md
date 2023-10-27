@@ -16,7 +16,7 @@ PX4 command sent via terminal and Qt (based on mavlink), providing simple API to
 ```bash
 # Create Catkin Workspace in home
 mkdir -p ~/px4_ws/src 
-cd catkin_ws/src
+cd ~/px4_ws/src
 catkin_init_workspace
 # Clone this Repo
 git clone https://github.com/Lovely-XPP/PX4_cmd.git

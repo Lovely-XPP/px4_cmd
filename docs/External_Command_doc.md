@@ -3,7 +3,7 @@
 ## Installation
 
 ``````
-catkin_make install
+catkin_make
 ``````
 
 ## Usage for Your ROS Package
@@ -35,7 +35,7 @@ find_package(catkin REQUIRED COMPONENTS
 #include <px4_cmd/Command.h>
 
 // simulation / hardware for single vehicle 
-#include <px4_cmd/template/single_vehicle_external_command.hpp>
+#include <px4_cmd/single_vehicle_external_command.hpp>
 
 // init class
 single_vehicle_external_command ext_cmd();
@@ -80,7 +80,7 @@ ext_cmd.shutdown();
 
 
 // simulation for muti-vehicles (this mode can not use in hardware)
-#include <px4_cmd/template/vehicle_external_command.hpp>
+#include <px4_cmd/vehicle_external_command.hpp>
 // init class - node_name in rostopic: /{node_name}/mavros/****
 vehicle_external_command ext_cmd(node_name);
 

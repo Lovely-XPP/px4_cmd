@@ -42,6 +42,9 @@ add_subdirectory(third_party/jsoncpp)
 add_subdirectory(third_party/tinyxml2)
 add_subdirectory(third_party/qcustomplot)
 
+# install python module
+catkin_python_setup()
+
 # message generation
 add_message_files(
     DIRECTORY msg
@@ -52,7 +55,7 @@ generate_messages(DEPENDENCIES std_msgs)
 
 catkin_package(
     INCLUDE_DIRS include
-    LIBRARIES vehicle_external_cmd single_vehicle_external_cmd
+    LIBRARIES ${PROJECT_NAME}
     CATKIN_DEPENDS message_runtime std_msgs
 )
 
@@ -103,25 +106,6 @@ target_link_libraries(monitor ${catkin_LIBRARIES})
 target_link_libraries(monitor qcustomplot)
 
 ################## External cmd  ##################
-add_library(vehicle_external_cmd src/template/vehicle_external_command.cpp)
-add_dependencies(vehicle_external_cmd ${${PROJECT_NAME}_EXPORTED_TARGETS})
-target_link_libraries(vehicle_external_cmd ${catkin_LIBRARIES})
-
-add_library(single_vehicle_external_cmd src/template/single_external_command.cpp)
-add_dependencies(single_vehicle_external_cmd ${${PROJECT_NAME}_EXPORTED_TARGETS})
-target_link_libraries(single_vehicle_external_cmd ${catkin_LIBRARIES})
-
-install(
-    DIRECTORY include/template
-    DESTINATION ${CATKIN_DEVEL_PREFIX}/include/${PROJECT_NAME}
-)
-
-install(
-    TARGETS vehicle_external_cmd single_vehicle_external_cmd
-    LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-)
-
-install(
-    FILES scripts/template/vehicle_external_command.py scripts/template/single_vehicle_external_command.py
-    DESTINATION ${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_PYTHON_DESTINATION}
-)
+add_library(${PROJECT_NAME} src/template/vehicle_external_command.cpp src/template/single_vehicle_external_command.cpp)
+add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS})
+target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})

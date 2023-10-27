@@ -1,4 +1,4 @@
-#include <template/vehicle_external_command.hpp>
+#include <px4_cmd/vehicle_external_command.hpp>
 #include <vector>
 #include <string>
 #include <thread>
