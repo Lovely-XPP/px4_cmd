@@ -76,25 +76,6 @@ target_link_libraries(recieve_video ${catkin_LIBRARIES} ${OpenCV_LIBS})
 
 
 ################## External cmd  ##################
-add_library(vehicle_external_cmd src/template/vehicle_external_command.cpp)
-add_dependencies(vehicle_external_cmd ${${PROJECT_NAME}_EXPORTED_TARGETS})
-target_link_libraries(vehicle_external_cmd ${catkin_LIBRARIES})
-
-add_library(single_vehicle_external_cmd src/template/single_external_command.cpp)
-add_dependencies(single_vehicle_external_cmd ${${PROJECT_NAME}_EXPORTED_TARGETS})
-target_link_libraries(single_vehicle_external_cmd ${catkin_LIBRARIES})
-
-install(
-    DIRECTORY include/template
-    DESTINATION ${CATKIN_DEVEL_PREFIX}/include/${PROJECT_NAME}
-)
-
-install(
-    TARGETS vehicle_external_cmd single_vehicle_external_cmd
-    LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-)
-
-install(
-    FILES scripts/template/vehicle_external_command.py scripts/template/single_vehicle_external_command.py
-    DESTINATION ${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_PYTHON_DESTINATION}
-)
+add_library(${PROJECT_NAME} src/template/vehicle_external_command.cpp src/template/single_vehicle_external_command.cpp)
+add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS})
+target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
