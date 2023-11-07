@@ -1647,7 +1647,7 @@ class GeneratorMainWindow : public QWidget
             joint->InsertEndChild(joint_child);
             // parent
             XMLElement *joint_parent = doc.NewElement("parent");
-            joint_parent->SetText((vehicle_name + "::base_link").c_str());
+            joint_parent->SetText("base_link");
             joint->InsertEndChild(joint_parent);
             // axis
             XMLElement *joint_axis = doc.NewElement("axis");
