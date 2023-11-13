@@ -32,7 +32,7 @@ class MonitorLoadWindow : public QWidget
 
     private:
         // settings
-        string version = "V1.0.0";
+        string version = "V1.0.1";
         bool thread_stop = false;
 
         //Widgets
@@ -78,7 +78,7 @@ class MonitorLoadWindow : public QWidget
             hbox->addLayout(vbox, 3);
 
             // start_button
-            start_button = new QPushButton("Start", win);
+            start_button = new QPushButton("Start  Monitor", win);
             start_button->setStyleSheet("background-color: rgb(84,255,159); font-weight: bold; font-size: 16pt");
             start_button->setMinimumHeight(70);
             start_button->setEnabled(false);
@@ -179,7 +179,7 @@ class MonitorLoadWindow : public QWidget
                         {
                             label_1->setText(("Detecte ROS & PX4 Running!\nDetected Nodes Count: " + to_string(nodes.size())).c_str());
                             label_1->setStyleSheet("color: green; font-size: 11pt");
-                            label_2->setText("Please Click [Start Monitor] start_button to Continue...");
+                            label_2->setText("Please Click [Start Monitor] Button to Continue...");
                             label_2->setStyleSheet("color: green; font-size: 11pt");
                             start_button->setEnabled(true);
                         }

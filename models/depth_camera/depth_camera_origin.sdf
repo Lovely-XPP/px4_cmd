@@ -37,7 +37,7 @@
           </clip>
         </camera>
         <plugin filename="libgazebo_ros_openni_kinect.so" name="camera_controller">
-            <robotNamespace></robotNamespace>
+          <robotNamespace/>
           <alwaysOn>true</alwaysOn>
           <updateRate>20</updateRate>
           <cameraName>depth_cam</cameraName>

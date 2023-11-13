@@ -48,11 +48,7 @@ class GeneratorMainWindow : public QWidget
 
     private:
         // settings
-        string version = "V1.1.7";
-        int local_port = 34580;
-        int remote_port = 14540;
-        int sitl_port = 24560;
-        int tcp_port = 4560;
+        string version = "V1.1.8";
         vector<string> topic_types = {"{Vehicle Type}_{ID}", "uav_{ID}"};
         vector<string> vehicle_types = {"iris", "typhoon_h480", "plane"};
         vector<string> sensor_types = {"None", "Lidar", "Depth Camera", "RGB Camera", "Stereo Camera", "Realsense Camera"};
@@ -773,6 +769,10 @@ class GeneratorMainWindow : public QWidget
             string model;
             string topic_type;
             string topic_name;
+            int local_port = 34580;
+            int remote_port = 14540;
+            int sitl_port = 24560;
+            int tcp_port = 4560;
             XMLComment *agent_comment;
             XMLElement *agent;
             XMLElement *agent_arg_1;
@@ -1572,7 +1572,7 @@ class GeneratorMainWindow : public QWidget
                                     cam_pose = cam_pose + " " + *str;
                                 }
                                 cam_edited_pose = cam_pose.toStdString();
-                                cam_edited_pose.erase(0);
+                                cam_edited_pose.erase(0, 1);
                                 para_3->SetText(cam_edited_pose.c_str());
                             }
                             else
@@ -1653,7 +1653,7 @@ class GeneratorMainWindow : public QWidget
             XMLElement *joint_axis = doc.NewElement("axis");
             joint->InsertEndChild(joint_axis);
             XMLElement *xyz = doc.NewElement("xyz");
-            xyz->SetText("1 0 0");
+            xyz->SetText("0 0 1");
             joint_axis->InsertEndChild(xyz);
             XMLElement *lim = doc.NewElement("limit");
             joint_axis->InsertEndChild(lim);

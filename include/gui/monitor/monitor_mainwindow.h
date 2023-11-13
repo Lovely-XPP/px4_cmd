@@ -56,8 +56,8 @@ class MonitorMainWindow : public QWidget
 
     private:
         // settings
-        string version = "V1.0.0";
-        double update_time = 0.3;
+        string version = "V1.0.1";
+        double update_time = 0.2;
         vector<string> table_headers_pos = {"Vehicle", "Sensor", "Mode", "x", "y", "z", "vx", "vy", "vz", "roll (deg)", "pitch (deg)", "yaw (deg)"};
         vector<string> table_headers_topic = {"Node", "Sensor", "Senor Topic"};
 
@@ -473,38 +473,49 @@ class MonitorMainWindow : public QWidget
 
         void show_topic_data_slot()
         {
+            string topic_name = topic_name_show;
             ros::Subscriber topic_data_sub = nh.subscribe<sensor_msgs::Image>(topic_name_show, 20, &MonitorMainWindow::topic_data_cb, this);
+            msg_box = new QMessageBox(win);
+            msg_box->setIcon(QMessageBox::Icon::Critical);
+            msg_box->setWindowTitle("Error");
+            ros::spinOnce();
             ros::Duration(0.2).sleep();
             ros::spinOnce();
             if (topic_data_sub.getNumPublishers() < 1)
             {
-                msg_box = new QMessageBox(win);
-                msg_box->setIcon(QMessageBox::Icon::Critical);
-                msg_box->setWindowTitle("Error");
-                msg_box->setText(("Can Not Recieve Topic Data: " + topic_name_show).c_str());
+                msg_box->setText(("Can Not Recieve Topic Data: " + topic_name).c_str());
                 msg_box->exec();
                 return;
             }
             while (ros::ok() && topic_data_sub.getNumPublishers() > 0)
             {
                 ros::spinOnce();
-                cv::imshow(topic_name_show, img);
-                if (cv::waitKey(10) == 27)
+                if (img.rows == 0 || img.cols == 0)
                 {
+                    continue;
+                }
+                cv::imshow(topic_name, img);
+                if (cv::waitKey(20) == 27)
+                {
+                    cv::destroyWindow(topic_name);
                     break;
                 }
-                if (cv::getWindowProperty(topic_name_show, cv::WND_PROP_AUTOSIZE) != 1)
+                if (cv::getWindowProperty(topic_name, cv::WND_PROP_AUTOSIZE) != 1)
                 {
+                    cv::destroyWindow(topic_name);
                     break;
                 }
             }
-            cv::destroyAllWindows();
             topic_data_sub.shutdown();
         }
 
         void topic_data_cb(const sensor_msgs::Image::ConstPtr &msg)
         {
             cv_bridge::CvImagePtr cv_ptr = cv_bridge::toCvCopy(msg, msg->encoding);
+            if (cv_ptr->image.channels() == 3)
+            {
+                cv_ptr = cv_bridge::toCvCopy(msg, "rgb8");
+            }
             img = cv_ptr->image;
         }
 

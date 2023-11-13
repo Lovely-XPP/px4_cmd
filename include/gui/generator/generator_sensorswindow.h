@@ -31,7 +31,7 @@ struct sensor_data
     string height = "480";
     string min_angle = "-0.0001";
     string max_angle = "0";
-    string distance = "0.07";
+    string distance = "0.2";
 };
 
 class GeneratorSensorsWindow : public QWidget
@@ -92,9 +92,12 @@ class GeneratorSensorsWindow : public QWidget
             else
             {
                 lidar.name = "Lidar";
+                lidar.position = {"-0.12", "0.0", "0.0"};
                 depth_cam.name = "Depth Camera";
+                depth_cam.position = {"0.1", "0.0", "0.0"};
                 rgb_cam.name = "RGB Camera";
                 stereo_cam.name = "Stereo Camera";
+                stereo_cam.position = {"0.1", "0.0", "0.0"};
                 realsense_cam.name = "Realsense Camera";
                 sensors_data.push_back(&lidar);
                 sensors_data.push_back(&depth_cam);
