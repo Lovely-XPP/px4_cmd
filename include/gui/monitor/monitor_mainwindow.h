@@ -28,6 +28,9 @@
 #include <thread>
 
 #include <ros/ros.h>
+#include <opencv2/highgui/highgui.hpp>
+#include <sensor_msgs/Image.h>
+#include <cv_bridge/cv_bridge.h>
 
 #include <gui/monitor/monitor_infowindow.h>
 #include <qcustomplot.h>
@@ -68,6 +71,10 @@ class MonitorMainWindow : public QWidget
         QVector<QCPCurve *> curves;
         bool thread_stop = false;
 
+        // selected topic to show
+        string topic_name_show = "";
+        cv::Mat img;
+
         // output file string
         string output_file = "";
         bool update_signal = false;
@@ -84,8 +91,15 @@ class MonitorMainWindow : public QWidget
         QPushButton *info_button;
         QPushButton *exit_button;
 
+        // ros handle
+        ros::NodeHandle nh;
+
         void setup()
         {
+            int argc = 0;
+            char **argv;
+            ros::init(argc, argv, "px4_cmd/monitor");
+
             // layout
             QHBoxLayout *hbox = new QHBoxLayout();
             QVBoxLayout *vbox = new QVBoxLayout();
@@ -127,6 +141,7 @@ class MonitorMainWindow : public QWidget
             // topic
             table_topic = new QTableView(win);
             table_topic->setStyleSheet("background-color: rgb(255,245,235)");
+            table_topic->setContextMenuPolicy(Qt::CustomContextMenu);
             model_topic = new QStandardItemModel(data.size(), table_headers_topic.size(), win);
             QStringList list_topic;
             QString node_name;
@@ -267,6 +282,7 @@ class MonitorMainWindow : public QWidget
             QObject::connect(signal_button, &QPushButton::clicked, this, &MonitorMainWindow::update_plot_slot);
             QObject::connect(info_button, &QPushButton::clicked, this, &MonitorMainWindow::info_window_slot);
             QObject::connect(exit_button, &QPushButton::clicked, this, &MonitorMainWindow::exit_slot);
+            QObject::connect(table_topic, &QTableView::customContextMenuRequested, this, &MonitorMainWindow::table_click_slot);
         }
 
         void update_info()
@@ -283,7 +299,7 @@ class MonitorMainWindow : public QWidget
                     info_label->setText("[ROS State]  Not Running\n[Vehicle Count]  0");
                     info_label->setStyleSheet("color: red; font-size: 14pt;");
                 }
-                ros::Duration(0.2).sleep();
+                sleep(1);
             }
         }
 
@@ -424,6 +440,72 @@ class MonitorMainWindow : public QWidget
             }
             ros::Duration(0.2).sleep();
             win->close();
+        }
+
+        void table_click_slot(QPoint pos)
+        {
+            QModelIndex index = table_topic->indexAt(pos);
+            int column = index.column();
+            QVariant data = index.data();
+            topic_name_show = data.toString().toStdString();
+            // new一个菜单
+            QMenu *popMenu = new QMenu(win);
+            if (index.isValid() && column == 2)
+            {
+                // 新建一个 QAction（可建多个），并设置显示的文本
+                QAction *actionUpdateInfo = new QAction();
+                actionUpdateInfo->setText(QString(QStringLiteral("Show Topic Data")));
+
+                // 把获取到的行数存储到 QAction中
+                popMenu->addAction(actionUpdateInfo);
+
+                // QAction 绑定槽函数，当点击QAction时触发
+                QObject::connect(actionUpdateInfo, &QAction::triggered, this, &MonitorMainWindow::show_topic_data_slot);
+
+                // 菜单显示到鼠标的位置
+                popMenu->exec(QCursor::pos());
+            }
+            // 释放内存
+            QList<QAction *> list = popMenu->actions();
+            foreach (QAction *pAction, list) delete pAction;
+            delete popMenu;
+        }
+
+        void show_topic_data_slot()
+        {
+            ros::Subscriber topic_data_sub = nh.subscribe<sensor_msgs::Image>(topic_name_show, 20, &MonitorMainWindow::topic_data_cb, this);
+            ros::Duration(0.2).sleep();
+            ros::spinOnce();
+            if (topic_data_sub.getNumPublishers() < 1)
+            {
+                msg_box = new QMessageBox(win);
+                msg_box->setIcon(QMessageBox::Icon::Critical);
+                msg_box->setWindowTitle("Error");
+                msg_box->setText(("Can Not Recieve Topic Data: " + topic_name_show).c_str());
+                msg_box->exec();
+                return;
+            }
+            while (ros::ok() && topic_data_sub.getNumPublishers() > 0)
+            {
+                ros::spinOnce();
+                cv::imshow(topic_name_show, img);
+                if (cv::waitKey(10) == 27)
+                {
+                    break;
+                }
+                if (cv::getWindowProperty(topic_name_show, cv::WND_PROP_AUTOSIZE) != 1)
+                {
+                    break;
+                }
+            }
+            cv::destroyAllWindows();
+            topic_data_sub.shutdown();
+        }
+
+        void topic_data_cb(const sensor_msgs::Image::ConstPtr &msg)
+        {
+            cv_bridge::CvImagePtr cv_ptr = cv_bridge::toCvCopy(msg, msg->encoding);
+            img = cv_ptr->image;
         }
 
         // utility functions

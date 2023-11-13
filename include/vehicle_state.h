@@ -98,7 +98,8 @@ void vehicle_state::get_state(string node)
 
 void vehicle_state::ros_thread_fun()
 {
-    while (ros::ok() && !thread_stop)
+    sleep(1);
+    while (ros::ok() && !thread_stop && pos_sub.getNumPublishers() > 0)
     {
         ros::Duration(update_time).sleep();
         ros::spinOnce();
