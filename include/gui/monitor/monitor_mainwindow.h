@@ -27,12 +27,8 @@
 #include <vector>
 #include <thread>
 
-#include <ros/ros.h>
-#include <opencv2/highgui/highgui.hpp>
-#include <sensor_msgs/Image.h>
-#include <cv_bridge/cv_bridge.h>
-
 #include <gui/monitor/monitor_infowindow.h>
+#include <gui/monitor/monitor_imagewindow.h>
 #include <qcustomplot.h>
 #include <vehicle_state.h>
 
@@ -48,15 +44,21 @@ class MonitorMainWindow : public QWidget
         QWidget *parent;
         MonitorMainWindow(QWidget *parent_widget, QStringList nodes_input)
         {
+            setAttribute(Qt::WA_DeleteOnClose);
             qRegisterMetaType<QList<QPersistentModelIndex>>("QList<QPersistentModelIndex>");
             qRegisterMetaType<QList<QAbstractItemModel::LayoutChangeHint>>("QList<QAbstractItemModel::LayoutChangeHint>");
             nodes = nodes_input;
             setup();
         }
 
+        ~MonitorMainWindow()
+        {
+            exit_slot();
+        }
+
     private:
         // settings
-        string version = "V1.0.1";
+        string version = "V1.0.2";
         double update_time = 0.2;
         vector<string> table_headers_pos = {"Vehicle", "Sensor", "Mode", "x", "y", "z", "vx", "vy", "vz", "roll (deg)", "pitch (deg)", "yaw (deg)"};
         vector<string> table_headers_topic = {"Node", "Sensor", "Senor Topic"};
@@ -69,6 +71,7 @@ class MonitorMainWindow : public QWidget
         QVector<vehicle_state *> data;
         QVector<std::thread *> threads;
         QVector<QCPCurve *> curves;
+        QVector<string> img_topic_showing;
         bool thread_stop = false;
 
         // selected topic to show
@@ -90,9 +93,6 @@ class MonitorMainWindow : public QWidget
         QPushButton *signal_button;
         QPushButton *info_button;
         QPushButton *exit_button;
-
-        // ros handle
-        ros::NodeHandle nh;
 
         void setup()
         {
@@ -240,7 +240,6 @@ class MonitorMainWindow : public QWidget
             plot->legend->setMargins(QMargins(indent, 1, indent, 1));
             plot->plotLayout()->addElement(plot_count, 0, plot->legend);
             plot->plotLayout()->setRowStretchFactor(plot_count, 0.0001);
-            plot->xAxis->axisRect()->insetLayout()->setInsetAlignment(0, Qt::AlignBottom | Qt::AlignRight);
             // set layout
             QVBoxLayout *vbox_1 = new QVBoxLayout();
             QVBoxLayout *vbox_2 = new QVBoxLayout();
@@ -299,7 +298,7 @@ class MonitorMainWindow : public QWidget
                     info_label->setText("[ROS State]  Not Running\n[Vehicle Count]  0");
                     info_label->setStyleSheet("color: red; font-size: 14pt;");
                 }
-                sleep(1);
+                usleep(100000);
             }
         }
 
@@ -395,7 +394,7 @@ class MonitorMainWindow : public QWidget
                 {
                     signal_button->click();
                 }
-                ros::Duration(update_time).sleep();
+                usleep(100000);
             }
         }
 
@@ -438,7 +437,7 @@ class MonitorMainWindow : public QWidget
             {
                 (*item)->thread_stop = true;
             }
-            ros::Duration(0.2).sleep();
+            sleep(1);
             win->close();
         }
 
@@ -473,50 +472,25 @@ class MonitorMainWindow : public QWidget
 
         void show_topic_data_slot()
         {
-            string topic_name = topic_name_show;
-            ros::Subscriber topic_data_sub = nh.subscribe<sensor_msgs::Image>(topic_name_show, 20, &MonitorMainWindow::topic_data_cb, this);
-            msg_box = new QMessageBox(win);
-            msg_box->setIcon(QMessageBox::Icon::Critical);
-            msg_box->setWindowTitle("Error");
-            ros::spinOnce();
-            ros::Duration(0.2).sleep();
-            ros::spinOnce();
-            if (topic_data_sub.getNumPublishers() < 1)
+            const string topic_name = topic_name_show;
+            for (auto item = img_topic_showing.begin(); item != img_topic_showing.end(); item++)
             {
-                msg_box->setText(("Can Not Recieve Topic Data: " + topic_name).c_str());
-                msg_box->exec();
-                return;
-            }
-            while (ros::ok() && topic_data_sub.getNumPublishers() > 0)
-            {
-                ros::spinOnce();
-                if (img.rows == 0 || img.cols == 0)
+                if (*item == topic_name)
                 {
-                    continue;
-                }
-                cv::imshow(topic_name, img);
-                if (cv::waitKey(20) == 27)
-                {
-                    cv::destroyWindow(topic_name);
-                    break;
-                }
-                if (cv::getWindowProperty(topic_name, cv::WND_PROP_AUTOSIZE) != 1)
-                {
-                    cv::destroyWindow(topic_name);
-                    break;
+                    return;
                 }
             }
-            topic_data_sub.shutdown();
+            img_topic_showing.push_back(topic_name_show);
+            MonitorImageWindow *img_win = new MonitorImageWindow(win, topic_name_show, img_topic_showing.size());
+            std::thread show_topic_data_thread(&MonitorMainWindow::show_topic_data_thread_func, this, topic_name, img_win);
+            show_topic_data_thread.detach();
         }
 
-        void topic_data_cb(const sensor_msgs::Image::ConstPtr &msg)
+        void show_topic_data_thread_func(string topic_name, MonitorImageWindow *img_win)
         {
-            cv_bridge::CvImagePtr cv_ptr = cv_bridge::toCvCopy(msg, msg->encoding);
-            if (cv_ptr->image.channels() == 3)
-            {
-                cv_ptr = cv_bridge::toCvCopy(msg, "rgb8");
-            }
-            img = cv_ptr->image;
+            img_win->start();
+            img_win->win->exec();
+            img_topic_showing.erase(std::find(img_topic_showing.begin(), img_topic_showing.end(), topic_name));
         }
 
         // utility functions

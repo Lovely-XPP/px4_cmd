@@ -42,7 +42,7 @@ class vehicle_state
         void pos_cb(const geometry_msgs::PoseStamped::ConstPtr &msg);
         void vel_cb(const geometry_msgs::TwistStamped::ConstPtr &msg);
         void state_cb(const mavros_msgs::State::ConstPtr &msg);
-        void ros_thread_fun();
+        void ros_thread_fun(ros::NodeHandle *nh);
 
     public:
         QVector<double> t;
@@ -56,7 +56,6 @@ class vehicle_state
         QVector<double> roll;
         QVector<double> yaw;
         QStringList sensor_topics;
-        std::thread *run_thread;
         string state_mode;
         string node_name;
         string vehicle_name;
@@ -91,12 +90,11 @@ void vehicle_state::get_state(string node)
     {
         ros::Duration(update_time).sleep();
     }
-    std::thread ros_thread(&vehicle_state::ros_thread_fun, this);
+    std::thread ros_thread(&vehicle_state::ros_thread_fun, this, &nh);
     ros_thread.detach();
-    run_thread = &ros_thread;
 }
 
-void vehicle_state::ros_thread_fun()
+void vehicle_state::ros_thread_fun(ros::NodeHandle *nh)
 {
     sleep(1);
     while (ros::ok() && !thread_stop && pos_sub.getNumPublishers() > 0)
@@ -104,6 +102,7 @@ void vehicle_state::ros_thread_fun()
         ros::Duration(update_time).sleep();
         ros::spinOnce();
     }
+    nh->shutdown();
     ros_stop = true;
 }
 

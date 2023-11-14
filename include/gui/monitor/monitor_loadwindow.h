@@ -32,7 +32,7 @@ class MonitorLoadWindow : public QWidget
 
     private:
         // settings
-        string version = "V1.0.1";
+        string version = "V1.0.2";
         bool thread_stop = false;
 
         //Widgets
