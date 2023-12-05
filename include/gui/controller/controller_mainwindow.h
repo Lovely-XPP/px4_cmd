@@ -391,7 +391,7 @@ class ControllerMainWindow : public QWidget
                     pubs[i].publish(cmds[i]);
                 }
                 ros::spinOnce();
-                ros::Duration(0.02).sleep();
+                usleep(20000);
             }
         }
 
@@ -543,7 +543,7 @@ class ControllerMainWindow : public QWidget
                 current_cmd = "Trajectory CMD";
                 std::thread trajectory_cmd_thread(&ControllerMainWindow::trajectory_cmd_thread_func, this);
                 trajectory_cmd_thread.detach();
-                ros::Duration(0.5).sleep();
+                usleep(500000);
             }
         }
 
@@ -591,9 +591,9 @@ class ControllerMainWindow : public QWidget
                 sleep(1);
                 while (!judge_all_achieve_state(true))
                 {
-                    ros::Duration(0.2).sleep();
+                    usleep(200000);
                 }
-                ros::Duration(sleep_time).sleep();
+                usleep(floor(sleep_time * 1000000));
             }
             operating_info = "Trajectory CMD Done. Change to Hover Mode.";
             sleep(3);
@@ -618,7 +618,7 @@ class ControllerMainWindow : public QWidget
                 ext_cmd_thread.detach();
                 ext_cmd_threads.push_back(&ext_cmd_thread);
             }
-            ros::Duration(0.5).sleep();
+            usleep(500000);
             manual_button->setEnabled(false);
             trajectory_button->setEnabled(false);
             external_button->setEnabled(false);
@@ -663,7 +663,7 @@ class ControllerMainWindow : public QWidget
                 }
                 cmds[node_id].yaw_cmd = cmd_values[node_id][3];
                 pubs[node_id].publish(cmds[node_id]);
-                ros::Duration(0.02).sleep();
+                usleep(20000);
             }
             if (!ext_cmd_state)
             {
@@ -769,7 +769,7 @@ class ControllerMainWindow : public QWidget
             {
                 (*item)->thread_stop = true;
             }
-            ros::Duration(0.2).sleep();
+            usleep(20000);
             win->close();
         }
 
@@ -831,7 +831,7 @@ class ControllerMainWindow : public QWidget
             sleep(1);
             while (!judge_all_achieve_state(true))
             {
-                ros::Duration(0.2).sleep();
+                usleep(200000);
             }
             operating_info = "Manual CMD Done. Change to Hover Mode";
             sleep(3);
@@ -1076,7 +1076,7 @@ class ControllerMainWindow : public QWidget
                 ext_cmd_state = ext_cmd_state_single;
 
                 // sleep
-                ros::Duration(0.1).sleep();
+                usleep(100000);
             }
         }
 
@@ -1237,7 +1237,7 @@ class ControllerMainWindow : public QWidget
                     info_model->setData(info_model->index(node_id, 7), QBrush(Qt::red), Qt::TextColorRole);
                 }
                 // sleep
-                ros::Duration(0.2).sleep();
+                usleep(200000);
             }
         }
 

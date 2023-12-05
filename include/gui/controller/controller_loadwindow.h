@@ -193,7 +193,7 @@ class ControllerLoadWindow : public QWidget
                         }
                     }
                 }
-                ros::Duration(0.5).sleep();
+                usleep(500000);
             }
             win->close();
         }
