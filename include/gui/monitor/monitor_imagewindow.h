@@ -194,7 +194,7 @@ class MonitorImageWindow : public QWidget
             cv_bridge::CvImagePtr cv_ptr = cv_bridge::toCvCopy(msg, msg->encoding);
             if (cv_ptr->image.channels() == 3)
             {
-                cv_ptr = cv_bridge::toCvCopy(msg, "rgb8");
+                cv_ptr = cv_bridge::toCvCopy(msg, "bgr8");
             }
             cv::Mat img = cv_ptr->image;
             QImage qimg = cvMat2QImage(img);
@@ -208,6 +208,7 @@ class MonitorImageWindow : public QWidget
                     std::remove(output_file.c_str());
                     video_w.open(output_file, encode_type, fps, cv::Size(img.cols, img.rows), true);
                 }
+                video_w.write(img);
             }
             if (!save_image && video_w.isOpened())
             {

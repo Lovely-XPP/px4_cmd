@@ -58,7 +58,7 @@ class MonitorMainWindow : public QWidget
 
     private:
         // settings
-        string version = "V1.0.2";
+        string version = "V1.0.3";
         double update_time = 0.2;
         vector<string> table_headers_pos = {"Vehicle", "Sensor", "Mode", "x", "y", "z", "vx", "vy", "vz", "roll (deg)", "pitch (deg)", "yaw (deg)"};
         vector<string> table_headers_topic = {"Node", "Sensor", "Senor Topic"};
