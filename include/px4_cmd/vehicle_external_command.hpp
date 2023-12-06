@@ -22,7 +22,6 @@ class vehicle_external_command
 {
     private:
         bool ros_shutdown_flag = false;
-        double update_time = 0.1;
         double init_R;
         double init_P;
         double init_Y;
@@ -39,6 +38,7 @@ class vehicle_external_command
         void ros_thread_fun();
 
     public:
+        double update_time = 0.02;
         double init_x;
         double init_y;
         double init_z;

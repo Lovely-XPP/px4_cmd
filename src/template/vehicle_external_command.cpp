@@ -35,7 +35,7 @@ void vehicle_external_command::start(string node)
     ext_cmd_pub = nh.advertise<px4_cmd::Command>("external_command", 50);
     while (!ros::ok())
     {
-        ros::Duration(update_time).sleep();
+        usleep(floor(1000000 * update_time));
     }
     std::thread ros_thread(&vehicle_external_command::ros_thread_fun, this);
     ros_thread.detach();
@@ -46,7 +46,7 @@ void vehicle_external_command::ros_thread_fun()
     while (ros::ok() && !ros_shutdown_flag)
     {
         ext_cmd_pub.publish(external_cmd);
-        ros::Duration(update_time).sleep();
+        usleep(floor(1000000 * update_time));
         ros::spinOnce();
     }
 };

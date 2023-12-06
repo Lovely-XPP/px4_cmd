@@ -21,6 +21,7 @@
 #include <vector>
 #include <sys/stat.h>
 #include <thread>
+#include <mutex>
 
 #include <ros/ros.h>
 #include <mavros_msgs/State.h>
@@ -57,16 +58,13 @@ class ControllerMainWindow : public QWidget
 
     private:
         // settings
-        string version = "V1.0.1";
+        string version = "V1.0.2";
         QString current_cmd = "None";
         double update_time = 0.3;
 
         // init vectors
         QVector<vehicle_command *> data;
-        QVector<std::thread *> threads;
-        QVector<std::thread *> ext_cmd_threads;
         QVector<px4_cmd::Command> cmds;
-        QVector<px4_cmd::Command> ext_cmds;
         QVector<ros::Publisher> pubs;
         vector<vector<double>> cmd_values;
         bool thread_stop = false;
@@ -75,6 +73,7 @@ class ControllerMainWindow : public QWidget
         QStringList nodes;
         QString operating_info;
         bool fix_wing_include = false;
+        mutex cmd_mutex;
 
         //Widgets
         QMessageBox *msg_box;
@@ -142,11 +141,15 @@ class ControllerMainWindow : public QWidget
                 ros::Publisher pub = nh.advertise<px4_cmd::Command>((nodes[i] + "/px4_cmd/control_command").toStdString().c_str(), 50);
                 pubs.push_back(pub);
                 cmds.push_back(cmd);
-                ext_cmds.push_back(cmd);
                 cmd_values.push_back({0, 0, 0, 0});
             }
-            std::thread ros_thread(&ControllerMainWindow::ros_thread_func, this);
-            ros_thread.detach();
+
+            // start ros thread
+            for (size_t i = 0; i < nodes.size(); i++)
+            {
+                std::thread ros_thread(&ControllerMainWindow::ros_thread_func, this, i);
+                ros_thread.detach();
+            }
 
             // layout
             QVBoxLayout *vbox = new QVBoxLayout();
@@ -375,21 +378,17 @@ class ControllerMainWindow : public QWidget
             {
                 std::thread update_table_thread(&ControllerMainWindow::update_table_info, this, i);
                 update_table_thread.detach();
-                threads.push_back(&update_table_thread);
             }
             std::thread update_thread(&ControllerMainWindow::update_info, this);
             update_thread.detach();
         }
 
         // ros thread
-        void ros_thread_func()
+        void ros_thread_func(int node_id)
         {
             while (ros::ok() && !thread_stop)
             {
-                for (size_t i = 0; i < nodes.size(); i++)
-                {
-                    pubs[i].publish(cmds[i]);
-                }
+                pubs[node_id].publish(cmds[node_id]);
                 ros::spinOnce();
                 usleep(20000);
             }
@@ -552,7 +551,9 @@ class ControllerMainWindow : public QWidget
             double sleep_time = trajectory_win->set_time;
             for (size_t i = 0; i < trajectory_win->cmd_values.size(); i++)
             {
+                cmd_mutex.lock();
                 cmd_values = trajectory_win->cmd_values[i];
+                cmd_mutex.unlock();
                 // set cmd
                 for (size_t j = 0; j < cmds.size(); j++)
                 {
@@ -616,7 +617,6 @@ class ControllerMainWindow : public QWidget
             {
                 std::thread ext_cmd_thread(&ControllerMainWindow::ext_cmd_thread_func, this, i);
                 ext_cmd_thread.detach();
-                ext_cmd_threads.push_back(&ext_cmd_thread);
             }
             usleep(500000);
             manual_button->setEnabled(false);
@@ -628,10 +628,12 @@ class ControllerMainWindow : public QWidget
         {
             while (ext_cmd_state && (current_cmd == "External Command"))
             {
+                cmd_mutex.lock();
                 cmd_values[node_id][0] = data[node_id]->ext_cmd.desire_cmd[0];
                 cmd_values[node_id][1] = data[node_id]->ext_cmd.desire_cmd[1];
                 cmd_values[node_id][2] = data[node_id]->ext_cmd.desire_cmd[2];
                 cmd_values[node_id][3] = data[node_id]->ext_cmd.yaw_cmd;
+                cmd_mutex.unlock();
                 cmds[node_id].Mode = data[node_id]->ext_cmd.Mode;
                 cmds[node_id].Move_mode = data[node_id]->ext_cmd.Move_mode;
                 cmds[node_id].Move_frame = data[node_id]->ext_cmd.Move_frame;
@@ -662,7 +664,7 @@ class ControllerMainWindow : public QWidget
                     }
                 }
                 cmds[node_id].yaw_cmd = cmd_values[node_id][3];
-                pubs[node_id].publish(cmds[node_id]);
+                // pubs[node_id].publish(cmds[node_id]);
                 usleep(20000);
             }
             if (!ext_cmd_state)
@@ -794,7 +796,9 @@ class ControllerMainWindow : public QWidget
         void manual_cmd_thread_func()
         {
             bool achieve = false;
+            cmd_mutex.lock();
             cmd_values = manual_win->cmd_values[0];
+            cmd_mutex.unlock();
             for (size_t i = 0; i < cmds.size(); i++)
             {
                 cmds[i].Mode = px4_cmd::Command::Move;
@@ -1191,7 +1195,7 @@ class ControllerMainWindow : public QWidget
                                 break;
 
                             case px4_cmd::Command::XY_VEL_Z_POS:
-                                cmd_mode = "Velocity with Altitude";
+                                cmd_mode = "Velocity with Height";
                                 break;
                         }
                     }

@@ -19,7 +19,6 @@ class single_vehicle_external_command
 {
     private:
         bool ros_shutdown = false;
-        double update_time = 0.1;
         tf::Quaternion quat;
         px4_cmd::Command external_cmd;
         ros::Subscriber pos_pose_sub;
@@ -32,6 +31,7 @@ class single_vehicle_external_command
         void ros_thread_fun();
 
     public:
+        double update_time = 0.1;
         bool ext_on = false;
         double total_time = -1;
         double position[3];

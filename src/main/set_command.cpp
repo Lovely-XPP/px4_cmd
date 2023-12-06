@@ -170,7 +170,7 @@ int main(int argc, char **argv)
             home_position[1] = cmd.desire_cmd[1];
         }
         // 清屏及初始化
-        system("clear");
+        int sys_res = system("clear");
         cout << POINTER;
 
         // 输出标题及选项
@@ -241,7 +241,7 @@ int main(int argc, char **argv)
                 correct = false;
                 while (!correct)
                 {
-                    system("clear");
+                    sys_res = system("clear");
                     print_title("PX4 Command Center", frame_list);
                     cout << WHITE << "Input frame id: ";
                     cin >> switch_frame;
@@ -267,7 +267,7 @@ int main(int argc, char **argv)
                 // 机体坐标系仅支持速度控制
                 if (switch_frame == px4_cmd::Command::BODY)
                 {
-                    system("clear");
+                    sys_res = system("clear");
                     print_head("PX4 Command Center");
                     string null_str = "";
                     string msg = null_str + YELLOW + "Tip: Body Frame Only Support [" + GREEN + "Velocity (XYZ)" + YELLOW + "] Control!" + WHITE + "\n";
@@ -287,7 +287,7 @@ int main(int argc, char **argv)
                 }
 
                 // 输入命令类型
-                system("clear");
+                sys_res = system("clear");
                 print_title("PX4 Command Center", move_list);
                 cout << WHITE << "Input Move Mode Number: ";
                 cin >> switch_cmd_mode;
@@ -377,7 +377,7 @@ int main(int argc, char **argv)
                 trajectory_next = true;
                 trajectory_points = init_trajectory_points;
                 // 输入模式：相对位置/绝对位置
-                system("clear");
+                sys_res = system("clear");
                 print_title("PX4 Trajectory Center", trajectory_list);
                 cout << YELLOW << "Tip: Trajectory Only Support Frame [" << GREEN << "ENU" << YELLOW << "]" << endl;
                 cout << WHITE << "\n" << "Input Trajectory Mode Number: ";
@@ -399,7 +399,7 @@ int main(int argc, char **argv)
                     while (!correct)
                     {
                         // 清空并显示轨迹航点输入模式
-                        system("clear");
+                        sys_res = system("clear");
                         print_head("PX4 Trajectory Center");
                         print_trajectory_info(switch_trajectory_mode, trajectory_point, trajectory_points, 1);
                         cout << "\n\n"
@@ -457,7 +457,7 @@ int main(int argc, char **argv)
                 trajectory_points.erase(trajectory_points.begin());
 
                 //输出标题
-                system("clear");
+                sys_res = system("clear");
                 print_head("PX4 Trajectory Center");
                 print_trajectory_info(switch_trajectory_mode, trajectory_point, trajectory_points, 0);
                 //用户确认航点
@@ -469,7 +469,7 @@ int main(int argc, char **argv)
                 }
 
                 //开始执行
-                system("clear");
+                sys_res = system("clear");
                 print_head("PX4 Trajectory Center");
                 print_trajectory_info(switch_trajectory_mode, trajectory_point, trajectory_points, 0);
                 cout << "\n" << endl;
@@ -530,7 +530,7 @@ int main(int argc, char **argv)
                     cmd_rate.sleep();
                     if (cmd_sub.getNumPublishers() < 1)
                     {
-                        system("clear");
+                        sys_res = system("clear");
                         print_title("PX4 External Command", null_string);
                         cout << RED << "[ERROR] External Cmd Topic Disconneted!" << WHITE << endl;
                         cout << "\nPress [ESC] to exit." << endl;
@@ -550,7 +550,7 @@ int main(int argc, char **argv)
                     }
                     if (ext_exit)
                     {
-                        system("clear");
+                        sys_res = system("clear");
                         print_title("PX4 External Command", null_string);
                         cout << YELLOW << "[INFO] User Terminate External Cmd!" << WHITE << endl;
                         ros::Duration(1).sleep();
@@ -570,7 +570,7 @@ int main(int argc, char **argv)
                     cmd.desire_cmd[1] = external_cmd.desire_cmd[1];
                     cmd.desire_cmd[2] = external_cmd.desire_cmd[2];
                     cmd.yaw_cmd = external_cmd.yaw_cmd;
-                    system("clear");
+                    sys_res = system("clear");
                     print_title("PX4 External Command", null_string);
                     cout << "Exit: Press [ESC]" << endl;
                     cout << "Time: " << fixed << setprecision(2) << external_cmd.ext_time << "/" << external_cmd.ext_total_time << endl;

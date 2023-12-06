@@ -78,7 +78,7 @@ int main(int argc, char **argv)
     while (ros::ok())
     {
         // 清屏及初始化
-        system("clear");
+        int sys_res = system("clear");
         cout << POINTER;
         error_times = 0;
 

@@ -60,7 +60,7 @@ int main(int argc, char **argv)
     ros::Rate rate(50.0);
 
     // 输出标题（提示）
-    system("clear");
+    int sys_res = system("clear");
     print_head("PX4 Command Sender");
     Info("PX4 Command Sender is Running...");
 
