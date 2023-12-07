@@ -208,6 +208,8 @@ string vehicle_command::set_mode(string desire_mode)
 
 void vehicle_command::ros_thread_fun()
 {
+    sleep(1);
+    ros::spinOnce();
     bool sub_state = true;
     while (ros::ok() && !thread_stop && sub_state)
     {
