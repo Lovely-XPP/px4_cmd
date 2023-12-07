@@ -23,6 +23,6 @@ int main(int argc, char *argv[])
         ControllerMainWindow *controller = new ControllerMainWindow(main_win, nodes);
         controller->exec(); // 主事件循环
     }
-    sleep(1);
+    usleep(200000);
     return 0;
 }

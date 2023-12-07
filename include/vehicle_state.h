@@ -22,7 +22,6 @@ class vehicle_state
 {
     private:
         // setting
-        double update_time = 0.1;
         ros::Subscriber pos_sub;
         ros::Subscriber vel_sub;
         ros::Subscriber pose_sub;
@@ -42,9 +41,10 @@ class vehicle_state
         void pos_cb(const geometry_msgs::PoseStamped::ConstPtr &msg);
         void vel_cb(const geometry_msgs::TwistStamped::ConstPtr &msg);
         void state_cb(const mavros_msgs::State::ConstPtr &msg);
-        void ros_thread_fun(ros::NodeHandle *nh);
+        void ros_thread_fun();
 
     public:
+        double update_time = 0.02;
         QVector<double> t;
         QVector<double> x;
         QVector<double> y;
@@ -88,21 +88,21 @@ void vehicle_state::get_state(string node)
     state_sub = nh.subscribe<mavros_msgs::State>((topic_header + "state").c_str(), 20, &vehicle_state::state_cb, this);
     while (!ros::ok())
     {
-        ros::Duration(update_time).sleep();
+        usleep(floor(1000000 * update_time));
     }
-    std::thread ros_thread(&vehicle_state::ros_thread_fun, this, &nh);
+    std::thread ros_thread(&vehicle_state::ros_thread_fun, this);
     ros_thread.detach();
 }
 
-void vehicle_state::ros_thread_fun(ros::NodeHandle *nh)
+void vehicle_state::ros_thread_fun()
 {
     sleep(1);
     while (ros::ok() && !thread_stop && pos_sub.getNumPublishers() > 0)
     {
-        ros::Duration(update_time).sleep();
+        usleep(floor(1000000 * update_time));
         ros::spinOnce();
     }
-    nh->shutdown();
+    ros::shutdown();
     ros_stop = true;
 }
 

@@ -22,6 +22,6 @@ int main(int argc, char *argv[])
         MonitorMainWindow *monitor = new MonitorMainWindow(main_win, nodes);
         return monitor->exec(); // 主事件循环
     }
-    sleep(1);
+    usleep(200000);
     return 0;
 }

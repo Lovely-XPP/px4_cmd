@@ -26,7 +26,6 @@ class vehicle_command
 {
     private:
         // setting
-        double update_time = 0.02;
         ros::Subscriber controller_cmd_sub;
         ros::Subscriber current_pos_sub;
         ros::Subscriber current_state_sub;
@@ -57,6 +56,7 @@ class vehicle_command
         void ros_thread_fun();
 
     public:
+        double update_time = 0.02;
         std::thread *run_thread;
         string state_mode;
         string node_name;
@@ -100,7 +100,7 @@ void vehicle_command::start(string node)
     ros::param::get(("/" + node_name + "/init_Y").c_str(), init_Y);
     while (!ros::ok())
     {
-        ros::Duration(update_time).sleep();
+        usleep(floor(1000000 * update_time));
     }
     controller_cmd_sub = nh.subscribe<px4_cmd::Command>((node_name + "/px4_cmd/control_command").c_str(), 20, &vehicle_command::controller_cmd_cb, this);
     current_pos_sub = nh.subscribe<geometry_msgs::PoseStamped>((topic_header + "local_position/pose").c_str(), 20, &vehicle_command::pos_cb, this);
@@ -132,7 +132,7 @@ string vehicle_command::set_mode(string desire_mode)
         while (error_times < 10)
         {
             ros::spinOnce();
-            ros::Duration(0.2).sleep();
+            usleep(200000);
             if (current_state.armed == desire_arm_cmd)
             {
                 return "";
@@ -142,7 +142,7 @@ string vehicle_command::set_mode(string desire_mode)
             {
                 // 执行回调函数
                 ros::spinOnce();
-                ros::Duration(0.2).sleep();
+                usleep(200000);
                 if (current_state.armed == desire_arm_cmd)
                 {
                     return "";
@@ -181,7 +181,7 @@ string vehicle_command::set_mode(string desire_mode)
         mode_cmd.request.custom_mode = desire_mode;
         mode_client.call(mode_cmd);
         ros::spinOnce();
-        ros::Duration(0.2).sleep();
+        usleep(200000);
         if (mode_cmd.response.mode_sent)
         {
             if (current_state.mode == desire_mode)
@@ -208,8 +208,17 @@ string vehicle_command::set_mode(string desire_mode)
 
 void vehicle_command::ros_thread_fun()
 {
-    while (ros::ok() && !thread_stop)
+    bool sub_state = true;
+    while (ros::ok() && !thread_stop && sub_state)
     {
+        if (current_pos_sub.getNumPublishers() > 0)
+        {
+            sub_state = true;
+        }
+        else
+        {
+            sub_state = false;
+        }
         if (ext_cmd_sub.getNumPublishers() > 0)
         {
             ext_cmd_state = true;
@@ -219,9 +228,10 @@ void vehicle_command::ros_thread_fun()
             ext_cmd_state = false;
         }
         setpoint_raw_local_pub.publish(pos_setpoint);
-        ros::Duration(update_time).sleep();
+        usleep(floor(1000000 * update_time));
         ros::spinOnce();
     }
+    ros::shutdown();
     ros_stop = true;
 }
 

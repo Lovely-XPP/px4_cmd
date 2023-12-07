@@ -30,7 +30,7 @@ void single_vehicle_external_command::start()
     ext_cmd_pub = nh.advertise<px4_cmd::Command>("/px4_cmd/ext_command", 50);
     while (!ros::ok())
     {
-        ros::Duration(update_time).sleep();
+        usleep(floor(1000000 * update_time));
     }
     std::thread ros_thread(&single_vehicle_external_command::ros_thread_fun, this);
     ros_thread.detach();
@@ -44,14 +44,14 @@ void single_vehicle_external_command::ros_thread_fun()
         while (ext_cmd_pub.getNumSubscribers() < 1)
         {
             ROS_INFO("External Command: Waiting for user-define mode!");
-            ros::Duration(1).sleep();
+            sleep(1);
             t = 0;
         }
         external_cmd.ext_time = t;
         external_cmd.ext_total_time = total_time;
         ext_cmd_pub.publish(external_cmd);
         t = t + update_time;
-        ros::Duration(update_time).sleep();
+        usleep(floor(1000000 * update_time));
         ros::spinOnce();
     }
     ros::shutdown();

@@ -84,7 +84,6 @@ class MonitorMainWindow : public QDialog
         QStringList topics;
         vector<vector<QStandardItem *>> table_items;
         QVector<vehicle_state *> data;
-        QVector<std::thread *> threads;
         QVector<QCPCurve *> curves;
         QVector<string> img_topic_showing;
         bool thread_stop = false;
@@ -354,11 +353,9 @@ class MonitorMainWindow : public QDialog
             {
                 std::thread thread(&MonitorMainWindow::update_table_info, this, i);
                 thread.detach();
-                threads.push_back(&thread);
             }
             std::thread thread(&MonitorMainWindow::update_info, this);
             thread.detach();
-            threads.push_back(&thread);
 
             // connect signal and slot
             QObject::connect(signal_button, &QPushButton::clicked, this, &MonitorMainWindow::update_plot_slot);
@@ -380,7 +377,7 @@ class MonitorMainWindow : public QDialog
 
         void update_info_slot()
         {
-            if (ros::ok())
+            if (ros::ok() && !data[0]->ros_stop)
             {
                 info_label->setText(("[ROS State]  Running\n[Vehicle Count]  " + to_string(nodes.size())).c_str());
                 info_label->setStyleSheet("color: green; font-size: 14pt;");
@@ -521,7 +518,7 @@ class MonitorMainWindow : public QDialog
             {
                 (*item)->thread_stop = true;
             }
-            sleep(1);
+            usleep(200000);
             this->close();
         }
 
@@ -533,6 +530,8 @@ class MonitorMainWindow : public QDialog
             topic_name_show = data.toString().toStdString();
             // new一个菜单
             QMenu *popMenu = new QMenu(this);
+            popMenu->setStyleSheet("QMenu::item {background-color: #FFFFFF; color: #000000;} QMenu::item::selected{background-color: #0078D7; color: #FFFFFF;}");
+
             if (index.isValid() && column == 2)
             {
                 // 新建一个 QAction（可建多个），并设置显示的文本
