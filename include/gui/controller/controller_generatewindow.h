@@ -16,11 +16,10 @@
 
 using namespace std;
 
-class ControllerGenerateWindow : public QWidget
+class ControllerGenerateWindow : public QDialog
 {
     public:
         QWidget *parent;
-        QDialog *win = new QDialog();
         ControllerGenerateWindow(QWidget *parent_widget)
         {
             setup();
@@ -47,10 +46,10 @@ class ControllerGenerateWindow : public QWidget
 
         void setup()
         {
-            // set win
-            win->setFixedSize(680, 220);
-            win->setWindowTitle("Take Off Setting");
-            win->setStyleSheet("background-color: rgb(255,250,250)");
+            // set this
+            this->setFixedSize(680, 220);
+            this->setWindowTitle("Take Off Setting");
+            this->setStyleSheet("background-color: rgb(255,250,250)");
 
             // init layouts
             QVBoxLayout *vbox = new QVBoxLayout();
@@ -59,26 +58,26 @@ class ControllerGenerateWindow : public QWidget
             QVBoxLayout *vbox_cb_1 = new QVBoxLayout();
             QVBoxLayout *vbox_cb_2 = new QVBoxLayout();
             QVBoxLayout *vbox_cb_3 = new QVBoxLayout();
-            QGroupBox *group = new QGroupBox("[Select Parameters]", win);
+            QGroupBox *group = new QGroupBox("[Select Parameters]", this);
             group->setAlignment(Qt::AlignHCenter | Qt::AlignBottom);
             group->setStyleSheet("font-size: 16pt;");
 
             // add buttons
-            py_button = new QPushButton("Generate Python Code", win);
+            py_button = new QPushButton("Generate Python Code", this);
             py_button->setStyleSheet("font-size: 16pt");
-            cpp_button = new QPushButton("Generate C++ Code", win);
+            cpp_button = new QPushButton("Generate C++ Code", this);
             cpp_button->setStyleSheet("font-size: 16pt");
             py_button->setMinimumHeight(50);
             cpp_button->setMinimumHeight(50);
 
             // add checkboxes
-            pos_box = new QCheckBox("Position", win);
+            pos_box = new QCheckBox("Position", this);
             pos_box->setStyleSheet("font-size: 14pt");
-            vel_box = new QCheckBox("Velocity", win);
+            vel_box = new QCheckBox("Velocity", this);
             vel_box->setStyleSheet("font-size: 14pt");
-            pose_box = new QCheckBox("Attitude", win);
+            pose_box = new QCheckBox("Attitude", this);
             pose_box->setStyleSheet("font-size: 14pt");
-            angle_rate_box = new QCheckBox("Angle Rate", win);
+            angle_rate_box = new QCheckBox("Angle Rate", this);
             angle_rate_box->setStyleSheet("font-size: 14pt");
             pos_box->setChecked(true);
 
@@ -97,7 +96,7 @@ class ControllerGenerateWindow : public QWidget
             hbox_button->addStretch(1);
             hbox_button->addWidget(cpp_button, 1);
             vbox->addLayout(hbox_button);
-            win->setLayout(vbox);
+            this->setLayout(vbox);
 
             // connect signals and slots
             QObject::connect(cpp_button, &QPushButton::clicked, this, &ControllerGenerateWindow::generate_cpp_h);
@@ -358,7 +357,7 @@ class ControllerGenerateWindow : public QWidget
             }
             else
             {
-                msg_box = new QMessageBox(win);
+                msg_box = new QMessageBox(this);
                 msg_box->setIcon(QMessageBox::Icon::Critical);
                 msg_box->setWindowTitle("Error");
                 msg_box->setText(("Fail to save C++ header to \n" + root_dir + "/include/vehicle_external_command.h").c_str());
@@ -366,7 +365,7 @@ class ControllerGenerateWindow : public QWidget
                 return;
             }
             // successful info
-            msg_box = new QMessageBox(win);
+            msg_box = new QMessageBox(this);
             msg_box->setIcon(QMessageBox::Icon::Information);
             msg_box->setWindowTitle("Successfully Save C++ Header File");
             msg_box->setText(("Successfully save C++ header file to \n" + root_dir + "/include/vehicle_external_command.h").c_str());
@@ -577,7 +576,7 @@ class ControllerGenerateWindow : public QWidget
             }
             else
             {
-                msg_box = new QMessageBox(win);
+                msg_box = new QMessageBox(this);
                 msg_box->setIcon(QMessageBox::Icon::Critical);
                 msg_box->setWindowTitle("Error");
                 msg_box->setText(("Fail to save Python class to \n" + root_dir + "/template/vehicle_external_command.py").c_str());
@@ -585,7 +584,7 @@ class ControllerGenerateWindow : public QWidget
                 return;
             }
             // successful info
-            msg_box = new QMessageBox(win);
+            msg_box = new QMessageBox(this);
             msg_box->setIcon(QMessageBox::Icon::Information);
             msg_box->setWindowTitle("Successfully Save Python class File");
             msg_box->setText(("Successfully save Python class file to \n" + root_dir + "/template/vehicle_external_command.py").c_str());

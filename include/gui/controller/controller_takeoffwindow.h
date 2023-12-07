@@ -18,12 +18,11 @@
 #include <vehicle_command.h>
 #include <mavros_msgs/State.h>
 
-class ControllerTakeoffWindow : public QWidget
+class ControllerTakeoffWindow : public QDialog
 {   
     Q_OBJECT
     public:
         QWidget *parent;
-        QDialog *win = new QDialog();
         double takeoff_height;
         bool set_height = false;
         ControllerTakeoffWindow(QWidget *parent_widget)
@@ -35,7 +34,7 @@ class ControllerTakeoffWindow : public QWidget
             set_height = false;
             data = input;
             QString err = "";
-            msg_box = new QMessageBox(win);
+            msg_box = new QMessageBox(this);
             msg_box->setIcon(QMessageBox::Icon::Critical);
             msg_box->setWindowTitle("Error");
             for (auto item = data.begin(); item != data.end(); item++)
@@ -76,25 +75,25 @@ class ControllerTakeoffWindow : public QWidget
 
         void setup()
         {
-            // set win
-            win->setFixedSize(600, 160);
-            win->setWindowTitle("Take Off Setting");
-            win->setStyleSheet("background-color: rgb(255,250,250)");
+            // set this
+            this->setFixedSize(600, 160);
+            this->setWindowTitle("Take Off Setting");
+            this->setStyleSheet("background-color: rgb(255,250,250)");
 
             // set label
-            QLabel *txt = new QLabel("Take off height (meters):", win);
+            QLabel *txt = new QLabel("Take off height (meters):", this);
             txt->setStyleSheet("font-size: 14pt");
 
             // set buttons
-            exit_button = new QPushButton("Exit", win);
-            exec_button = new QPushButton("Exec and Arm", win);
+            exit_button = new QPushButton("Exit", this);
+            exec_button = new QPushButton("Exec and Arm", this);
             exit_button->setMinimumHeight(50);
             exec_button->setMinimumHeight(50);
             exit_button->setStyleSheet("background-color: rgb(255,106,106); font-size: 16pt");
             exec_button->setStyleSheet("background-color: rgb(84,255,159); font-size: 16pt");
 
             // set line edit
-            takeoff_height_txt = new QLineEdit("2", win);
+            takeoff_height_txt = new QLineEdit("2", this);
             takeoff_height_txt->setStyleSheet("font-size: 16pt");
 
             // set layout
@@ -109,7 +108,7 @@ class ControllerTakeoffWindow : public QWidget
             hbox_2->addWidget(exit_button);
             hbox_2->addWidget(exec_button);
             vbox->addLayout(hbox_2);
-            win->setLayout(vbox);
+            this->setLayout(vbox);
 
             // Signal connect slot
             QObject::connect(exec_button, &QPushButton::clicked, this, &ControllerTakeoffWindow::exec_slot);
@@ -127,19 +126,19 @@ class ControllerTakeoffWindow : public QWidget
             emit take_off_info_signal();
             takeoff_height = height.toDouble();
             set_height = true;
-            win->close();
+            this->close();
         }
 
         void exit_slot()
         {
-            win->close();
+            this->close();
         }
 
         // utility function
         bool check_input_data(string data)
         {
             double data_double;
-            msg_box = new QMessageBox(win);
+            msg_box = new QMessageBox(this);
             msg_box->setIcon(QMessageBox::Icon::Critical);
             msg_box->setWindowTitle("Error");
             if (!data.compare(""))

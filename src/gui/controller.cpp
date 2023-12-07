@@ -1,5 +1,6 @@
 #include <gui/controller/controller_mainwindow.h>
 #include <gui/controller/controller_loadwindow.h>
+#include "gui/controller/moc_controller_mainwindow.cpp"
 #include "gui/controller/moc_controller_modewindow.cpp"
 #include "gui/controller/moc_controller_takeoffwindow.cpp"
 #include <QApplication>
@@ -14,11 +15,14 @@ int main(int argc, char *argv[])
     app.setStyle("Fusion");
     QMainWindow *main_win;
     ControllerLoadWindow *load_win = new ControllerLoadWindow(main_win);
-    load_win->win->exec();
+    load_win->exec();
+    QStringList nodes = load_win->nodes;
+    delete load_win;
     if (load_win->push_button)
     {
-        ControllerMainWindow *controller = new ControllerMainWindow(main_win, load_win->nodes);
-        return controller->win->exec(); // 主事件循环
+        ControllerMainWindow *controller = new ControllerMainWindow(main_win, nodes);
+        controller->exec(); // 主事件循环
     }
+    sleep(1);
     return 0;
 }

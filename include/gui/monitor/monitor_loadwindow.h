@@ -27,6 +27,7 @@ class MonitorLoadWindow : public QWidget
         QWidget *parent;
         MonitorLoadWindow(QWidget *parent_widget)
         {
+            this->setAttribute(Qt::WA_DeleteOnClose);
             setup();
         }
 

@@ -18,16 +18,20 @@
 
 using namespace std;
 
-class ControllerLoadWindow : public QWidget
+class ControllerLoadWindow : public QDialog
 {
     public:
         bool push_button = false;
         QStringList nodes;
-        QDialog *win = new QDialog();
         QWidget *parent;
         ControllerLoadWindow(QWidget *parent_widget)
         {
             setup();
+        }
+
+        ~ControllerLoadWindow()
+        {
+            thread_stop = true;
         }
 
     private:
@@ -48,16 +52,16 @@ class ControllerLoadWindow : public QWidget
         {
             // init window
             QIcon *icon = new QIcon(QApplication::style()->standardIcon(QStyle::SP_FileIcon));
-            win->setWindowIcon(*icon);
-            win->setFixedSize(1080, 130);
-            win->setWindowTitle(("PX4 Cmd Simulation Controller [Version: " + version + "]").c_str());
-            win->setStyleSheet("background-color: rgb(255,250,250)");
+            this->setWindowIcon(*icon);
+            this->setFixedSize(1080, 130);
+            this->setWindowTitle(("PX4 Cmd Simulation Controller [Version: " + version + "]").c_str());
+            this->setStyleSheet("background-color: rgb(255,250,250)");
             
             // detect env
             string err = detect_env();
             if (err.length() != 0)
             {
-                msg_box = new QMessageBox(win);
+                msg_box = new QMessageBox(this);
                 msg_box->setIcon(QMessageBox::Icon::Critical);
                 msg_box->setWindowTitle("Error");
                 msg_box->setText(err.c_str());
@@ -65,8 +69,8 @@ class ControllerLoadWindow : public QWidget
             }
 
             // lables
-            label_1 = new QLabel("", win);
-            label_2 = new QLabel("", win);
+            label_1 = new QLabel("", this);
+            label_2 = new QLabel("", this);
             label_1->setText("Can not Detected ROS Running!");
             label_1->setStyleSheet("color: red; font-size: 11pt");
             label_2->setText("Please Run roslaunch xxx.launch to Continue...");
@@ -78,11 +82,11 @@ class ControllerLoadWindow : public QWidget
             hbox->addLayout(vbox, 3);
 
             // start_button
-            start_button = new QPushButton("Start  Controller", win);
+            start_button = new QPushButton("Start  Controller", this);
             start_button->setStyleSheet("background-color: rgb(84,255,159); font-weight: bold; font-size: 16pt");
             start_button->setMinimumHeight(70);
             start_button->setEnabled(false);
-            exit_button = new QPushButton("Exit", win);
+            exit_button = new QPushButton("Exit", this);
             exit_button->setStyleSheet("background-color: rgb(255,99,71); font-weight: bold; font-size: 16pt");
             exit_button->setMinimumHeight(70);
             hbox->addWidget(start_button, 2);
@@ -90,7 +94,7 @@ class ControllerLoadWindow : public QWidget
             hbox->addWidget(exit_button, 2);
 
             // layout
-            win->setLayout(hbox);
+            this->setLayout(hbox);
 
             // connect signal and slot
             QObject::connect(start_button, &QPushButton::clicked, this, &ControllerLoadWindow::start_button_slot);
@@ -195,7 +199,7 @@ class ControllerLoadWindow : public QWidget
                 }
                 usleep(500000);
             }
-            win->close();
+            this->close();
         }
 
         bool detect_px4()

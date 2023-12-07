@@ -19,11 +19,10 @@
 
 using namespace std;
 
-class ControllerTrajectoryWindow : public QWidget
+class ControllerTrajectoryWindow : public QDialog
 {
     public:
         QWidget *parent;
-        QDialog *win = new QDialog();
         int set_mode;
         int set_frame;
         int set_time;
@@ -107,10 +106,10 @@ class ControllerTrajectoryWindow : public QWidget
                 cmd_values[0].push_back(tmp);
             }
 
-            // set win
-            win->setFixedSize(1200, 550);
-            win->setWindowTitle("Trajectory Cmd Setting");
-            win->setStyleSheet("background-color: rgb(255,250,250)");
+            // set this
+            this->setFixedSize(1200, 550);
+            this->setWindowTitle("Trajectory Cmd Setting");
+            this->setStyleSheet("background-color: rgb(255,250,250)");
 
             // add layouts
             QVBoxLayout *vbox = new QVBoxLayout();
@@ -121,50 +120,50 @@ class ControllerTrajectoryWindow : public QWidget
             QHBoxLayout *hbox_4 = new QHBoxLayout();
 
             // add labels
-            title_txt = new QLabel("Trajectory Command Setting", win);
+            title_txt = new QLabel("Trajectory Command Setting", this);
             title_txt->setStyleSheet("font-size: 18pt");
             title_txt->setAlignment(Qt::AlignCenter);
-            sub_title_1_txt = new QLabel("[Global Setting]", win);
+            sub_title_1_txt = new QLabel("[Global Setting]", this);
             sub_title_1_txt->setStyleSheet("font-size: 16pt; font-weight: bold; color: rgb(0,130,186)");
             sub_title_1_txt->setAlignment(Qt::AlignCenter);
-            sub_title_2_txt = new QLabel("[Single Node Setting]", win);
+            sub_title_2_txt = new QLabel("[Single Node Setting]", this);
             sub_title_2_txt->setStyleSheet("font-size: 16pt; font-weight: bold; color: rgb(0,131,0)");
             sub_title_2_txt->setAlignment(Qt::AlignCenter);
-            uav_txt = new QLabel("Node ", win);
+            uav_txt = new QLabel("Node ", this);
             uav_txt->setStyleSheet("font-size: 14pt");
             uav_txt->setAlignment(Qt::AlignVCenter | Qt::AlignRight);
             uav_txt->setMaximumWidth(60);
-            frame_txt = new QLabel("Frame ", win);
+            frame_txt = new QLabel("Frame ", this);
             frame_txt->setStyleSheet("font-size: 14pt");
             frame_txt->setAlignment(Qt::AlignVCenter | Qt::AlignRight);
-            mode_txt = new QLabel("Mode ", win);
+            mode_txt = new QLabel("Mode ", this);
             mode_txt->setStyleSheet("font-size: 14pt");
             mode_txt->setAlignment(Qt::AlignVCenter | Qt::AlignRight);
-            time_txt = new QLabel("Gap Time (second) ", win);
+            time_txt = new QLabel("Gap Time (second) ", this);
             time_txt->setStyleSheet("font-size: 14pt");
             time_txt->setAlignment(Qt::AlignVCenter | Qt::AlignRight);
 
             // add buttons
-            add_button = new QPushButton("Add Point", win);
-            del_button = new QPushButton("Delete Point", win);
-            clc_button = new QPushButton("Clear Points", win);
+            add_button = new QPushButton("Add Point", this);
+            del_button = new QPushButton("Delete Point", this);
+            clc_button = new QPushButton("Clear Points", this);
             add_button->setStyleSheet("background-color: rgb(50,191,255); font-size: 14pt");
             del_button->setStyleSheet("background-color: rgb(255,106,106); font-size: 14pt");
             clc_button->setStyleSheet("background-color: rgb(224,102,255); font-size: 14pt");
             add_button->setMinimumHeight(55);
             del_button->setMinimumHeight(55);
             clc_button->setMinimumHeight(55);
-            exec_button = new QPushButton("Exec", win);
-            exit_button = new QPushButton("Exit", win);
+            exec_button = new QPushButton("Exec", this);
+            exit_button = new QPushButton("Exit", this);
             exit_button->setMinimumHeight(50);
             exec_button->setMinimumHeight(50);
             exit_button->setStyleSheet("background-color: rgb(255,106,106); font-size: 16pt");
             exec_button->setStyleSheet("background-color: rgb(84,255,159); font-size: 16pt");
 
             // add select box & lineedit
-            uav_select = new QComboBox(win);
-            frame_select = new QComboBox(win);
-            mode_select = new QComboBox(win);
+            uav_select = new QComboBox(this);
+            frame_select = new QComboBox(this);
+            mode_select = new QComboBox(this);
             uav_select->addItems(nodes);
             frame_select->addItems(frames);
             mode_select->addItems(modes);
@@ -173,13 +172,13 @@ class ControllerTrajectoryWindow : public QWidget
             uav_select->setStyleSheet("background-color: rgb(155,205,155); font-size: 14pt");
             frame_select->setStyleSheet("background-color: rgb(135,206,235); font-size: 14pt");
             mode_select->setStyleSheet("background-color: rgb(135,206,235); font-size: 14pt");
-            time_input = new QLineEdit("1", win);
+            time_input = new QLineEdit("1", this);
             time_input->setStyleSheet("background-color: white; font-size: 14pt");
 
             // add table
-            cmd_table = new QTableView(win);
+            cmd_table = new QTableView(this);
             cmd_table->setStyleSheet("background-color: rgb(236,245,225); font-size: 12pt");
-            cmd_model = new QStandardItemModel(cmd_values.size(), table_headers.size(), win);
+            cmd_model = new QStandardItemModel(cmd_values.size(), table_headers.size(), this);
             cmd_model->setHorizontalHeaderLabels(table_headers);
             QStandardItem *item_1;
             QStandardItem *item_2;
@@ -249,7 +248,7 @@ class ControllerTrajectoryWindow : public QWidget
             hbox_4->addWidget(exec_button, 1);
             vbox->addSpacing(10);
             vbox->addLayout(hbox_4);
-            win->setLayout(vbox);
+            this->setLayout(vbox);
 
             // connect signals and slots
             QObject::connect(cmd_model, &QStandardItemModel::itemChanged, this, &ControllerTrajectoryWindow::update_table_slot);
@@ -417,7 +416,7 @@ class ControllerTrajectoryWindow : public QWidget
             QModelIndexList indexes = cmd_table->selectionModel()->selectedIndexes();
             if (indexes.length() == 0)
             {
-                msg_box = new QMessageBox(win);
+                msg_box = new QMessageBox(this);
                 msg_box->setIcon(QMessageBox::Icon::Information);
                 msg_box->setWindowTitle("Info");
                 msg_box->setText("Please Select Point");
@@ -464,12 +463,12 @@ class ControllerTrajectoryWindow : public QWidget
                 time_input->setText(QString(set_time));
                 return;
             }
-            msg_box = new QMessageBox(QMessageBox::Question, "Confirmation", "Comfirm to Execute Commands?", QMessageBox::Yes | QMessageBox::No, win);
+            msg_box = new QMessageBox(QMessageBox::Question, "Confirmation", "Comfirm to Execute Commands?", QMessageBox::Yes | QMessageBox::No, this);
             int result = msg_box->exec();
             switch (result)
             {
                 case QMessageBox::Yes:
-                    win->close();
+                    this->close();
                     exec_state = true;
                     break;
                 case QMessageBox::No:
@@ -481,14 +480,14 @@ class ControllerTrajectoryWindow : public QWidget
 
         void exit_slot()
         {
-            win->close();
+            this->close();
         }
 
         // utility function
         bool check_input_data(string data, bool positive = false)
         {
             double data_double;
-            msg_box = new QMessageBox(win);
+            msg_box = new QMessageBox(this);
             msg_box->setIcon(QMessageBox::Icon::Critical);
             msg_box->setWindowTitle("Error");
             if (!data.compare(""))

@@ -30,6 +30,7 @@ class MonitorImageWindow : public QWidget
 
         MonitorImageWindow(QWidget *parent_widget, const string &topic_name_input, const int &id)
         {
+            this->setAttribute(Qt::WA_DeleteOnClose);
             topic_name = topic_name_input;
             node_id = id;
             setup();

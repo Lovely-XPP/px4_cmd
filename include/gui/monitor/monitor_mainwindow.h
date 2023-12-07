@@ -44,7 +44,7 @@ class MonitorMainWindow : public QWidget
         QWidget *parent;
         MonitorMainWindow(QWidget *parent_widget, QStringList nodes_input)
         {
-            setAttribute(Qt::WA_DeleteOnClose);
+            this->setAttribute(Qt::WA_DeleteOnClose);
             qRegisterMetaType<QList<QPersistentModelIndex>>("QList<QPersistentModelIndex>");
             qRegisterMetaType<QList<QAbstractItemModel::LayoutChangeHint>>("QList<QAbstractItemModel::LayoutChangeHint>");
             nodes = nodes_input;

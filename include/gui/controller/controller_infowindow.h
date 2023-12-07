@@ -11,13 +11,13 @@
 
 #include <print_utility/printf_utility.h>
 
-class ControllerInfoWindow : public QWidget
+class ControllerInfoWindow : public QDialog
 {
     public:
         QWidget *parent;
-        QDialog *win = new QDialog();
         ControllerInfoWindow(QWidget *parent_widget)
         {
+            this->setAttribute(Qt::WA_DeleteOnClose);
             setup();
         }
 
@@ -25,17 +25,17 @@ class ControllerInfoWindow : public QWidget
         // init widgets
         QVBoxLayout *vbox = new QVBoxLayout();
         QHBoxLayout *hbox = new QHBoxLayout();
-        QPushButton *programme_info_button = new QPushButton(win);
-        QPushButton *topic_name_info_button = new QPushButton(win);
-        QPushButton *sensors_info_button = new QPushButton(win);
-        QTextBrowser *txt = new QTextBrowser(win);
+        QPushButton *programme_info_button = new QPushButton(this);
+        QPushButton *topic_name_info_button = new QPushButton(this);
+        QPushButton *sensors_info_button = new QPushButton(this);
+        QTextBrowser *txt = new QTextBrowser(this);
 
         void setup()
         {
-            // set win
-            win->setFixedSize(600, 600);
-            win->setWindowTitle("About");
-            win->setStyleSheet("background-color: rgb(255,250,250)");
+            // set this
+            this->setFixedSize(600, 600);
+            this->setWindowTitle("About");
+            this->setStyleSheet("background-color: rgb(255,250,250)");
             // set buttons
             programme_info_button->setMinimumSize(200, 40);
             programme_info_button->setText("About the Programme");
@@ -56,7 +56,7 @@ class ControllerInfoWindow : public QWidget
             hbox->addWidget(txt);
 
             // set layout
-            win->setLayout(hbox);
+            this->setLayout(hbox);
 
             // Signal connect slot
             QObject::connect(programme_info_button, &QPushButton::clicked, this, &ControllerInfoWindow::programme_info_slot);

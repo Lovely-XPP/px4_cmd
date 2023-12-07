@@ -17,12 +17,11 @@
 #include <mavros_msgs/State.h>
 #include <vehicle_command.h>
 
-class ControllerModeWindow : public QWidget
+class ControllerModeWindow : public QDialog
 {
     Q_OBJECT
     public:
         QWidget *parent;
-        QDialog *win = new QDialog();
         ControllerModeWindow(QWidget *parent_widget)
         {
             setup();
@@ -55,10 +54,10 @@ class ControllerModeWindow : public QWidget
 
         void setup()
         {
-            // set win
-            win->setFixedSize(1000, 250);
-            win->setWindowTitle("Mode Setting");
-            win->setStyleSheet("background-color: rgb(255,250,250)");
+            // set this
+            this->setFixedSize(1000, 250);
+            this->setWindowTitle("Mode Setting");
+            this->setStyleSheet("background-color: rgb(255,250,250)");
 
             // add Layout
             QVBoxLayout *vbox = new QVBoxLayout();
@@ -67,21 +66,21 @@ class ControllerModeWindow : public QWidget
             QHBoxLayout *hbox_3 = new QHBoxLayout();
 
             // add text
-            state_txt = new QLabel("", win);
+            state_txt = new QLabel("", this);
             state_txt->setAlignment(Qt::AlignmentFlag::AlignCenter);
-            QLabel *info_txt = new QLabel("Note: [POSCTL] = Position Control, [ALTCTL] = Altitude Control, [OFFBOARD] = programme working mode", win);
+            QLabel *info_txt = new QLabel("Note: [POSCTL] = Position Control, [ALTCTL] = Altitude Control, [OFFBOARD] = programme working mode", this);
             info_txt->setAlignment(Qt::AlignmentFlag::AlignCenter);
             info_txt->setStyleSheet("font-size: 12pt");
 
             // add buttons
-            manual_mode = new QPushButton("Manual", win);
-            stable_mode = new QPushButton("Stablized", win);
-            offboard_mode = new QPushButton("Offboard", win);
-            pos_mode = new QPushButton("Position Control", win);
-            alt_mode = new QPushButton("Altitude Control", win);
-            land_mode = new QPushButton("Auto Land", win);
-            return_mode = new QPushButton("Auto Return", win);
-            exit_mode = new QPushButton("Exit", win);
+            manual_mode = new QPushButton("Manual", this);
+            stable_mode = new QPushButton("Stablized", this);
+            offboard_mode = new QPushButton("Offboard", this);
+            pos_mode = new QPushButton("Position Control", this);
+            alt_mode = new QPushButton("Altitude Control", this);
+            land_mode = new QPushButton("Auto Land", this);
+            return_mode = new QPushButton("Auto Return", this);
+            exit_mode = new QPushButton("Exit", this);
             manual_mode->setStyleSheet("font-size: 16pt");
             stable_mode->setStyleSheet("font-size: 16pt");
             offboard_mode->setStyleSheet("font-size: 16pt");
@@ -98,7 +97,7 @@ class ControllerModeWindow : public QWidget
             exit_mode->setMinimumHeight(50);
             land_mode->setMinimumHeight(50);
             return_mode->setMinimumHeight(50);
-            signal_button = new QPushButton(win);
+            signal_button = new QPushButton(this);
             signal_button->setVisible(false);
             
             // set layout
@@ -119,7 +118,7 @@ class ControllerModeWindow : public QWidget
             vbox->addLayout(hbox_2, 6);
 
             // set layout
-            win->setLayout(vbox);
+            this->setLayout(vbox);
 
             // Signal connect slot
             QObject::connect(manual_mode, &QPushButton::clicked, this, &ControllerModeWindow::manual_mode_slot);
@@ -190,7 +189,7 @@ class ControllerModeWindow : public QWidget
 
         void exit_mode_slot()
         {
-            win->close();
+            this->close();
         }
 
         // utility functions
@@ -243,14 +242,14 @@ class ControllerModeWindow : public QWidget
             exit_mode->setEnabled(true);
             if (desire_mode == mavros_msgs::State::MODE_PX4_LAND || desire_mode == mavros_msgs::State::MODE_PX4_RTL)
             {
-                win->close();
+                this->close();
                 return;
             }
         }
 
         void show_error()
         {
-            msg_box = new QMessageBox(win);
+            msg_box = new QMessageBox(this);
             msg_box->setIcon(QMessageBox::Icon::Critical);
             msg_box->setWindowTitle("Error");
             msg_box->setText(error);

@@ -19,11 +19,10 @@
 
 using namespace std;
 
-class ControllerManualWindow : public QWidget
+class ControllerManualWindow : public QDialog
 {
     public:
         QWidget *parent;
-        QDialog *win = new QDialog();
         int set_mode;
         int set_frame;
         bool exec_state = false;
@@ -100,10 +99,10 @@ class ControllerManualWindow : public QWidget
                 cmd_values[0].push_back(tmp);
             }
 
-            // set win
-            win->setFixedSize(1000, 450);
-            win->setWindowTitle("Manual Cmd Setting");
-            win->setStyleSheet("background-color: rgb(255,250,250)");
+            // set this
+            this->setFixedSize(1000, 450);
+            this->setWindowTitle("Manual Cmd Setting");
+            this->setStyleSheet("background-color: rgb(255,250,250)");
 
             // add layouts
             QVBoxLayout *vbox = new QVBoxLayout();
@@ -111,27 +110,27 @@ class ControllerManualWindow : public QWidget
             QHBoxLayout *hbox_2 = new QHBoxLayout();
 
             // add labels
-            title_txt = new QLabel("Manual Command Setting", win);
+            title_txt = new QLabel("Manual Command Setting", this);
             title_txt->setStyleSheet("font-size: 18pt");
             title_txt->setAlignment(Qt::AlignCenter);
-            frame_txt = new QLabel("Frame ", win);
+            frame_txt = new QLabel("Frame ", this);
             frame_txt->setStyleSheet("font-size: 14pt");
             frame_txt->setAlignment(Qt::AlignVCenter | Qt::AlignRight);
-            mode_txt = new QLabel("Mode ", win);
+            mode_txt = new QLabel("Mode ", this);
             mode_txt->setStyleSheet("font-size: 14pt");
             mode_txt->setAlignment(Qt::AlignVCenter | Qt::AlignRight);
 
             // add buttons
-            exec_button = new QPushButton("Exec", win);
-            exit_button = new QPushButton("Exit", win);
+            exec_button = new QPushButton("Exec", this);
+            exit_button = new QPushButton("Exit", this);
             exit_button->setMinimumHeight(50);
             exec_button->setMinimumHeight(50);
             exit_button->setStyleSheet("background-color: rgb(255,106,106); font-size: 16pt");
             exec_button->setStyleSheet("background-color: rgb(84,255,159); font-size: 16pt");
 
             // add select box & lineedit
-            frame_select = new QComboBox(win);
-            mode_select = new QComboBox(win);
+            frame_select = new QComboBox(this);
+            mode_select = new QComboBox(this);
             frame_select->addItems(frames);
             mode_select->addItems(modes);
             frame_select->setCurrentIndex(0);
@@ -142,9 +141,9 @@ class ControllerManualWindow : public QWidget
             mode_select->setMinimumWidth(360);
 
             // add table
-            cmd_table = new QTableView(win);
+            cmd_table = new QTableView(this);
             cmd_table->setStyleSheet("background-color: rgb(236,245,225); font-size: 12pt");
-            cmd_model = new QStandardItemModel(nodes.size(), table_headers.size(), win);
+            cmd_model = new QStandardItemModel(nodes.size(), table_headers.size(), this);
             cmd_model->setHorizontalHeaderLabels(table_headers);
             for (size_t i = 0; i < nodes.size(); i++)
             {
@@ -191,7 +190,7 @@ class ControllerManualWindow : public QWidget
             hbox_2->addStretch(3);
             hbox_2->addWidget(exec_button, 1);
             vbox->addLayout(hbox_2);
-            win->setLayout(vbox);
+            this->setLayout(vbox);
 
             // connect signals and slots
             QObject::connect(cmd_model, &QStandardItemModel::itemChanged, this, &ControllerManualWindow::update_table_slot);
@@ -273,12 +272,12 @@ class ControllerManualWindow : public QWidget
 
         void exec_slot()
         {
-            msg_box = new QMessageBox(QMessageBox::Question, "Confirmation", "Comfirm to Execute Commands?", QMessageBox::Yes | QMessageBox::No, win);
+            msg_box = new QMessageBox(QMessageBox::Question, "Confirmation", "Comfirm to Execute Commands?", QMessageBox::Yes | QMessageBox::No, this);
             int result = msg_box->exec();
             switch (result)
             {
                 case QMessageBox::Yes:
-                    win->close();
+                    this->close();
                     exec_state = true;
                     break;
                 case QMessageBox::No:
@@ -290,14 +289,14 @@ class ControllerManualWindow : public QWidget
 
         void exit_slot()
         {
-            win->close();
+            this->close();
         }
 
         // utility function
         bool check_input_data(string data)
         {
             double data_double;
-            msg_box = new QMessageBox(win);
+            msg_box = new QMessageBox(this);
             msg_box->setIcon(QMessageBox::Icon::Critical);
             msg_box->setWindowTitle("Error");
             if (!data.compare(""))
