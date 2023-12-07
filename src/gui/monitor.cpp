@@ -1,5 +1,6 @@
 #include <gui/monitor/monitor_loadwindow.h>
 #include <gui/monitor/monitor_mainwindow.h>
+#include "gui/monitor/moc_monitor_mainwindow.cpp"
 #include <QApplication>
 #include <QMainWindow>
 #include <ros/ros.h>
@@ -13,11 +14,14 @@ int main(int argc, char *argv[])
     app.setStyle("Fusion");
     QMainWindow *main_win;
     MonitorLoadWindow *load_win = new MonitorLoadWindow(main_win);
-    load_win->win->exec();
+    load_win->exec();
+    QStringList nodes = load_win->nodes;
+    delete load_win;
     if (load_win->push_button)
     {
-        MonitorMainWindow *monitor = new MonitorMainWindow(main_win, load_win->nodes);
-        return monitor->win->exec(); // 主事件循环
+        MonitorMainWindow *monitor = new MonitorMainWindow(main_win, nodes);
+        return monitor->exec(); // 主事件循环
     }
+    sleep(1);
     return 0;
 }

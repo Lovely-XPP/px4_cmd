@@ -34,10 +34,9 @@ struct sensor_data
     string distance = "0.2";
 };
 
-class GeneratorSensorsWindow : public QWidget
+class GeneratorSensorsWindow : public QDialog
 {
     public:
-        QDialog *win = new QDialog();
         // sensors data list
         vector<sensor_data *> sensors_save_data;
         vector<sensor_data *> sensors_data;
@@ -106,10 +105,10 @@ class GeneratorSensorsWindow : public QWidget
                 sensors_data.push_back(&realsense_cam);
                 sensors_save_data = sensors_data;
             }
-            // set win
-            win->setFixedSize(600, 600);
-            win->setWindowTitle("PX4 Cmd Launch File Generator");
-            win->setStyleSheet("background-color: rgb(255,250,250)");
+            // set this
+            this->setFixedSize(600, 600);
+            this->setWindowTitle("PX4 Cmd Launch File Generator");
+            this->setStyleSheet("background-color: rgb(255,250,250)");
             // layout setting
             hbox->setSpacing(10);
             hbox->setAlignment(Qt::AlignHCenter);
@@ -117,8 +116,8 @@ class GeneratorSensorsWindow : public QWidget
             vbox->setContentsMargins(50, 35, 50, 35);
             vbox->setSpacing(36);
             // select box
-            QLabel *label_select = new QLabel("Sensor Type", win);
-            box_select = new QComboBox(win);
+            QLabel *label_select = new QLabel("Sensor Type", this);
+            box_select = new QComboBox(this);
             box_select->setMinimumWidth(400);
             box_select->setStyleSheet("background-color: rgb(155,205,155)");
             for (auto item = sensors_types.begin(); item != sensors_types.end(); item++)
@@ -132,15 +131,15 @@ class GeneratorSensorsWindow : public QWidget
             QHBoxLayout *save_box = new QHBoxLayout();
             save_box->setAlignment(Qt::AlignHCenter);
             // load button
-            load_button = new QPushButton("Load", win);
+            load_button = new QPushButton("Load", this);
             load_button->setStyleSheet("background-color: rgb(159,231,167); font-weight: bold; font-size: 16pt");
             load_button->setMinimumSize(150, 40);
             // export button
-            export_button = new QPushButton("Export", win);
+            export_button = new QPushButton("Export", this);
             export_button->setStyleSheet("background-color: rgb(176,208,238); font-weight: bold; font-size: 16pt");
             export_button->setMinimumSize(150, 40);
             // save button
-            save_button = new QPushButton("Save", win);
+            save_button = new QPushButton("Save", this);
             save_button->setStyleSheet("background-color: rgb(180,180,241); font-weight: bold; font-size: 16pt");
             save_button->setMinimumSize(150, 40);
             save_box->addWidget(load_button);
@@ -152,7 +151,7 @@ class GeneratorSensorsWindow : public QWidget
             vbox->addLayout(save_box);
 
             // set layout
-            win->setLayout(vbox);
+            this->setLayout(vbox);
 
             // connet sigal and slot function
             QObject::connect(box_select, &QComboBox::currentTextChanged, this, &GeneratorSensorsWindow::update_win);
@@ -166,7 +165,7 @@ class GeneratorSensorsWindow : public QWidget
             // get select text
             string select_text = box_select->currentText().toStdString();
             // clear window
-            clear_win(win->layout(), 1);
+            clear_win(this->layout(), 1);
             if (select_text != sensors_types[0])
             {
                 // get select text data
@@ -190,26 +189,26 @@ class GeneratorSensorsWindow : public QWidget
                 QHBoxLayout *pose_hbox_3 = new QHBoxLayout();
                 pos_vbox->setSpacing(10);
                 pose_vbox->setSpacing(10);
-                QGroupBox *pos_box = new QGroupBox("[Position (m)]", win);
-                QGroupBox *pose_box = new QGroupBox("[Pose (degree)]", win);
-                QLabel *pos_label_1 = new QLabel("x", win);
-                QLabel *pos_label_2 = new QLabel("y", win);
-                QLabel *pos_label_3 = new QLabel("z", win);
-                QLabel *pose_label_1 = new QLabel("R", win);
-                QLabel *pose_label_2 = new QLabel("P", win);
-                QLabel *pose_label_3 = new QLabel("Y", win);
+                QGroupBox *pos_box = new QGroupBox("[Position (m)]", this);
+                QGroupBox *pose_box = new QGroupBox("[Pose (degree)]", this);
+                QLabel *pos_label_1 = new QLabel("x", this);
+                QLabel *pos_label_2 = new QLabel("y", this);
+                QLabel *pos_label_3 = new QLabel("z", this);
+                QLabel *pose_label_1 = new QLabel("R", this);
+                QLabel *pose_label_2 = new QLabel("P", this);
+                QLabel *pose_label_3 = new QLabel("Y", this);
                 pos_hbox_1->addWidget(pos_label_1);
                 pos_hbox_2->addWidget(pos_label_2);
                 pos_hbox_3->addWidget(pos_label_3);
                 pose_hbox_1->addWidget(pose_label_1);
                 pose_hbox_2->addWidget(pose_label_2);
                 pose_hbox_3->addWidget(pose_label_3);
-                pos_txt_1 = new QLineEdit(select_data->position[0].c_str(), win);
-                pos_txt_2 = new QLineEdit(select_data->position[1].c_str(), win);
-                pos_txt_3 = new QLineEdit(select_data->position[2].c_str(), win);
-                pose_txt_1 = new QLineEdit(select_data->pose[0].c_str(), win);
-                pose_txt_2 = new QLineEdit(select_data->pose[1].c_str(), win);
-                pose_txt_3 = new QLineEdit(select_data->pose[2].c_str(), win);
+                pos_txt_1 = new QLineEdit(select_data->position[0].c_str(), this);
+                pos_txt_2 = new QLineEdit(select_data->position[1].c_str(), this);
+                pos_txt_3 = new QLineEdit(select_data->position[2].c_str(), this);
+                pose_txt_1 = new QLineEdit(select_data->pose[0].c_str(), this);
+                pose_txt_2 = new QLineEdit(select_data->pose[1].c_str(), this);
+                pose_txt_3 = new QLineEdit(select_data->pose[2].c_str(), this);
                 pos_txt_1->setStyleSheet("background-color: white");
                 pos_txt_2->setStyleSheet("background-color: white");
                 pos_txt_3->setStyleSheet("background-color: white");
@@ -246,14 +245,14 @@ class GeneratorSensorsWindow : public QWidget
                 {
                     QHBoxLayout *sample_box = new QHBoxLayout();
                     QHBoxLayout *angle_box = new QHBoxLayout();
-                    QLabel *lidar_samples_label = new QLabel("[Samples]", win);
-                    QLabel *lidar_resolution_label = new QLabel("[Resolution]", win);
-                    QLabel *lidar_min_angle_label = new QLabel("[Min Angle]", win);
-                    QLabel *lidar_max_angle_label = new QLabel("[Max Angle]", win);
-                    lidar_samples = new QLineEdit(select_data->samples.c_str(), win);
-                    lidar_resolution = new QLineEdit(select_data->resolution.c_str(), win);
-                    lidar_min_angle = new QLineEdit(select_data->min_angle.c_str(), win);
-                    lidar_max_angle = new QLineEdit(select_data->max_angle.c_str(), win);
+                    QLabel *lidar_samples_label = new QLabel("[Samples]", this);
+                    QLabel *lidar_resolution_label = new QLabel("[Resolution]", this);
+                    QLabel *lidar_min_angle_label = new QLabel("[Min Angle]", this);
+                    QLabel *lidar_max_angle_label = new QLabel("[Max Angle]", this);
+                    lidar_samples = new QLineEdit(select_data->samples.c_str(), this);
+                    lidar_resolution = new QLineEdit(select_data->resolution.c_str(), this);
+                    lidar_min_angle = new QLineEdit(select_data->min_angle.c_str(), this);
+                    lidar_max_angle = new QLineEdit(select_data->max_angle.c_str(), this);
                     lidar_samples->setMaximumHeight(textedit_max_height);
                     lidar_samples->setStyleSheet("background-color: white");
                     lidar_resolution->setMaximumHeight(textedit_max_height);
@@ -283,11 +282,11 @@ class GeneratorSensorsWindow : public QWidget
                 else
                 {
                     QHBoxLayout *cam_box = new QHBoxLayout();
-                    QLabel *cam_resolution = new QLabel("[Resolution]", win);
-                    QLabel *cam_width_label = new QLabel("Width", win);
-                    QLabel *cam_height_label = new QLabel("Height", win);
-                    cam_width = new QLineEdit(select_data->width.c_str(), win);
-                    cam_height = new QLineEdit(select_data->height.c_str(), win);
+                    QLabel *cam_resolution = new QLabel("[Resolution]", this);
+                    QLabel *cam_width_label = new QLabel("Width", this);
+                    QLabel *cam_height_label = new QLabel("Height", this);
+                    cam_width = new QLineEdit(select_data->width.c_str(), this);
+                    cam_height = new QLineEdit(select_data->height.c_str(), this);
                     cam_width->setMaximumHeight(textedit_max_height);
                     cam_height->setMaximumHeight(textedit_max_height);
                     cam_width->setStyleSheet("background-color: white");
@@ -305,7 +304,7 @@ class GeneratorSensorsWindow : public QWidget
                     {
                         QHBoxLayout *dis_box = new QHBoxLayout();
                         QLabel *dis_label = new QLabel("[Distance (m)]");
-                        stereo_cam_distance = new QLineEdit(select_data->distance.c_str(), win);
+                        stereo_cam_distance = new QLineEdit(select_data->distance.c_str(), this);
                         stereo_cam_distance->setMaximumHeight(textedit_max_height);
                         stereo_cam_distance->setStyleSheet("background-color: white");
                         dis_box->addWidget(dis_label);
@@ -317,8 +316,8 @@ class GeneratorSensorsWindow : public QWidget
                 }
                 // update rate box
                 QHBoxLayout *update_box = new QHBoxLayout();
-                QLabel *update_label = new QLabel("[Update Rate]", win);
-                update_rate = new QLineEdit(select_data->update_rate.c_str(), win);
+                QLabel *update_label = new QLabel("[Update Rate]", this);
+                update_rate = new QLineEdit(select_data->update_rate.c_str(), this);
                 update_rate->setMaximumHeight(textedit_max_height);
                 update_rate->setStyleSheet("background-color: white");
                 update_box->addWidget(update_label);
@@ -342,15 +341,15 @@ class GeneratorSensorsWindow : public QWidget
             QHBoxLayout *save_box = new QHBoxLayout();
             save_box->setAlignment(Qt::AlignHCenter);
             // load button
-            load_button = new QPushButton("Load", win);
+            load_button = new QPushButton("Load", this);
             load_button->setStyleSheet("background-color: rgb(159,231,167); font-weight: bold; font-size: 16pt");
             load_button->setMinimumSize(150, 40);
             // export button
-            export_button = new QPushButton("Export", win);
+            export_button = new QPushButton("Export", this);
             export_button->setStyleSheet("background-color: rgb(176,208,238); font-weight: bold; font-size: 16pt");
             export_button->setMinimumSize(150, 40);
             // save button
-            save_button = new QPushButton("Save", win);
+            save_button = new QPushButton("Save", this);
             save_button->setStyleSheet("background-color: rgb(180,180,241); font-weight: bold; font-size: 16pt");
             save_button->setMinimumSize(150, 40);
             save_box->addWidget(load_button);
@@ -512,7 +511,7 @@ class GeneratorSensorsWindow : public QWidget
         void save_slot()
         {
             sensors_save_data = sensors_data;
-            msg_box = new QMessageBox(win);
+            msg_box = new QMessageBox(this);
             msg_box->setIcon(QMessageBox::Icon::Information);
             msg_box->setText("Info");
             msg_box->setWindowTitle("Info");
@@ -523,7 +522,7 @@ class GeneratorSensorsWindow : public QWidget
         void export_slot()
         {
             // get save filename
-            QString qfilename = QFileDialog::getSaveFileName(win, "Select Saved Sensors Config File Dir", "", "Json Files (*.json)");
+            QString qfilename = QFileDialog::getSaveFileName(this, "Select Saved Sensors Config File Dir", "", "Json Files (*.json)");
             QStringList qfilename_split = qfilename.split(".");
             string filename = qfilename_split[0].toStdString();
             if (!filename.compare(""))
@@ -577,7 +576,7 @@ class GeneratorSensorsWindow : public QWidget
             msg_box->setText("Load Sensors Configuration Files Will Replace Origin Configuration.");
             msg_box->exec();
             // get saved filename
-            QString qfilename = QFileDialog::getOpenFileName(win, "Select Sensors Config File", "", "Json Files (*.json)");
+            QString qfilename = QFileDialog::getOpenFileName(this, "Select Sensors Config File", "", "Json Files (*.json)");
             QStringList qfilename_split = qfilename.split(".");
             string filename = qfilename_split[0].toStdString();
             filename = filename + ".json";
@@ -681,7 +680,7 @@ class GeneratorSensorsWindow : public QWidget
         bool check_input_data(string data, int data_type = 0, string error_msg = "")
         {
             string err = "";
-            msg_box = new QMessageBox(win);
+            msg_box = new QMessageBox(this);
             msg_box->setIcon(QMessageBox::Icon::Critical);
             msg_box->setWindowTitle("Error");
             if (!data.compare(""))

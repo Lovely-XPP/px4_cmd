@@ -33,14 +33,13 @@
 using namespace std;
 using namespace tinyxml2;
 
-class GeneratorMainWindow : public QWidget
+class GeneratorMainWindow : public QDialog
 {
 
     public:
-        QDialog *win = new QDialog();
         QWidget *parent;
-        GeneratorInfoWindow *info_win = new GeneratorInfoWindow(win);
-        GeneratorSensorsWindow *sensors_win = new GeneratorSensorsWindow(win);
+        GeneratorInfoWindow *info_win = new GeneratorInfoWindow(this);
+        GeneratorSensorsWindow *sensors_win = new GeneratorSensorsWindow(this);
         GeneratorMainWindow(QWidget *parent_widget)
         {
             setup();
@@ -96,14 +95,14 @@ class GeneratorMainWindow : public QWidget
         void setup()
         {
             QIcon *icon = new QIcon(QApplication::style()->standardIcon(QStyle::SP_FileIcon));
-            win->setWindowIcon(*icon);
-            win->setFixedSize(1080, 750);
-            win->setWindowTitle(("PX4 Cmd Launch File Generator [Version: " + version + "]").c_str());
-            win->setStyleSheet("background-color: rgb(255,250,250)");
+            this->setWindowIcon(*icon);
+            this->setFixedSize(1080, 750);
+            this->setWindowTitle(("PX4 Cmd Launch File Generator [Version: " + version + "]").c_str());
+            this->setStyleSheet("background-color: rgb(255,250,250)");
             string err = detect_env();
             if (err.length() != 0)
             {
-                msg_box = new QMessageBox(win);
+                msg_box = new QMessageBox(this);
                 msg_box->setIcon(QMessageBox::Icon::Critical);
                 msg_box->setWindowTitle("Error");
                 msg_box->setText(err.c_str());
@@ -167,10 +166,10 @@ class GeneratorMainWindow : public QWidget
         {
             int xshift = -20;
             // vehicles type
-            QLabel *label1 = new QLabel("Vehicle Type", win);
+            QLabel *label1 = new QLabel("Vehicle Type", this);
             label1->move(50 + xshift, 20);
             label1->resize(150, 35);
-            QComboBox *list1 = new QComboBox(win);
+            QComboBox *list1 = new QComboBox(this);
             for (auto item = vehicle_types.begin(); item != vehicle_types.end(); item++)
             {
                 list1->addItem(&(*item->c_str()));
@@ -181,10 +180,10 @@ class GeneratorMainWindow : public QWidget
             vehicles_list = list1;
 
             // sensors type
-            QLabel *label2 = new QLabel("Sensor Type", win);
+            QLabel *label2 = new QLabel("Sensor Type", this);
             label2->move(580 + xshift, 20);
             label2->resize(150, 35);
-            QComboBox *list2 = new QComboBox(win);
+            QComboBox *list2 = new QComboBox(this);
             for (auto item = sensor_types.begin(); item != sensor_types.end(); item++)
             {
                 list2->addItem(&(*item->c_str()));
@@ -195,10 +194,10 @@ class GeneratorMainWindow : public QWidget
             sensors_list = list2;
 
             // worlds file
-            QLabel *label3 = new QLabel("World Files", win);
+            QLabel *label3 = new QLabel("World Files", this);
             label3->move(50 + xshift, 70);
             label3->resize(150, 35);
-            QComboBox *list3 = new QComboBox(win);
+            QComboBox *list3 = new QComboBox(this);
             for (auto item = world_files.begin(); item != world_files.end(); item++)
             {
                 list3->addItem(&(*item->c_str()));
@@ -210,10 +209,10 @@ class GeneratorMainWindow : public QWidget
             worlds_list = list3;
 
             // topic_type
-            QLabel *label4 = new QLabel("Topic Type", win);
+            QLabel *label4 = new QLabel("Topic Type", this);
             label4->move(580 + xshift, 70);
             label4->resize(150, 35);
-            QComboBox *list4 = new QComboBox(win);
+            QComboBox *list4 = new QComboBox(this);
             for (auto item = topic_types.begin(); item != topic_types.end(); item++)
             {
                 list4->addItem(&(*item->c_str()));
@@ -228,11 +227,11 @@ class GeneratorMainWindow : public QWidget
         void add_table()
         {
             float xshift = -20;
-            QTableView *ftable = new QTableView(win);
+            QTableView *ftable = new QTableView(this);
             ftable->move(50 + xshift, 360);
             ftable->resize(1020, 360);
             ftable->setStyleSheet("background-color: white");
-            QStandardItemModel *fmodel = new QStandardItemModel(0, table_headers.size(), win);
+            QStandardItemModel *fmodel = new QStandardItemModel(0, table_headers.size(), this);
             fmodel->setHorizontalHeaderLabels(table_headers);
             ftable->setModel(fmodel);
             ftable->horizontalHeader()->setStretchLastSection(true);
@@ -250,25 +249,25 @@ class GeneratorMainWindow : public QWidget
             int x1 = 95;
             int x = x0;
 
-            QFrame *label00 = new QFrame(win);
+            QFrame *label00 = new QFrame(this);
             QGraphicsOpacityEffect *op = new QGraphicsOpacityEffect;
             op->setOpacity(0.3);
             label00->setFrameShape(QFrame::Box);
             label00->setGraphicsEffect(op);
             label00->move(30, 63 + yshift);
             label00->resize(800, 75);
-            QLabel *label0 = new QLabel("Initial Position", win);
+            QLabel *label0 = new QLabel("Initial Position", this);
             label0->move(380, 55 + yshift);
             label0->resize(100, 35);
             label0->setAlignment(Qt::AlignHCenter);
 
             // x
             // label
-            QLabel *label1 = new QLabel("x", win);
+            QLabel *label1 = new QLabel("x", this);
             label1->move(x, 85 + yshift);
             label1->resize(30, 35);
             // text
-            QLineEdit *text1 = new QLineEdit("0.0", win);
+            QLineEdit *text1 = new QLineEdit("0.0", this);
             text1->setReadOnly(false);
             x = x + dx2;
             text1->move(x, 85 + yshift);
@@ -278,12 +277,12 @@ class GeneratorMainWindow : public QWidget
 
             // y
             // label
-            QLabel *label2 = new QLabel("y", win);
+            QLabel *label2 = new QLabel("y", this);
             x = x + x1 + dx1;
             label2->move(x, 85 + yshift);
             label2->resize(30, 35);
             // text
-            QLineEdit *text2 = new QLineEdit("0.0", win);
+            QLineEdit *text2 = new QLineEdit("0.0", this);
             text2->setReadOnly(false);
             x = x + dx2;
             text2->move(x, 85 + yshift);
@@ -293,12 +292,12 @@ class GeneratorMainWindow : public QWidget
 
             // z
             // label
-            QLabel *label3 = new QLabel("z", win);
+            QLabel *label3 = new QLabel("z", this);
             x = x + x1 + dx1;
             label3->move(x, 85 + yshift);
             label3->resize(30, 35);
             // text
-            QLineEdit *text3 = new QLineEdit("0.0", win);
+            QLineEdit *text3 = new QLineEdit("0.0", this);
             text3->setReadOnly(false);
             x = x + dx2;
             text3->move(x, 85 + yshift);
@@ -308,12 +307,12 @@ class GeneratorMainWindow : public QWidget
 
             // R
             // label
-            QLabel *label4 = new QLabel("R", win);
+            QLabel *label4 = new QLabel("R", this);
             x = x + x1 + dx1;
             label4->move(x, 85 + yshift);
             label4->resize(30, 35);
             // text
-            QLineEdit *text4 = new QLineEdit("0.0", win);
+            QLineEdit *text4 = new QLineEdit("0.0", this);
             text4->setReadOnly(false);
             x = x + dx2;
             text4->move(x, 85 + yshift);
@@ -323,12 +322,12 @@ class GeneratorMainWindow : public QWidget
 
             // P
             // label
-            QLabel *label5 = new QLabel("P", win);
+            QLabel *label5 = new QLabel("P", this);
             x = x + x1 + dx1;
             label5->move(x, 85 + yshift);
             label5->resize(30, 35);
             // text
-            QLineEdit *text5 = new QLineEdit("0.0", win);
+            QLineEdit *text5 = new QLineEdit("0.0", this);
             text5->setReadOnly(false);
             x = x + dx2;
             text5->move(x, 85 + yshift);
@@ -338,12 +337,12 @@ class GeneratorMainWindow : public QWidget
 
             // Y
             // label
-            QLabel *label6 = new QLabel("P", win);
+            QLabel *label6 = new QLabel("P", this);
             x = x + x1 + dx1;
             label6->move(x, 85 + yshift);
             label6->resize(30, 35);
             // text
-            QLineEdit *text6 = new QLineEdit("0.0", win);
+            QLineEdit *text6 = new QLineEdit("0.0", this);
             text6->setReadOnly(false);
             x = x + dx2;
             text6->move(x, 85 + yshift);
@@ -356,49 +355,49 @@ class GeneratorMainWindow : public QWidget
         {
             float xshift = 75;
             // add button 
-            QPushButton *button1 = new QPushButton("Add Vehicle", win);
+            QPushButton *button1 = new QPushButton("Add Vehicle", this);
             button1->move(30, 305);
             button1->resize(190, 40);
             button1->setStyleSheet("background-color: rgb(50,191,255); font-size: 13pt");
             add_button = button1;
 
             // del vehicle button
-            QPushButton *button2 = new QPushButton("Del Vehicle", win);
+            QPushButton *button2 = new QPushButton("Del Vehicle", this);
             button2->move(235, 305);
             button2->resize(190, 40);
             button2->setStyleSheet("background-color: rgb(255,106,106); font-size: 13pt");
             del_button = button2;
 
             // clear vehicle button
-            QPushButton *button3 = new QPushButton("Clear Vehicles", win);
+            QPushButton *button3 = new QPushButton("Clear Vehicles", this);
             button3->move(440, 305);
             button3->resize(190, 40);
             button3->setStyleSheet("background-color: rgb(224,102,255); font-size: 13pt");
             clc_button = button3;
 
             // generate button
-            QPushButton *button4 = new QPushButton("Generate Launch", win);
+            QPushButton *button4 = new QPushButton("Generate Launch", this);
             button4->move(780 + xshift, 214);
             button4->resize(195, 75);
             button4->setStyleSheet("background-color: rgb(84,255,159); font-weight: bold; font-size: 16pt");
             generate_button = button4;
 
             // sensors setting
-            QPushButton *button5 = new QPushButton("Sensors Setting", win);
+            QPushButton *button5 = new QPushButton("Sensors Setting", this);
             button5->move(645, 305);
             button5->resize(195, 40);
             button5->setStyleSheet("background-color: rgb(255,190,155); font-size: 13pt");
             sensors_set_button = button5;
 
             // load button
-            QPushButton *button6 = new QPushButton("Load Launch", win);
+            QPushButton *button6 = new QPushButton("Load Launch", this);
             button6->move(780 + xshift, 123);
             button6->resize(195, 75);
             button6->setStyleSheet("background-color: rgb(135,206,235); font-weight: bold; font-size: 16pt");
             load_button = button6;
 
             // information button
-            QPushButton *button7 = new QPushButton("About", win);
+            QPushButton *button7 = new QPushButton("About", this);
             button7->move(855, 305);
             button7->resize(195, 40);
             button7->setStyleSheet("background-color: rgb(255,227,132); font-size: 13pt");
@@ -410,21 +409,21 @@ class GeneratorMainWindow : public QWidget
             float xshift = -20;
             float yshift = 30 + 42;
             // label
-            QLabel *label_1 = new QLabel("Output Dir", win);
+            QLabel *label_1 = new QLabel("Output Dir", this);
             label_1->move(170 + xshift, 142 + yshift);
             label_1->resize(100, 33);
-            QLabel *label_2 = new QLabel("Simulation Dir", win);
+            QLabel *label_2 = new QLabel("Simulation Dir", this);
             label_2->move(148 + xshift, 185 + yshift);
             label_2->resize(100, 33);
 
             // show dir
-            QLineEdit *text_1 = new QLineEdit(win);
+            QLineEdit *text_1 = new QLineEdit(this);
             text_1->setReadOnly(true);
             text_1->move(255 + xshift, 142 + yshift);
             text_1->resize(480, 33);
             text_1->setStyleSheet("background-color: white");
             txt_dir = text_1;
-            QLineEdit *text_2 = new QLineEdit("~/.ros/[topic type]", win);
+            QLineEdit *text_2 = new QLineEdit("~/.ros/[topic type]", this);
             text_2->setReadOnly(true);
             text_2->move(255 + xshift, 185 + yshift);
             text_2->resize(480, 33);
@@ -432,12 +431,12 @@ class GeneratorMainWindow : public QWidget
             txt_sim_dir = text_2;
 
             // button
-            QPushButton *button_1 = new QPushButton("Browse", win);
+            QPushButton *button_1 = new QPushButton("Browse", this);
             button_1->move(750 + xshift, 142 + yshift);
             button_1->resize(100, 33);
             button_1->setStyleSheet("background-color: rgb(255,235,230)");
             browse_button = button_1;
-            QPushButton *button_2 = new QPushButton("Browse", win);
+            QPushButton *button_2 = new QPushButton("Browse", this);
             button_2->move(750 + xshift, 185 + yshift);
             button_2->resize(100, 33);
             button_2->setStyleSheet("background-color: rgb(255,235,230)");
@@ -451,11 +450,11 @@ class GeneratorMainWindow : public QWidget
             float yshift = 30 + 42;
 
             // check box
-            gazebo_gui_checkbox = new QCheckBox("Gazebo GUI", win);
+            gazebo_gui_checkbox = new QCheckBox("Gazebo GUI", this);
             gazebo_gui_checkbox->move(50 + xshift, 148 + yshift);
             gazebo_gui_checkbox->setChecked(true);
 
-            defalut_sim_dir = new QCheckBox("Default", win);
+            defalut_sim_dir = new QCheckBox("Default", this);
             defalut_sim_dir->move(50 + xshift, 191 + yshift);
             defalut_sim_dir->setChecked(true);
         }
@@ -533,7 +532,7 @@ class GeneratorMainWindow : public QWidget
 
         void browse_dir_slot()
         {
-            QString qfilename = QFileDialog::getSaveFileName(win, "Select Saved Launch File", "", "Launch Files (*.launch)");
+            QString qfilename = QFileDialog::getSaveFileName(this, "Select Saved Launch File", "", "Launch Files (*.launch)");
             auto qfilename_split = qfilename.split(".");
             string filename = qfilename_split[0].toStdString();
             if (!filename.compare(""))
@@ -549,7 +548,7 @@ class GeneratorMainWindow : public QWidget
 
         void sim_browse_dir_slot()
         {
-            QString qfilename = QFileDialog::getExistingDirectory(win, "Select Simulation Data Directory", "");
+            QString qfilename = QFileDialog::getExistingDirectory(this, "Select Simulation Data Directory", "");
             auto qfilename_split = qfilename.split(".");
             string filename = qfilename_split[0].toStdString();
             if (!filename.compare(""))
@@ -593,7 +592,7 @@ class GeneratorMainWindow : public QWidget
             QModelIndexList indexes = table->selectionModel()->selectedIndexes();
             if (indexes.length() == 0)
             {
-                msg_box = new QMessageBox(win);
+                msg_box = new QMessageBox(this);
                 msg_box->setIcon(QMessageBox::Icon::Information);
                 msg_box->setText("Info");
                 msg_box->setWindowTitle("Info");
@@ -636,7 +635,7 @@ class GeneratorMainWindow : public QWidget
 
         void info_window_slot()
         {
-            info_win->win->exec();
+            info_win->exec();
         }
 
         void sensor_window_slot()
@@ -647,7 +646,7 @@ class GeneratorMainWindow : public QWidget
                 sensors_win->sensors_data = sensor_datas;
             }
 
-            sensors_win->win->exec();
+            sensors_win->exec();
             sensor_datas = sensors_win->sensors_save_data;
         }
 
@@ -1088,7 +1087,7 @@ class GeneratorMainWindow : public QWidget
             msg_box->setText("Only Support Loading Launch File Generated by the Programme and will replace The Edited One.");
             msg_box->exec();
             // get filename by file browser
-            QString qfilename = QFileDialog::getOpenFileName(win, "Select  Launch File", "", "Launch Files (*.launch)");
+            QString qfilename = QFileDialog::getOpenFileName(this, "Select  Launch File", "", "Launch Files (*.launch)");
             string filename = qfilename.toStdString();
             // err msg
             msg_box = new QMessageBox();
@@ -1370,7 +1369,7 @@ class GeneratorMainWindow : public QWidget
         // utility function
         bool check_input_data(string data, int data_type = 0)
         {
-            msg_box = new QMessageBox(win);
+            msg_box = new QMessageBox(this);
             msg_box->setIcon(QMessageBox::Icon::Critical);
             msg_box->setWindowTitle("Error");
             if (!data.compare(""))

@@ -20,11 +20,10 @@
 
 using namespace std;
 
-class MonitorImageWindow : public QWidget
+class MonitorImageWindow : public QDialog
 {
     public:
         QWidget *parent;
-        QDialog *win = new QDialog();
         // topic name
         string topic_name;
 
@@ -40,7 +39,7 @@ class MonitorImageWindow : public QWidget
         {
             stop_flag = true;
             save_image = false;
-            sleep(1);
+            usleep(200000);
         }
 
         void start()
@@ -64,25 +63,28 @@ class MonitorImageWindow : public QWidget
         // init widgets
         QVBoxLayout *vbox = new QVBoxLayout();
         QHBoxLayout *hbox = new QHBoxLayout();
-        QPushButton *browse_button = new QPushButton(win);
-        QPushButton *save_image_button = new QPushButton(win);
-        QLineEdit *txt_dir = new QLineEdit(win);
-        QLabel *image_show = new QLabel(win);
-        QLabel *dir_tip = new QLabel(win);
-        QMessageBox *msg_box = new QMessageBox(win);
+        QPushButton *signal_button = new QPushButton(this);
+        QPushButton *browse_button = new QPushButton(this);
+        QPushButton *save_image_button = new QPushButton(this);
+        QLineEdit *txt_dir = new QLineEdit(this);
+        QLabel *image_show = new QLabel(this);
+        QLabel *dir_tip = new QLabel(this);
+        QMessageBox *msg_box = new QMessageBox(this);
 
         void setup()
         {
-            // set win
-            win->setFixedSize(700, 450);
-            win->setWindowTitle(topic_name.c_str());
-            win->setStyleSheet("background-color: rgb(255,250,250)");
+            // set this
+            this->setFixedSize(700, 450);
+            this->setWindowTitle(topic_name.c_str());
+            this->setStyleSheet("background-color: rgb(255,250,250)");
 
             // set buttons
             browse_button->setMinimumWidth(80);
             browse_button->setText("Browse");
             save_image_button->setMinimumWidth(80);
             save_image_button->setText("Save Video");
+            signal_button->setEnabled(false);
+            signal_button->setVisible(false);
 
             // show selected path
             dir_tip->setText("Video Save Path: ");
@@ -99,11 +101,12 @@ class MonitorImageWindow : public QWidget
             hbox->addWidget(save_image_button);
             vbox->addLayout(hbox, 1);
             vbox->addWidget(image_show, 8);
-            win->setLayout(vbox);
+            this->setLayout(vbox);
 
             // Signal connect slot
             QObject::connect(browse_button, &QPushButton::clicked, this, &MonitorImageWindow::browse_file_slot);
             QObject::connect(save_image_button, &QPushButton::clicked, this, &MonitorImageWindow::save_image_slot);
+            QObject::connect(signal_button, &QPushButton::clicked, this, &MonitorImageWindow::start_error_msg_box_slot);
         }
 
         void stop()
@@ -120,7 +123,7 @@ class MonitorImageWindow : public QWidget
             QString file_name = topic.c_str();
             file_name.replace("/", "_");
             QString default_save_path = QString(cwd) + "/" + file_name + ".mp4";
-            QString qfilename = QFileDialog::getSaveFileName(win, "Select Saved Video File", default_save_path, "MPEG File (*.mp4)");
+            QString qfilename = QFileDialog::getSaveFileName(this, "Select Saved Video File", default_save_path, "MPEG File (*.mp4)");
             string filename = qfilename.toStdString();
             if (!filename.compare(""))
             {
@@ -170,11 +173,7 @@ class MonitorImageWindow : public QWidget
             ros::spinOnce();
             if (img_sub.getNumPublishers() < 1)
             {
-                msg_box = new QMessageBox(win);
-                msg_box->setIcon(QMessageBox::Icon::Critical);
-                msg_box->setWindowTitle("Error");
-                msg_box->setText(("Can Not Recieve Topic Data: " + topic_name).c_str());
-                msg_box->exec();
+                signal_button->click();
                 return;
             }
             while (ros::ok() && img_sub.getNumPublishers() > 0)
@@ -187,6 +186,15 @@ class MonitorImageWindow : public QWidget
                 }
             }
             nh.shutdown();
+        }
+
+        void start_error_msg_box_slot()
+        {
+            msg_box = new QMessageBox(this);
+            msg_box->setIcon(QMessageBox::Icon::Critical);
+            msg_box->setWindowTitle("Error");
+            msg_box->setText(("Can Not Recieve Topic Data: " + topic_name).c_str());
+            msg_box->exec();
         }
 
         // subscibe callback funciton

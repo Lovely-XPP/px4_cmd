@@ -41,7 +41,13 @@ struct cell_info
     int cell_id;
     QString str;
 };
+struct button_info
+{
+    QPushButton * button_name;
+    bool state;
+};
 Q_DECLARE_METATYPE(cell_info);
+Q_DECLARE_METATYPE(button_info);
 
 using namespace std;
 
@@ -64,6 +70,8 @@ class ControllerMainWindow : public QDialog
             qRegisterMetaType<QList<Qt::Orientation>>("QList<Qt::Orientation>");
             qRegisterMetaType<cell_info>("cell_info");
             qRegisterMetaType<cell_info>("cell_info&");
+            qRegisterMetaType<button_info>("button_info");
+            qRegisterMetaType<button_info>("button_info&");
             nodes = nodes_input;
             setup();
         }
@@ -76,10 +84,11 @@ class ControllerMainWindow : public QDialog
     signals:
         void update_cell_info_signal(QVariant info);
         void update_info_signal();
+        void update_button_state_signal(QVariant state);
 
     private:
         // settings
-        string version = "V1.0.2";
+        string version = "V1.0.3";
         QString current_cmd = "None";
         double update_time = 0.3;
 
@@ -451,6 +460,8 @@ class ControllerMainWindow : public QDialog
 
         void arm_thread_func()
         {
+            QVariant button_data;
+            button_info button;
             string err = "";
             for (size_t i = 0; i < nodes.size(); i++)
             {
@@ -472,8 +483,14 @@ class ControllerMainWindow : public QDialog
             }
             operating_info = "";
             current_cmd = "Arm";
-            arm_button->setEnabled(false);
-            disarm_button->setEnabled(true);
+            button.button_name = arm_button;
+            button.state = false;
+            button_data.setValue(button);
+            emit update_button_state_signal(button_data);
+            button.button_name = disarm_button;
+            button.state = true;
+            button_data.setValue(button);
+            emit update_button_state_signal(button_data);
         }
 
         void disarm_slot()
@@ -485,6 +502,8 @@ class ControllerMainWindow : public QDialog
 
         void disarm_thread_func()
         {
+            QVariant button_data;
+            button_info button;
             string err = "";
             for (size_t i = 0; i < nodes.size(); i++)
             {
@@ -502,8 +521,14 @@ class ControllerMainWindow : public QDialog
             }
             operating_info = "";
             current_cmd = "DisArm";
-            arm_button->setEnabled(true);
-            disarm_button->setEnabled(false);
+            button.button_name = arm_button;
+            button.state = true;
+            button_data.setValue(button);
+            emit update_button_state_signal(button_data);
+            button.button_name = disarm_button;
+            button.state = false;
+            button_data.setValue(button);
+            emit update_button_state_signal(button_data);
         }
 
         void take_off_window_slot()
@@ -525,6 +550,8 @@ class ControllerMainWindow : public QDialog
 
         void take_off_thread_func()
         {
+            QVariant button_data;
+            button_info button;
             string err = "";
             for (size_t i = 0; i < nodes.size(); i++)
             {
@@ -557,16 +584,45 @@ class ControllerMainWindow : public QDialog
             }
             operating_info = "";
             current_cmd = "Take Off";
-            mode_button->setEnabled(true);
-            takeoff_button->setEnabled(false);
-            arm_button->setEnabled(false);
-            disarm_button->setEnabled(true);
+            button.button_name = mode_button;
+            button.state = true;
+            button_data.setValue(button);
+            emit update_button_state_signal(button_data);
+            button.button_name = takeoff_button;
+            button.state = false;
+            button_data.setValue(button);
+            emit update_button_state_signal(button_data);
+            button.button_name = arm_button;
+            button.state = false;
+            button_data.setValue(button);
+            emit update_button_state_signal(button_data);
+            button.button_name = disarm_button;
+            button.state = true;
+            button_data.setValue(button);
+            emit update_button_state_signal(button_data);
+            button.button_name = manual_button;
+            button.state = true;
             manual_button->setEnabled(true);
-            trajectory_button->setEnabled(true);
-            external_button->setEnabled(true);
-            hover_button->setEnabled(true);
-            land_button->setEnabled(true);
-            return_button->setEnabled(true);
+            button.button_name = trajectory_button;
+            button.state = true;
+            button_data.setValue(button);
+            emit update_button_state_signal(button_data);
+            button.button_name = external_button;
+            button.state = true;
+            button_data.setValue(button);
+            emit update_button_state_signal(button_data);
+            button.button_name = hover_button;
+            button.state = true;
+            button_data.setValue(button);
+            emit update_button_state_signal(button_data);
+            button.button_name = land_button;
+            button.state = true;
+            button_data.setValue(button);
+            emit update_button_state_signal(button_data);
+            button.button_name = return_button;
+            button.state = true;
+            button_data.setValue(button);
+            emit update_button_state_signal(button_data);
         }
 
         void trajectory_cmd_slot()
@@ -1308,6 +1364,12 @@ class ControllerMainWindow : public QDialog
             {
                 info_model->setData(info_model->index(data.node_id, 7), QBrush(Qt::red), Qt::TextColorRole);
             }
+        };
+
+        void update_button_state_slot(QVariant state)
+        {
+            button_info data = state.value<button_info>();
+            data.button_name->setEnabled(data.state);
         };
 
         // utility functions

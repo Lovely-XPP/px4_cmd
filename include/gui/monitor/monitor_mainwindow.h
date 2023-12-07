@@ -34,19 +34,29 @@
 
 #define PI 3.14159265358979323846
 
+struct cell_info
+{
+    int node_id;
+    int cell_id;
+    QString str;
+};
+Q_DECLARE_METATYPE(cell_info);
+
 using namespace std;
 
-class MonitorMainWindow : public QWidget
+class MonitorMainWindow : public QDialog
 {
+    Q_OBJECT
     public:
-        QDialog *win = new QDialog();
-        MonitorInfoWindow *info_win = new MonitorInfoWindow(win);
+        MonitorInfoWindow *info_win = new MonitorInfoWindow(this);
         QWidget *parent;
         MonitorMainWindow(QWidget *parent_widget, QStringList nodes_input)
         {
             this->setAttribute(Qt::WA_DeleteOnClose);
             qRegisterMetaType<QList<QPersistentModelIndex>>("QList<QPersistentModelIndex>");
             qRegisterMetaType<QList<QAbstractItemModel::LayoutChangeHint>>("QList<QAbstractItemModel::LayoutChangeHint>");
+            qRegisterMetaType<cell_info>("cell_info");
+            qRegisterMetaType<cell_info>("cell_info&");
             nodes = nodes_input;
             setup();
         }
@@ -55,6 +65,10 @@ class MonitorMainWindow : public QWidget
         {
             exit_slot();
         }
+    
+    signals:
+        void update_info_signal();
+        void update_cell_info_signal(QVariant info);
 
     private:
         // settings
@@ -68,6 +82,7 @@ class MonitorMainWindow : public QWidget
         QVector<double> x_end = {0};
         QVector<double> y_end = {0};
         QStringList topics;
+        vector<vector<QStandardItem *>> table_items;
         QVector<vehicle_state *> data;
         QVector<std::thread *> threads;
         QVector<QCPCurve *> curves;
@@ -85,10 +100,10 @@ class MonitorMainWindow : public QWidget
         //Widgets
         QMessageBox *msg_box;
         QCustomPlot *plot;
-        QTableView *table_pos;
+        QTableView *table_info;
         QTableView *table_topic;
         QLabel *info_label;
-        QStandardItemModel *model_pos;
+        QStandardItemModel *model_info;
         QStandardItemModel *model_topic;
         QPushButton *signal_button;
         QPushButton *info_button;
@@ -104,10 +119,10 @@ class MonitorMainWindow : public QWidget
             QHBoxLayout *hbox = new QHBoxLayout();
             QVBoxLayout *vbox = new QVBoxLayout();
             QIcon *icon = new QIcon(QApplication::style()->standardIcon(QStyle::SP_FileIcon));
-            win->setWindowIcon(*icon);
-            win->setFixedSize(1280, 750);
-            win->setWindowTitle(("PX4 Cmd Simulation Monitor [Version: " + version + "]").c_str());
-            win->setStyleSheet("background-color: rgb(255,250,250)");
+            this->setWindowIcon(*icon);
+            this->setFixedSize(1280, 750);
+            this->setWindowTitle(("PX4 Cmd Simulation Monitor [Version: " + version + "]").c_str());
+            this->setStyleSheet("background-color: rgb(255,250,250)");
             // get data
             for (auto item = nodes.begin(); item != nodes.end(); item++)
             {
@@ -117,32 +132,32 @@ class MonitorMainWindow : public QWidget
             }
 
             // add label
-            QLabel *topic_label = new QLabel("[ Vehicle Sensor Topics Information ]", win);
-            QLabel *pos_label = new QLabel("[ Vehicle Position & Pose Information ]", win);
-            QLabel *plot_label = new QLabel("[ Vehicle Position 2D Plane Plot (x-y Plane) ]", win);
-            info_label = new QLabel(("[ROS State]  Running\n[Vehicle Count]  " + to_string(nodes.size())).c_str(), win);
+            QLabel *topic_label = new QLabel("[ Vehicle Sensor Topics Information ]", this);
+            QLabel *pos_label = new QLabel("[ Vehicle Position & Pose Information ]", this);
+            QLabel *plot_label = new QLabel("[ Vehicle Position 2D Plane Plot (x-y Plane) ]", this);
+            info_label = new QLabel(("[ROS State]  Running\n[Vehicle Count]  " + to_string(nodes.size())).c_str(), this);
             info_label->setStyleSheet("color: green; font-size: 14pt");
             topic_label->setStyleSheet("color: rgb(255,137,46); font-size: 14pt; font-weight: bold");
             pos_label->setStyleSheet("color: rgb(120,200,200); font-size: 14pt; font-weight: bold");
             plot_label->setStyleSheet("color: black; font-size: 14pt; font-weight: bold");
 
             // add button
-            signal_button = new QPushButton(win);
+            signal_button = new QPushButton(this);
             signal_button->setFixedSize(1, 1);
             //info
-            info_button = new QPushButton("About", win);
+            info_button = new QPushButton("About", this);
             info_button->setMinimumHeight(50);
             info_button->setStyleSheet("background-color: rgb(255,227,132); color: black; font-size: 16pt; font-weight: bold");
-            exit_button = new QPushButton("Exit", win);
+            exit_button = new QPushButton("Exit", this);
             exit_button->setMinimumHeight(50);
             exit_button->setStyleSheet("background-color: rgb(255,106,106); color: black; font-size: 16pt; font-weight: bold");
 
             // add table
             // topic
-            table_topic = new QTableView(win);
+            table_topic = new QTableView(this);
             table_topic->setStyleSheet("background-color: rgb(255,245,235)");
             table_topic->setContextMenuPolicy(Qt::CustomContextMenu);
-            model_topic = new QStandardItemModel(data.size(), table_headers_topic.size(), win);
+            model_topic = new QStandardItemModel(data.size(), table_headers_topic.size(), this);
             QStringList list_topic;
             QString node_name;
             QString sensor_name;
@@ -179,24 +194,92 @@ class MonitorMainWindow : public QWidget
             table_topic->setModel(model_topic);
             table_topic->horizontalHeader()->setStretchLastSection(true);
             table_topic->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
-            // pos
-            table_pos = new QTableView(win);
-            table_pos->setStyleSheet("background-color: rgb(239,255,254)");
-            model_pos = new QStandardItemModel(data.size(), table_headers_pos.size(), win);
+            // table of infomation
+            table_info = new QTableView(this);
+            table_info->setStyleSheet("background-color: rgb(239,255,254)");
+            model_info = new QStandardItemModel(data.size(), table_headers_pos.size(), this);
             QStringList list_pos;
             for (auto item = table_headers_pos.begin(); item != table_headers_pos.end(); item++)
             {
                 list_pos.append(&(*item->c_str()));
             }
-            model_pos->setHorizontalHeaderLabels(list_pos);
-            table_pos->setModel(model_pos);
-            table_pos->horizontalHeader()->setStretchLastSection(true);
-            table_pos->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
+            model_info->setHorizontalHeaderLabels(list_pos);
+            vector<QStandardItem *> table_item;
+            for (int i = 0; i < nodes.size(); i++)
+            {
+                table_item.clear();
+                QStandardItem *item_1 = new QStandardItem();
+                QStandardItem *item_2 = new QStandardItem();
+                QStandardItem *item_3 = new QStandardItem();
+                QStandardItem *item_4 = new QStandardItem();
+                QStandardItem *item_5 = new QStandardItem();
+                QStandardItem *item_6 = new QStandardItem();
+                QStandardItem *item_7 = new QStandardItem();
+                QStandardItem *item_8 = new QStandardItem();
+                QStandardItem *item_9 = new QStandardItem();
+                QStandardItem *item_10 = new QStandardItem();
+                QStandardItem *item_11 = new QStandardItem();
+                QStandardItem *item_12 = new QStandardItem();
+                item_1->setText(nodes[i]);
+                item_2->setText(data[i]->sensor_name.c_str());
+                item_1->setEditable(false);
+                item_2->setEditable(false);
+                item_3->setEditable(false);
+                item_4->setEditable(false);
+                item_5->setEditable(false);
+                item_6->setEditable(false);
+                item_7->setEditable(false);
+                item_8->setEditable(false);
+                item_9->setEditable(false);
+                item_10->setEditable(false);
+                item_11->setEditable(false);
+                item_12->setEditable(false);
+                item_1->setTextAlignment(Qt::AlignCenter);
+                item_2->setTextAlignment(Qt::AlignCenter);
+                item_3->setTextAlignment(Qt::AlignCenter);
+                item_4->setTextAlignment(Qt::AlignCenter);
+                item_5->setTextAlignment(Qt::AlignCenter);
+                item_6->setTextAlignment(Qt::AlignCenter);
+                item_7->setTextAlignment(Qt::AlignCenter);
+                item_8->setTextAlignment(Qt::AlignCenter);
+                item_9->setTextAlignment(Qt::AlignCenter);
+                item_10->setTextAlignment(Qt::AlignCenter);
+                item_11->setTextAlignment(Qt::AlignCenter);
+                item_12->setTextAlignment(Qt::AlignCenter);
+                model_info->setItem(i, 0, item_1);
+                model_info->setItem(i, 1, item_2);
+                model_info->setItem(i, 2, item_3);
+                model_info->setItem(i, 3, item_4);
+                model_info->setItem(i, 4, item_5);
+                model_info->setItem(i, 5, item_6);
+                model_info->setItem(i, 6, item_7);
+                model_info->setItem(i, 7, item_8);
+                model_info->setItem(i, 8, item_9);
+                model_info->setItem(i, 9, item_10);
+                model_info->setItem(i, 10, item_11);
+                model_info->setItem(i, 11, item_12);
+                table_item.push_back(item_1);
+                table_item.push_back(item_2);
+                table_item.push_back(item_3);
+                table_item.push_back(item_4);
+                table_item.push_back(item_5);
+                table_item.push_back(item_6);
+                table_item.push_back(item_7);
+                table_item.push_back(item_8);
+                table_item.push_back(item_9);
+                table_item.push_back(item_10);
+                table_item.push_back(item_11);
+                table_item.push_back(item_12);
+                table_items.push_back(table_item);
+            }
+            table_info->setModel(model_info);
+            table_info->horizontalHeader()->setStretchLastSection(true);
+            table_info->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
 
             // add plot
             QPen pen;
             int count = data.size();
-            plot = new QCustomPlot(win);
+            plot = new QCustomPlot(this);
             plot->setBackground(QColor(255, 250, 250)); 
             plot->axisRect()->setBackground(QColor(255, 250, 250));
             plot->legend->setBrush(QColor(100, 100, 100, 0));
@@ -232,7 +315,7 @@ class MonitorMainWindow : public QWidget
             plot->legend->setVisible(true);
             plot->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom | QCP::iSelectPlottables);
             int plot_count = plot->plotLayout()->rowCount();
-            int indent = win->width() / 2 - 50 * nodes.size();
+            int indent = this->width() / 2 - 50 * nodes.size();
             if (indent <= 0)
             {
                 indent = 1;
@@ -263,13 +346,13 @@ class MonitorMainWindow : public QWidget
             hbox->addLayout(vbox_1, 4);
             vbox->addLayout(hbox, 8);
             vbox->addLayout(hbox_2, 1);
-            vbox->addWidget(table_pos, 8);
+            vbox->addWidget(table_info, 8);
             vbox->addLayout(hbox_3, 1);
             vbox->addWidget(plot, 12);
-            win->setLayout(vbox);
+            this->setLayout(vbox);
             for (int i = 0; i < data.size(); i++)
             {
-                std::thread thread(&MonitorMainWindow::update_table, this, i);
+                std::thread thread(&MonitorMainWindow::update_table_info, this, i);
                 thread.detach();
                 threads.push_back(&thread);
             }
@@ -282,27 +365,34 @@ class MonitorMainWindow : public QWidget
             QObject::connect(info_button, &QPushButton::clicked, this, &MonitorMainWindow::info_window_slot);
             QObject::connect(exit_button, &QPushButton::clicked, this, &MonitorMainWindow::exit_slot);
             QObject::connect(table_topic, &QTableView::customContextMenuRequested, this, &MonitorMainWindow::table_click_slot);
+            QObject::connect(this, &MonitorMainWindow::update_info_signal, this, &MonitorMainWindow::update_info_slot);
+            QObject::connect(this, &MonitorMainWindow::update_cell_info_signal, this, &MonitorMainWindow::update_cell_info_slot);
         }
 
         void update_info()
         {
             while (!thread_stop)
             {
-                if (ros::ok())
-                {
-                    info_label->setText(("[ROS State]  Running\n[Vehicle Count]  " + to_string(nodes.size())).c_str());
-                    info_label->setStyleSheet("color: green; font-size: 14pt;");
-                }
-                else
-                {
-                    info_label->setText("[ROS State]  Not Running\n[Vehicle Count]  0");
-                    info_label->setStyleSheet("color: red; font-size: 14pt;");
-                }
-                usleep(100000);
+                emit update_info_signal();
+                usleep(200000);
             }
         }
 
-        void update_table(int thread_id)
+        void update_info_slot()
+        {
+            if (ros::ok())
+            {
+                info_label->setText(("[ROS State]  Running\n[Vehicle Count]  " + to_string(nodes.size())).c_str());
+                info_label->setStyleSheet("color: green; font-size: 14pt;");
+            }
+            else
+            {
+                info_label->setText("[ROS State]  Not Running\n[Vehicle Count]  0");
+                info_label->setStyleSheet("color: red; font-size: 14pt;");
+            }
+        }
+
+        void update_table_info(int thread_id)
         {
             vehicle_state *vec = data[thread_id];
             string mode;
@@ -318,60 +408,28 @@ class MonitorMainWindow : public QWidget
             QStandardItem *item_10 = new QStandardItem();
             QStandardItem *item_11 = new QStandardItem();
             QStandardItem *item_12 = new QStandardItem();
-            item_1->setEditable(false);
-            item_2->setEditable(false);
-            item_3->setEditable(false);
-            item_4->setEditable(false);
-            item_5->setEditable(false);
-            item_6->setEditable(false);
-            item_7->setEditable(false);
-            item_8->setEditable(false);
-            item_9->setEditable(false);
-            item_10->setEditable(false);
-            item_11->setEditable(false);
-            item_12->setEditable(false);
-            item_1->setTextAlignment(Qt::AlignCenter);
-            item_2->setTextAlignment(Qt::AlignCenter);
-            item_3->setTextAlignment(Qt::AlignCenter);
-            item_4->setTextAlignment(Qt::AlignCenter);
-            item_5->setTextAlignment(Qt::AlignCenter);
-            item_6->setTextAlignment(Qt::AlignCenter);
-            item_7->setTextAlignment(Qt::AlignCenter);
-            item_8->setTextAlignment(Qt::AlignCenter);
-            item_9->setTextAlignment(Qt::AlignCenter);
-            item_10->setTextAlignment(Qt::AlignCenter);
-            item_11->setTextAlignment(Qt::AlignCenter);
-            item_12->setTextAlignment(Qt::AlignCenter);
-            item_1->setText(vec->vehicle_name.c_str());
-            item_2->setText(vec->sensor_name.c_str());
-            mode = vec->state_mode;
-            // Remove "AUTO."
-            if (mode.find_first_of(".") != string::npos)
-            {
-                mode.erase(0, 5);
-            }
-            item_3->setText(mode.c_str());
-            item_4->setText(to_string((*(vec->x.end() - 1))).c_str());
-            item_5->setText(to_string((*(vec->y.end() - 1))).c_str());
-            item_6->setText(to_string((*(vec->z.end() - 1))).c_str());
-            item_7->setText(to_string((*(vec->vx.end() - 1))).c_str());
-            item_8->setText(to_string((*(vec->vy.end() - 1))).c_str());
-            item_9->setText(to_string((*(vec->vz.end() - 1))).c_str());
-            item_10->setText(to_string((*(vec->roll.end() - 1) * 180 / PI)).c_str());
-            item_11->setText(to_string((*(vec->pitch.end() - 1) * 180 / PI)).c_str());
-            item_12->setText(to_string((*(vec->yaw.end() - 1) * 180 / PI)).c_str());
-            model_pos->setItem(thread_id, 0, item_1);
-            model_pos->setItem(thread_id, 1, item_2);
-            model_pos->setItem(thread_id, 2, item_3);
-            model_pos->setItem(thread_id, 3, item_4);
-            model_pos->setItem(thread_id, 4, item_5);
-            model_pos->setItem(thread_id, 5, item_6);
-            model_pos->setItem(thread_id, 6, item_7);
-            model_pos->setItem(thread_id, 7, item_8);
-            model_pos->setItem(thread_id, 8, item_9);
-            model_pos->setItem(thread_id, 9, item_10);
-            model_pos->setItem(thread_id, 10, item_11);
-            model_pos->setItem(thread_id, 11, item_12);
+            QVariant info;
+            cell_info info3, info4, info5, info6, info7, info8, info9, info10, info11, info12;
+            info3.node_id = thread_id;
+            info4.node_id = thread_id;
+            info5.node_id = thread_id;
+            info6.node_id = thread_id;
+            info7.node_id = thread_id;
+            info8.node_id = thread_id;
+            info9.node_id = thread_id;
+            info10.node_id = thread_id;
+            info11.node_id = thread_id;
+            info12.node_id = thread_id;
+            info3.cell_id = 2;
+            info4.cell_id = 3;
+            info5.cell_id = 4;
+            info6.cell_id = 5;
+            info7.cell_id = 6;
+            info8.cell_id = 7;
+            info9.cell_id = 8;
+            info10.cell_id = 9;
+            info11.cell_id = 10;
+            info12.cell_id = 11;
             while (ros::ok() && !thread_stop)
             {
                 mode = vec->state_mode;
@@ -380,23 +438,49 @@ class MonitorMainWindow : public QWidget
                 {
                     mode.erase(0, 5);
                 }
-                item_3->setText(mode.c_str());
-                item_4->setText(to_string((*(vec->x.end() - 1))).c_str());
-                item_5->setText(to_string((*(vec->y.end() - 1))).c_str());
-                item_6->setText(to_string((*(vec->z.end() - 1))).c_str());
-                item_7->setText(to_string((*(vec->vx.end() - 1))).c_str());
-                item_8->setText(to_string((*(vec->vy.end() - 1))).c_str());
-                item_9->setText(to_string((*(vec->vz.end() - 1))).c_str());
-                item_10->setText(to_string((*(vec->roll.end() - 1) * 180 / PI)).c_str());
-                item_11->setText(to_string((*(vec->pitch.end() - 1) * 180 / PI)).c_str());
-                item_12->setText(to_string((*(vec->yaw.end() - 1) * 180 / PI)).c_str());
-                if (thread_id == 0)
-                {
-                    signal_button->click();
-                }
+                info3.str = mode.c_str();
+                info4.str = to_string((*(vec->x.end() - 1))).c_str();
+                info5.str = to_string((*(vec->y.end() - 1))).c_str();
+                info6.str = to_string((*(vec->z.end() - 1))).c_str();
+                info7.str = to_string((*(vec->vx.end() - 1))).c_str();
+                info8.str = to_string((*(vec->vy.end() - 1))).c_str();
+                info9.str = to_string((*(vec->vz.end() - 1))).c_str();
+                info10.str = to_string((*(vec->roll.end() - 1) * 180 / PI)).c_str();
+                info11.str = to_string((*(vec->pitch.end() - 1) * 180 / PI)).c_str();
+                info12.str = to_string((*(vec->yaw.end() - 1) * 180 / PI)).c_str();
+                info.setValue(info3);
+                emit update_cell_info_signal(info);
+                info.setValue(info4);
+                emit update_cell_info_signal(info);
+                info.setValue(info5);
+                emit update_cell_info_signal(info);
+                info.setValue(info6);
+                emit update_cell_info_signal(info);
+                info.setValue(info7);
+                emit update_cell_info_signal(info);
+                info.setValue(info8);
+                emit update_cell_info_signal(info);
+                info.setValue(info9);
+                emit update_cell_info_signal(info);
+                info.setValue(info10);
+                emit update_cell_info_signal(info);
+                info.setValue(info11);
+                emit update_cell_info_signal(info);
+                info.setValue(info12);
+                emit update_cell_info_signal(info);
                 usleep(100000);
             }
         }
+
+        void update_cell_info_slot(QVariant info)
+        {
+            cell_info data = info.value<cell_info>();
+            table_items[data.node_id][data.cell_id]->setText(data.str);
+            if (data.node_id == 0 && data.cell_id == 3)
+            {
+                signal_button->click();
+            }
+        };
 
         void update_plot_slot()
         {
@@ -425,7 +509,7 @@ class MonitorMainWindow : public QWidget
         // slot functions
         void info_window_slot()
         {
-            info_win->win->exec();
+            info_win->exec();
         }
 
         void exit_slot()
@@ -438,7 +522,7 @@ class MonitorMainWindow : public QWidget
                 (*item)->thread_stop = true;
             }
             sleep(1);
-            win->close();
+            this->close();
         }
 
         void table_click_slot(QPoint pos)
@@ -448,7 +532,7 @@ class MonitorMainWindow : public QWidget
             QVariant data = index.data();
             topic_name_show = data.toString().toStdString();
             // new一个菜单
-            QMenu *popMenu = new QMenu(win);
+            QMenu *popMenu = new QMenu(this);
             if (index.isValid() && column == 2)
             {
                 // 新建一个 QAction（可建多个），并设置显示的文本
@@ -481,7 +565,7 @@ class MonitorMainWindow : public QWidget
                 }
             }
             img_topic_showing.push_back(topic_name_show);
-            MonitorImageWindow *img_win = new MonitorImageWindow(win, topic_name_show, img_topic_showing.size());
+            MonitorImageWindow *img_win = new MonitorImageWindow(this, topic_name_show, img_topic_showing.size());
             std::thread show_topic_data_thread(&MonitorMainWindow::show_topic_data_thread_func, this, topic_name, img_win);
             show_topic_data_thread.detach();
         }
@@ -489,7 +573,7 @@ class MonitorMainWindow : public QWidget
         void show_topic_data_thread_func(string topic_name, MonitorImageWindow *img_win)
         {
             img_win->start();
-            img_win->win->exec();
+            img_win->exec();
             img_topic_showing.erase(std::find(img_topic_showing.begin(), img_topic_showing.end(), topic_name));
         }
 

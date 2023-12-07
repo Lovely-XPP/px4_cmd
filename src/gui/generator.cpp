@@ -11,5 +11,5 @@ int main(int argc, char *argv[])
     app.setStyle("Fusion");
     QMainWindow *main_win;
     GeneratorMainWindow *generator = new GeneratorMainWindow(main_win);
-    return generator->win->exec(); // 主事件循环
+    return generator->exec(); // 主事件循环
 }
