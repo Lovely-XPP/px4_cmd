@@ -1,3 +1,6 @@
+// Copyright (c) 2023 易鹏 中山大学航空航天学院
+// Copyright (c) 2023 Peng Yi, Sun Yat-Sen University, School of Aeronautics and Astronautics
+
 #ifndef CONTROLLERTAKEOFFWINDOW_H
 #define CONTROLLERTAKEOFFWINDOW_H
 #include <QMainWindow>

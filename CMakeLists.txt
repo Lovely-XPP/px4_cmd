@@ -1,3 +1,6 @@
+# Copyright (c) 2023 易鹏 中山大学航空航天学院
+# Copyright (c) 2023 Peng Yi, Sun Yat-Sen University, School of Aeronautics and Astronautics
+
 cmake_minimum_required(VERSION 3.11)
 
 # project name version languages

@@ -1,3 +1,6 @@
+// Copyright (c) 2023 易鹏 中山大学航空航天学院
+// Copyright (c) 2023 Peng Yi, Sun Yat-Sen University, School of Aeronautics and Astronautics
+
 #include <ros/ros.h>
 
 #include <opencv2/highgui/highgui.hpp>
