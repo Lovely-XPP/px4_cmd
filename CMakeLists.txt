@@ -110,6 +110,6 @@ target_link_libraries(monitor ${catkin_LIBRARIES})
 target_link_libraries(monitor qcustomplot)
 
 ################## External cmd  ##################
-add_library(${PROJECT_NAME} src/template/vehicle_external_command.cpp src/template/single_vehicle_external_command.cpp)
+add_library(${PROJECT_NAME} STATIC src/template/vehicle_external_command.cpp src/template/single_vehicle_external_command.cpp)
 add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS})
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
