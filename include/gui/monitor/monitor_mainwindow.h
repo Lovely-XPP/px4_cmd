@@ -43,7 +43,13 @@ struct cell_info
     int cell_id;
     QString str;
 };
+struct image_info
+{
+    MonitorImageWindow *image_window;
+    string topic_name;
+};
 Q_DECLARE_METATYPE(cell_info);
+Q_DECLARE_METATYPE(image_info);
 
 using namespace std;
 
@@ -60,6 +66,8 @@ class MonitorMainWindow : public QDialog
             qRegisterMetaType<QList<QAbstractItemModel::LayoutChangeHint>>("QList<QAbstractItemModel::LayoutChangeHint>");
             qRegisterMetaType<cell_info>("cell_info");
             qRegisterMetaType<cell_info>("cell_info&");
+            qRegisterMetaType<image_info>("image_info");
+            qRegisterMetaType<image_info>("image_info&");
             nodes = nodes_input;
             setup();
         }
@@ -71,6 +79,7 @@ class MonitorMainWindow : public QDialog
     
     signals:
         void update_info_signal();
+        void show_topic_data_thread_signal(QVariant info);
         void update_cell_info_signal(QVariant info);
 
     private:
@@ -367,6 +376,7 @@ class MonitorMainWindow : public QDialog
             QObject::connect(table_topic, &QTableView::customContextMenuRequested, this, &MonitorMainWindow::table_click_slot);
             QObject::connect(this, &MonitorMainWindow::update_info_signal, this, &MonitorMainWindow::update_info_slot);
             QObject::connect(this, &MonitorMainWindow::update_cell_info_signal, this, &MonitorMainWindow::update_cell_info_slot);
+            QObject::connect(this, &MonitorMainWindow::show_topic_data_thread_signal, this, &MonitorMainWindow::show_topic_data_thread_slot);
         }
 
         void update_info()
@@ -574,9 +584,20 @@ class MonitorMainWindow : public QDialog
 
         void show_topic_data_thread_func(string topic_name, MonitorImageWindow *img_win)
         {
-            img_win->start();
-            img_win->exec();
+            QVariant data;
+            image_info info;
+            info.image_window = img_win;
+            info.topic_name = topic_name;
+            data.setValue(info);
+            emit show_topic_data_thread_signal(data);
             img_topic_showing.erase(std::find(img_topic_showing.begin(), img_topic_showing.end(), topic_name));
+        }
+
+        void show_topic_data_thread_slot(QVariant info)
+        {
+            image_info data = info.value<image_info>();
+            data.image_window->start();
+            data.image_window->exec();
         }
 
         // utility functions
