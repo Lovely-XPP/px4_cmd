@@ -188,7 +188,7 @@ class MonitorImageWindow : public QDialog
                     break;
                 }
             }
-            ros::shutdown();
+            nh.shutdown();
         }
 
         void start_error_msg_box_slot()
