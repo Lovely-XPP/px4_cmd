@@ -23,8 +23,11 @@
 
 using namespace std;
 
+Q_DECLARE_METATYPE(cv::Mat);
+
 class MonitorImageWindow : public QDialog
 {
+    Q_OBJECT
     public:
         QWidget *parent;
         // topic name
@@ -33,6 +36,8 @@ class MonitorImageWindow : public QDialog
         MonitorImageWindow(QWidget *parent_widget, const string &topic_name_input, const int &id)
         {
             this->setAttribute(Qt::WA_DeleteOnClose);
+            qRegisterMetaType<cv::Mat>("cv::Mat");
+            qRegisterMetaType<cv::Mat>("cv::Mat&");
             topic_name = topic_name_input;
             node_id = id;
             setup();
@@ -50,6 +55,9 @@ class MonitorImageWindow : public QDialog
             std::thread start_thread(&MonitorImageWindow::start_thread_func, this);
             start_thread.detach();
         }
+
+    signals:
+        void update_image_signal(QVariant data);
 
     private:
         // init 
@@ -110,6 +118,7 @@ class MonitorImageWindow : public QDialog
             QObject::connect(browse_button, &QPushButton::clicked, this, &MonitorImageWindow::browse_file_slot);
             QObject::connect(save_image_button, &QPushButton::clicked, this, &MonitorImageWindow::save_image_slot);
             QObject::connect(signal_button, &QPushButton::clicked, this, &MonitorImageWindow::start_error_msg_box_slot);
+            QObject::connect(this, &MonitorImageWindow::update_image_signal, this, &MonitorImageWindow::update_image_slot);
         }
 
         void stop()
@@ -177,6 +186,7 @@ class MonitorImageWindow : public QDialog
             if (img_sub.getNumPublishers() < 1)
             {
                 signal_button->click();
+                nh.shutdown();
                 return;
             }
             while (ros::ok() && img_sub.getNumPublishers() > 0)
@@ -209,10 +219,9 @@ class MonitorImageWindow : public QDialog
                 cv_ptr = cv_bridge::toCvCopy(msg, "bgr8");
             }
             cv::Mat img = cv_ptr->image;
-            QImage qimg = cvMat2QImage(img);
-            QPixmap temp_pixmap = QPixmap::fromImage(qimg);
-            QPixmap fit_pixmap = temp_pixmap.scaled(image_show->size(), Qt::KeepAspectRatio, Qt::SmoothTransformation);
-            image_show->setPixmap(fit_pixmap);
+            QVariant img_data;
+            img_data.setValue(img);
+            emit update_image_signal(img_data);
             if (save_image)
             {
                 if (!video_w.isOpened())
@@ -226,6 +235,15 @@ class MonitorImageWindow : public QDialog
             {
                 video_w.release();
             }
+        }
+
+        void update_image_slot(QVariant data)
+        {
+            cv::Mat img = data.value<cv::Mat>();
+            QImage qimg = cvMat2QImage(img);
+            QPixmap temp_pixmap = QPixmap::fromImage(qimg);
+            QPixmap fit_pixmap = temp_pixmap.scaled(image_show->size(), Qt::KeepAspectRatio, Qt::SmoothTransformation);
+            image_show->setPixmap(fit_pixmap);
         }
 
         // utility function

@@ -4,6 +4,7 @@
 #include <gui/monitor/monitor_loadwindow.h>
 #include <gui/monitor/monitor_mainwindow.h>
 #include "gui/monitor/moc_monitor_mainwindow.cpp"
+#include "gui/monitor/moc_monitor_imagewindow.cpp"
 #include <QApplication>
 #include <QMainWindow>
 #include <ros/ros.h>
