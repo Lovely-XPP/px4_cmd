@@ -2,16 +2,6 @@
 // Copyright (c) 2023 Peng Yi, Sun Yat-Sen University, School of Aeronautics and Astronautics
 
 #include <px4_cmd/vehicle_external_command.hpp>
-#include <vector>
-#include <string>
-#include <thread>
-#include <ros/ros.h>
-#include <px4_cmd/Command.h>
-#include <tf/LinearMath/Quaternion.h>
-#include <tf/LinearMath/Transform.h>
-#include <tf/transform_datatypes.h>
-#include <geometry_msgs/PoseStamped.h>
-#include <geometry_msgs/TwistStamped.h>
 
 #define PI 3.14159265358979323846
 using namespace std;
@@ -59,6 +49,10 @@ void vehicle_external_command::pos_cb(const geometry_msgs::PoseStamped::ConstPtr
     position[0] = msg->pose.position.x + init_x;
     position[1] = msg->pose.position.y + init_y;
     position[2] = msg->pose.position.z + init_z;
+    tf::Quaternion quat;
+    double R;
+    double P;
+    double Y;
     tf::quaternionMsgToTF(msg->pose.orientation, quat);
     tf::Matrix3x3(quat).getRPY(R, P, Y);
     attitude[0] = P + init_P;

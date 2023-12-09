@@ -20,38 +20,109 @@ using namespace std;
 class vehicle_external_command
 {
     private:
+        /// @brief ros shutdown flag
         bool ros_shutdown_flag = false;
+        /// @brief initial roll angle in rad
         double init_R;
+        /// @brief initial pitch angle in rad
         double init_P;
+        /// @brief initial yaw angle in rad
         double init_Y;
+        /// @brief external command
         px4_cmd::Command external_cmd;
-        tf::Quaternion quat;
-        double R;
-        double P;
-        double Y;
+        /// @brief subscriber for position and pose
         ros::Subscriber pos_pose_sub;
+        /// @brief subscriber for velocity and angle rate
         ros::Subscriber vel_angle_rate_sub;
+        /// @brief publish if recive external command
         ros::Publisher ext_cmd_pub;
+
+        /// @brief position and pose subscriber callback function
+        /// @param msg message
         void pos_cb(const geometry_msgs::PoseStamped::ConstPtr &msg);
+
+        /// @brief velocity and angle rate subscriber callback function
+        /// @param msg message
         void vel_cb(const geometry_msgs::TwistStamped::ConstPtr &msg);
+
+        /// @brief main thread function
         void ros_thread_fun();
 
     public:
+        /// @brief update time for API
         double update_time = 0.02;
+        /// @brief initial position in x axis, m
         double init_x;
+        /// @brief initial position in y axis, m
         double init_y;
+        /// @brief initial position in z axis, m
         double init_z;
+        /// @brief vehicle position [x y z], m
         double position[3];
+        /// @brief vehicle attitude [roll pitch yaw], rad
         double attitude[3];
+        /// @brief vehicle velocity [vx vy vz], m/s
         double velocity[3];
+        /// @brief vehicle angle rate [x, y, z], rad/s
         double angle_rate[3];
+
+        /// @brief start API node
+        /// @param node node name for vehicle, defined in topic name: /{node}/mavros/....
         void start(string node);
-        void set_position(double x, double y, double z, int frame);
-        void set_position(double x, double y, double z, double yaw, int frame);
-        void set_velocity(double vx, double vy, double vz, int frame);
-        void set_velocity(double vx, double vy, double vz, double yaw, int frame);
-        void set_velocity_with_height(double vx, double vy, double z, int frame);
-        void set_velocity_with_height(double vx, double vy, double z, double yaw, int frame);
+
+        /// @brief setting position command in 3 axis for vehicle
+        /// @param x desire position in x axis
+        /// @param y desire position in y axis
+        /// @param z desire position in z axis
+        /// @param frame position in which frame, px4_cmd::Command::ENU (default) / px4_cmd::Command::BODY
+        void set_position(double x, double y, double z, int frame = px4_cmd::Command::ENU);
+
+        /// @brief setting position command in 3 axis for vehicle
+        /// @param x desire position in x axis
+        /// @param y desire position in y axis
+        /// @param z desire position in z axis
+        /// @param yaw_cmd desire yaw command
+        /// @param frame position in which frame, px4_cmd::Command::ENU (default) / px4_cmd::Command::BODY
+        void set_position(double x, double y, double z, double yaw_cmd, int frame = px4_cmd::Command::ENU);
+
+        /// @brief setting velocity command in 3 axis for vehicle
+        /// @param vx desire velocity in x axis
+        /// @param vy desire velocity in y axis
+        /// @param vz desire velocity in z axis
+        /// @param frame velocity in which frame, px4_cmd::Command::ENU (default) / px4_cmd::Command::BODY
+        void set_velocity(double vx, double vy, double vz, int frame = px4_cmd::Command::ENU);
+
+        /// @brief setting velocity command in 3 axis for vehicle
+        /// @param vx desire velocity in x axis
+        /// @param vy desire velocity in y axis
+        /// @param vz desire velocity in z axis
+        /// @param yaw_cmd desire yaw command
+        /// @param frame velocity in which frame, px4_cmd::Command::ENU (default) / px4_cmd::Command::BODY
+        void set_velocity(double vx, double vy, double vz, double yaw_cmd, int frame = px4_cmd::Command::ENU);
+
+        /// @brief setting velocity command in 2 axis with height command for vehicle
+        /// @param vx desire velocity in x axis
+        /// @param vy desire velocity in y axis
+        /// @param z desire height
+        /// @param frame velocity in which frame, px4_cmd::Command::ENU (default) / px4_cmd::Command::BODY
+        void set_velocity_with_height(double vx, double vy, double z, int frame = px4_cmd::Command::ENU);
+
+        /// @brief setting velocity command in 2 axis with height command for vehicle
+        /// @param vx desire velocity in x axis
+        /// @param vy desire velocity in y axis
+        /// @param z desire height
+        /// @param yaw_cmd desire yaw command
+        /// @param frame velocity in which frame, px4_cmd::Command::ENU (default) / px4_cmd::Command::BODY
+        void set_velocity_with_height(double vx, double vy, double z, double yaw_cmd, int frame = px4_cmd::Command::ENU);
+
+        /// @brief setting vehicle to hover mode
+        void set_hover();
+
+        /// @brief setting vehicle to hover mode
+        /// @param yaw_cmd desire yaw command
+        void set_hover(double yaw);
+
+        /// @brief shutdown API node
         void shutdown();
 };
 #endif

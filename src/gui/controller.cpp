@@ -14,18 +14,27 @@ int main(int argc, char *argv[])
     ros::init(argc, argv, "controller");
     // 设置应用程序的 DPI 适应性，这可以使应用程序在高 DPI 屏幕上看起来更清晰
     QGuiApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
+    // 初始化 QT app
     QApplication app(argc, argv);
+    // 统一设置为 Fusion 样式
     app.setStyle("Fusion");
+    // 开启主窗口
     QMainWindow *main_win;
+    // 开启加载窗口
     ControllerLoadWindow *load_win = new ControllerLoadWindow(main_win);
     load_win->exec();
+    // 获取节点
     QStringList nodes = load_win->nodes;
-    delete load_win;
+    // 如果点击了开始按钮则开启主控制窗口
     if (load_win->push_button)
     {
+        // 回收内存
+        delete load_win;
+        // 开启 controller 主窗口
         ControllerMainWindow *controller = new ControllerMainWindow(main_win, nodes);
         controller->exec(); // 主事件循环
     }
+    // 等待线程结束
     usleep(200000);
     return 0;
 }

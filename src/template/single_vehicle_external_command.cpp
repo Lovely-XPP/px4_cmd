@@ -2,17 +2,6 @@
 // Copyright (c) 2023 Peng Yi, Sun Yat-Sen University, School of Aeronautics and Astronautics
 
 #include <px4_cmd/single_vehicle_external_command.hpp>
-#include <vector>
-#include <string>
-#include <thread>
-#include <ros/ros.h>
-#include <px4_cmd/Command.h>
-#include <geometry_msgs/PoseStamped.h>
-#include <geometry_msgs/TwistStamped.h>
-#include <std_msgs/Bool.h>
-#include <tf/LinearMath/Quaternion.h>
-#include <tf/LinearMath/Transform.h>
-#include <tf/transform_datatypes.h>
 
 #define PI 3.14159265358979323846
 using namespace std;
@@ -65,6 +54,7 @@ void single_vehicle_external_command::pos_cb(const geometry_msgs::PoseStamped::C
     position[0] = msg->pose.position.x;
     position[1] = msg->pose.position.y;
     position[2] = msg->pose.position.z;
+    tf::Quaternion quat;
     tf::quaternionMsgToTF(msg->pose.orientation, quat);
     tf::Matrix3x3(quat).getRPY(attitude[0], attitude[1], attitude[2]);
 };
