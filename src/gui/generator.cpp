@@ -14,8 +14,10 @@ int main(int argc, char *argv[])
     QApplication app(argc, argv);
     // 统一设置为 Fusion 样式
     app.setStyle("Fusion");
-    QMainWindow *main_win;
     // 开启 generator 主窗口
-    GeneratorMainWindow *generator = new GeneratorMainWindow(main_win);
-    return generator->exec(); // 主事件循环
+    GeneratorMainWindow *generator = new GeneratorMainWindow();
+    generator->exec();
+    // 执行 QT 应用
+    app.exit();
+    return 0; // 主事件循环
 }

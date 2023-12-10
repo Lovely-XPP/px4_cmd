@@ -26,8 +26,7 @@ class MonitorLoadWindow : public QDialog
     public:
         bool push_button = false;
         QStringList nodes;
-        QWidget *parent;
-        MonitorLoadWindow(QWidget *parent_widget)
+        MonitorLoadWindow(QWidget *parent_widget = 0)
         {
             setup();
         }

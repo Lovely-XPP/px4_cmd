@@ -25,10 +25,9 @@ class ControllerTakeoffWindow : public QDialog
 {   
     Q_OBJECT
     public:
-        QWidget *parent;
         double takeoff_height;
         bool set_height = false;
-        ControllerTakeoffWindow(QWidget *parent_widget)
+        ControllerTakeoffWindow(QWidget *parent_widget = 0)
         {
             setup();
         }

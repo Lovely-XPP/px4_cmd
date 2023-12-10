@@ -25,13 +25,12 @@ using namespace std;
 class ControllerTrajectoryWindow : public QDialog
 {
     public:
-        QWidget *parent;
         int set_mode;
         int set_frame;
         int set_time;
         bool exec_state = false;
         vector<vector<vector<double>>> cmd_values = {{{0, 0, 0, 0}}};
-        ControllerTrajectoryWindow(QWidget *parent_widget)
+        ControllerTrajectoryWindow(QWidget *parent_widget = 0)
         {
 
         }

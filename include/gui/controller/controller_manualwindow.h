@@ -25,12 +25,11 @@ using namespace std;
 class ControllerManualWindow : public QDialog
 {
     public:
-        QWidget *parent;
         int set_mode;
         int set_frame;
         bool exec_state = false;
         vector<vector<vector<double>>> cmd_values = {{{0, 0, 0, 0}}};
-        ControllerManualWindow(QWidget *parent_widget)
+        ControllerManualWindow(QWidget *parent_widget = 0)
         {
 
         }

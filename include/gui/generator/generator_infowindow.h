@@ -16,10 +16,8 @@
 class GeneratorInfoWindow : public QDialog
 {
     public:
-        QWidget *parent;
         GeneratorInfoWindow(QWidget *parent_widget)
         {
-            this->setAttribute(Qt::WA_DeleteOnClose);
             setup();
         }
 

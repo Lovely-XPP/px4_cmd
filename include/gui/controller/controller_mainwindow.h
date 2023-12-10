@@ -64,8 +64,7 @@ class ControllerMainWindow : public QDialog
         ControllerManualWindow *manual_win = new ControllerManualWindow(this);
         ControllerTrajectoryWindow *trajectory_win = new ControllerTrajectoryWindow(this);
         ControllerGenerateWindow *generate_win = new ControllerGenerateWindow(this);
-        QWidget *parent;
-        ControllerMainWindow(QWidget *parent_widget, QStringList nodes_input)
+        ControllerMainWindow(QStringList nodes_input, QWidget *parent_widget = 0)
         {
             this->setAttribute(Qt::WA_DeleteOnClose);
             qRegisterMetaType<QList<QPersistentModelIndex>>("QList<QPersistentModelIndex>");
@@ -445,7 +444,7 @@ class ControllerMainWindow : public QDialog
         // slot functions
         void info_window_slot()
         {
-            info_win->exec();
+            info_win->show();
         }
 
         void mode_window_slot()

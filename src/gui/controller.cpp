@@ -18,10 +18,8 @@ int main(int argc, char *argv[])
     QApplication app(argc, argv);
     // 统一设置为 Fusion 样式
     app.setStyle("Fusion");
-    // 开启主窗口
-    QMainWindow *main_win;
     // 开启加载窗口
-    ControllerLoadWindow *load_win = new ControllerLoadWindow(main_win);
+    ControllerLoadWindow *load_win = new ControllerLoadWindow();
     load_win->exec();
     // 获取节点
     QStringList nodes = load_win->nodes;
@@ -31,10 +29,10 @@ int main(int argc, char *argv[])
         // 回收内存
         delete load_win;
         // 开启 controller 主窗口
-        ControllerMainWindow *controller = new ControllerMainWindow(main_win, nodes);
-        controller->exec(); // 主事件循环
+        ControllerMainWindow *controller = new ControllerMainWindow(nodes);
+        controller->exec();
     }
-    // 等待线程结束
-    usleep(200000);
+    // 退出 QT 应用
+    app.exit();
     return 0;
 }

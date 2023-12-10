@@ -15,10 +15,8 @@
 class MonitorInfoWindow : public QDialog
 {
     public:
-        QWidget *parent;
-        MonitorInfoWindow(QWidget *parent_widget)
+        MonitorInfoWindow(QWidget *parent_widget = 0)
         {
-            this->setAttribute(Qt::WA_DeleteOnClose);
             setup();
         }
 

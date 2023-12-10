@@ -40,13 +40,15 @@ class GeneratorMainWindow : public QDialog
 {
 
     public:
-        QWidget *parent;
         GeneratorInfoWindow *info_win = new GeneratorInfoWindow(this);
         GeneratorSensorsWindow *sensors_win = new GeneratorSensorsWindow(this);
-        GeneratorMainWindow(QWidget *parent_widget)
+        GeneratorMainWindow(QWidget *parent_widget = 0)
         {
+            this->setAttribute(Qt::WA_DeleteOnClose);
             setup();
         }
+
+        ~GeneratorMainWindow(){}
 
     private:
         // settings
@@ -638,7 +640,7 @@ class GeneratorMainWindow : public QDialog
 
         void info_window_slot()
         {
-            info_win->exec();
+            info_win->show();
         }
 
         void sensor_window_slot()

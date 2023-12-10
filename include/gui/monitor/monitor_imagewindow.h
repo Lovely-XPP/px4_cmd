@@ -29,11 +29,10 @@ class MonitorImageWindow : public QDialog
 {
     Q_OBJECT
     public:
-        QWidget *parent;
         // topic name
         string topic_name;
 
-        MonitorImageWindow(QWidget *parent_widget, const string &topic_name_input, const int &id)
+        MonitorImageWindow(const string &topic_name_input, const int &id, QWidget *parent_widget = 0)
         {
             this->setAttribute(Qt::WA_DeleteOnClose);
             qRegisterMetaType<cv::Mat>("cv::Mat");
@@ -58,6 +57,7 @@ class MonitorImageWindow : public QDialog
 
     signals:
         void update_image_signal(QVariant data);
+        void recieve_image_error_signal();
 
     private:
         // init 
@@ -74,7 +74,6 @@ class MonitorImageWindow : public QDialog
         // init widgets
         QVBoxLayout *vbox = new QVBoxLayout();
         QHBoxLayout *hbox = new QHBoxLayout();
-        QPushButton *signal_button = new QPushButton(this);
         QPushButton *browse_button = new QPushButton(this);
         QPushButton *save_image_button = new QPushButton(this);
         QLineEdit *txt_dir = new QLineEdit(this);
@@ -94,8 +93,6 @@ class MonitorImageWindow : public QDialog
             browse_button->setText("Browse");
             save_image_button->setMinimumWidth(80);
             save_image_button->setText("Save Video");
-            signal_button->setEnabled(false);
-            signal_button->setVisible(false);
 
             // show selected path
             dir_tip->setText("Video Save Path: ");
@@ -117,7 +114,7 @@ class MonitorImageWindow : public QDialog
             // Signal connect slot
             QObject::connect(browse_button, &QPushButton::clicked, this, &MonitorImageWindow::browse_file_slot);
             QObject::connect(save_image_button, &QPushButton::clicked, this, &MonitorImageWindow::save_image_slot);
-            QObject::connect(signal_button, &QPushButton::clicked, this, &MonitorImageWindow::start_error_msg_box_slot);
+            QObject::connect(this, &MonitorImageWindow::recieve_image_error_signal, this, &MonitorImageWindow::start_error_msg_box_slot);
             QObject::connect(this, &MonitorImageWindow::update_image_signal, this, &MonitorImageWindow::update_image_slot);
         }
 
@@ -185,7 +182,7 @@ class MonitorImageWindow : public QDialog
             ros::spinOnce();
             if (img_sub.getNumPublishers() < 1)
             {
-                signal_button->click();
+                emit recieve_image_error_signal();
                 nh.shutdown();
                 return;
             }
@@ -208,6 +205,7 @@ class MonitorImageWindow : public QDialog
             msg_box->setWindowTitle("Error");
             msg_box->setText(("Can Not Recieve Topic Data: " + topic_name).c_str());
             msg_box->exec();
+            this->close();
         }
 
         // subscibe callback funciton

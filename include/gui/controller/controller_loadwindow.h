@@ -26,8 +26,7 @@ class ControllerLoadWindow : public QDialog
     public:
         bool push_button = false;
         QStringList nodes;
-        QWidget *parent;
-        ControllerLoadWindow(QWidget *parent_widget)
+        ControllerLoadWindow(QWidget *parent_widget = 0)
         {
             setup();
         }

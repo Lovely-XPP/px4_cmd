@@ -17,10 +17,8 @@
 class ControllerInfoWindow : public QDialog
 {
     public:
-        QWidget *parent;
-        ControllerInfoWindow(QWidget *parent_widget)
+        ControllerInfoWindow(QWidget *parent_widget = 0)
         {
-            this->setAttribute(Qt::WA_DeleteOnClose);
             setup();
         }
 

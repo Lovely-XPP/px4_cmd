@@ -58,8 +58,7 @@ class MonitorMainWindow : public QDialog
     Q_OBJECT
     public:
         MonitorInfoWindow *info_win = new MonitorInfoWindow(this);
-        QWidget *parent;
-        MonitorMainWindow(QWidget *parent_widget, QStringList nodes_input)
+        MonitorMainWindow(QStringList nodes_input, QWidget *parent_widget = 0)
         {
             this->setAttribute(Qt::WA_DeleteOnClose);
             qRegisterMetaType<QList<QPersistentModelIndex>>("QList<QPersistentModelIndex>");
@@ -545,7 +544,7 @@ class MonitorMainWindow : public QDialog
             QMenu *popMenu = new QMenu(this);
             popMenu->setStyleSheet("QMenu::item {background-color: #FFFFFF; color: #000000;} QMenu::item::selected{background-color: #0078D7; color: #FFFFFF;}");
 
-            if (index.isValid() && column == 2)
+            if (index.isValid() && column == 2 && topic_name_show != "None")
             {
                 // 新建一个 QAction（可建多个），并设置显示的文本
                 QAction *actionUpdateInfo = new QAction();
@@ -577,7 +576,7 @@ class MonitorMainWindow : public QDialog
                 }
             }
             img_topic_showing.push_back(topic_name_show);
-            MonitorImageWindow *img_win = new MonitorImageWindow(this, topic_name_show, img_topic_showing.size());
+            MonitorImageWindow *img_win = new MonitorImageWindow(topic_name_show, img_topic_showing.size(), this);
             std::thread show_topic_data_thread(&MonitorMainWindow::show_topic_data_thread_func, this, topic_name, img_win);
             show_topic_data_thread.detach();
         }

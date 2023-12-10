@@ -22,8 +22,7 @@ using namespace std;
 class ControllerGenerateWindow : public QDialog
 {
     public:
-        QWidget *parent;
-        ControllerGenerateWindow(QWidget *parent_widget)
+        ControllerGenerateWindow(QWidget *parent_widget = 0)
         {
             setup();
         }

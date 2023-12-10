@@ -18,10 +18,8 @@ int main(int argc, char *argv[])
     QApplication app(argc, argv);
     // 统一设置为 Fusion 样式
     app.setStyle("Fusion");
-    // 开启主窗口
-    QMainWindow *main_win;
     // 开启加载窗口
-    MonitorLoadWindow *load_win = new MonitorLoadWindow(main_win);
+    MonitorLoadWindow *load_win = new MonitorLoadWindow();
     load_win->exec();
     // 获取节点
     QStringList nodes = load_win->nodes;
@@ -31,10 +29,10 @@ int main(int argc, char *argv[])
         // 删除内存
         delete load_win;
         // 开启 monitor 主窗口
-        MonitorMainWindow *monitor = new MonitorMainWindow(main_win, nodes);
-        return monitor->exec(); // 主事件循环
+        MonitorMainWindow *monitor = new MonitorMainWindow(nodes);
+        monitor->exec();
     }
-    // 等待线程结束
-    usleep(200000);
+    // 退出 QT 应用
+    app.exit();
     return 0;
 }

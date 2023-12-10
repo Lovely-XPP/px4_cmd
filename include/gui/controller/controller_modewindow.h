@@ -24,8 +24,7 @@ class ControllerModeWindow : public QDialog
 {
     Q_OBJECT
     public:
-        QWidget *parent;
-        ControllerModeWindow(QWidget *parent_widget)
+        ControllerModeWindow(QWidget *parent_widget = 0)
         {
             setup();
         }
