@@ -7,7 +7,6 @@
 #include "gui/controller/moc_controller_modewindow.cpp"
 #include "gui/controller/moc_controller_takeoffwindow.cpp"
 #include <QApplication>
-#include <QMainWindow>
 
 int main(int argc, char *argv[])
 {

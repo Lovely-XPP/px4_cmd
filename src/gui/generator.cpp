@@ -3,8 +3,6 @@
 
 #include <gui/generator/generator_mainwindow.h>
 #include <QApplication>
-#include <QMainWindow>
-
 
 int main(int argc, char *argv[])
 {

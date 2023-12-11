@@ -6,7 +6,6 @@
 #include "gui/monitor/moc_monitor_mainwindow.cpp"
 #include "gui/monitor/moc_monitor_imagewindow.cpp"
 #include <QApplication>
-#include <QMainWindow>
 #include <ros/ros.h>
 
 int main(int argc, char *argv[])
