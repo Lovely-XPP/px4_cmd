@@ -55,7 +55,7 @@
         <env name="PX4_ESTIMATOR" value="$(arg est)"/>
         <arg unless="$(arg interactive)" name="px4_command_arg1" value=""/>
         <arg if="$(arg interactive)" name="px4_command_arg1" value="-d"/>
-        <node name="sitl_$(arg ID)" pkg="px4" type="px4" output="screen" args="$(find px4_cmd)/config/etc -s etc/init.d-posix/rcS -i $(arg ID) -w uav_0 $(arg px4_command_arg1)"/>
+        <node name="sitl_$(arg ID)" pkg="px4" type="px4" output="screen" args="$(find px4_cmd)/config/px4/etc -s etc/init.d-posix/rcS -i $(arg ID) -w uav_0 $(arg px4_command_arg1)"/>
         <!-- spawn model -->
         <node name="$(anon vehicle_spawn)" pkg="gazebo_ros" type="spawn_model" output="log" args="-sdf -param sdf_$(arg vehicle)$(arg ID) -model uav_0 -x $(arg x) -y $(arg y) -z $(arg z) -R $(arg R) -P $(arg P) -Y $(arg Y)"/>
         <!-- mavros -->
@@ -103,7 +103,7 @@
         <env name="PX4_ESTIMATOR" value="$(arg est)"/>
         <arg unless="$(arg interactive)" name="px4_command_arg1" value=""/>
         <arg if="$(arg interactive)" name="px4_command_arg1" value="-d"/>
-        <node name="sitl_$(arg ID)" pkg="px4" type="px4" output="screen" args="$(find px4_cmd)/config/etc -s etc/init.d-posix/rcS -i $(arg ID) -w uav_1 $(arg px4_command_arg1)"/>
+        <node name="sitl_$(arg ID)" pkg="px4" type="px4" output="screen" args="$(find px4_cmd)/config/px4/etc -s etc/init.d-posix/rcS -i $(arg ID) -w uav_1 $(arg px4_command_arg1)"/>
         <!-- spawn model -->
         <node name="$(anon vehicle_spawn)" pkg="gazebo_ros" type="spawn_model" output="log" args="-sdf -param sdf_$(arg vehicle)$(arg ID) -model uav_1 -x $(arg x) -y $(arg y) -z $(arg z) -R $(arg R) -P $(arg P) -Y $(arg Y)"/>
         <!-- mavros -->
@@ -151,7 +151,7 @@
         <env name="PX4_ESTIMATOR" value="$(arg est)"/>
         <arg unless="$(arg interactive)" name="px4_command_arg1" value=""/>
         <arg if="$(arg interactive)" name="px4_command_arg1" value="-d"/>
-        <node name="sitl_$(arg ID)" pkg="px4" type="px4" output="screen" args="$(find px4_cmd)/config/etc -s etc/init.d-posix/rcS -i $(arg ID) -w uav_2 $(arg px4_command_arg1)"/>
+        <node name="sitl_$(arg ID)" pkg="px4" type="px4" output="screen" args="$(find px4_cmd)/config/px4/etc -s etc/init.d-posix/rcS -i $(arg ID) -w uav_2 $(arg px4_command_arg1)"/>
         <!-- spawn model -->
         <node name="$(anon vehicle_spawn)" pkg="gazebo_ros" type="spawn_model" output="log" args="-sdf -param sdf_$(arg vehicle)$(arg ID) -model uav_2 -x $(arg x) -y $(arg y) -z $(arg z) -R $(arg R) -P $(arg P) -Y $(arg Y)"/>
         <!-- mavros -->
@@ -199,7 +199,7 @@
         <env name="PX4_ESTIMATOR" value="$(arg est)"/>
         <arg unless="$(arg interactive)" name="px4_command_arg1" value=""/>
         <arg if="$(arg interactive)" name="px4_command_arg1" value="-d"/>
-        <node name="sitl_$(arg ID)" pkg="px4" type="px4" output="screen" args="$(find px4_cmd)/config/etc -s etc/init.d-posix/rcS -i $(arg ID) -w uav_3 $(arg px4_command_arg1)"/>
+        <node name="sitl_$(arg ID)" pkg="px4" type="px4" output="screen" args="$(find px4_cmd)/config/px4/etc -s etc/init.d-posix/rcS -i $(arg ID) -w uav_3 $(arg px4_command_arg1)"/>
         <!-- spawn model -->
         <node name="$(anon vehicle_spawn)" pkg="gazebo_ros" type="spawn_model" output="log" args="-sdf -param sdf_$(arg vehicle)$(arg ID) -model uav_3 -x $(arg x) -y $(arg y) -z $(arg z) -R $(arg R) -P $(arg P) -Y $(arg Y)"/>
         <!-- mavros -->
@@ -247,7 +247,7 @@
         <env name="PX4_ESTIMATOR" value="$(arg est)"/>
         <arg unless="$(arg interactive)" name="px4_command_arg1" value=""/>
         <arg if="$(arg interactive)" name="px4_command_arg1" value="-d"/>
-        <node name="sitl_$(arg ID)" pkg="px4" type="px4" output="screen" args="$(find px4_cmd)/config/etc -s etc/init.d-posix/rcS -i $(arg ID) -w uav_4 $(arg px4_command_arg1)"/>
+        <node name="sitl_$(arg ID)" pkg="px4" type="px4" output="screen" args="$(find px4_cmd)/config/px4/etc -s etc/init.d-posix/rcS -i $(arg ID) -w uav_4 $(arg px4_command_arg1)"/>
         <!-- spawn model -->
         <node name="$(anon vehicle_spawn)" pkg="gazebo_ros" type="spawn_model" output="log" args="-sdf -param sdf_$(arg vehicle)$(arg ID) -model uav_4 -x $(arg x) -y $(arg y) -z $(arg z) -R $(arg R) -P $(arg P) -Y $(arg Y)"/>
         <!-- mavros -->
@@ -295,7 +295,7 @@
         <env name="PX4_ESTIMATOR" value="$(arg est)"/>
         <arg unless="$(arg interactive)" name="px4_command_arg1" value=""/>
         <arg if="$(arg interactive)" name="px4_command_arg1" value="-d"/>
-        <node name="sitl_$(arg ID)" pkg="px4" type="px4" output="screen" args="$(find px4_cmd)/config/etc -s etc/init.d-posix/rcS -i $(arg ID) -w uav_5 $(arg px4_command_arg1)"/>
+        <node name="sitl_$(arg ID)" pkg="px4" type="px4" output="screen" args="$(find px4_cmd)/config/px4/etc -s etc/init.d-posix/rcS -i $(arg ID) -w uav_5 $(arg px4_command_arg1)"/>
         <!-- spawn model -->
         <node name="$(anon vehicle_spawn)" pkg="gazebo_ros" type="spawn_model" output="log" args="-sdf -param sdf_$(arg vehicle)$(arg ID) -model uav_5 -x $(arg x) -y $(arg y) -z $(arg z) -R $(arg R) -P $(arg P) -Y $(arg Y)"/>
         <!-- mavros -->
@@ -343,7 +343,7 @@
         <env name="PX4_ESTIMATOR" value="$(arg est)"/>
         <arg unless="$(arg interactive)" name="px4_command_arg1" value=""/>
         <arg if="$(arg interactive)" name="px4_command_arg1" value="-d"/>
-        <node name="sitl_$(arg ID)" pkg="px4" type="px4" output="screen" args="$(find px4_cmd)/config/etc -s etc/init.d-posix/rcS -i $(arg ID) -w uav_6 $(arg px4_command_arg1)"/>
+        <node name="sitl_$(arg ID)" pkg="px4" type="px4" output="screen" args="$(find px4_cmd)/config/px4/etc -s etc/init.d-posix/rcS -i $(arg ID) -w uav_6 $(arg px4_command_arg1)"/>
         <!-- spawn model -->
         <node name="$(anon vehicle_spawn)" pkg="gazebo_ros" type="spawn_model" output="log" args="-sdf -param sdf_$(arg vehicle)$(arg ID) -model uav_6 -x $(arg x) -y $(arg y) -z $(arg z) -R $(arg R) -P $(arg P) -Y $(arg Y)"/>
         <!-- mavros -->
@@ -391,7 +391,7 @@
         <env name="PX4_ESTIMATOR" value="$(arg est)"/>
         <arg unless="$(arg interactive)" name="px4_command_arg1" value=""/>
         <arg if="$(arg interactive)" name="px4_command_arg1" value="-d"/>
-        <node name="sitl_$(arg ID)" pkg="px4" type="px4" output="screen" args="$(find px4_cmd)/config/etc -s etc/init.d-posix/rcS -i $(arg ID) -w uav_7 $(arg px4_command_arg1)"/>
+        <node name="sitl_$(arg ID)" pkg="px4" type="px4" output="screen" args="$(find px4_cmd)/config/px4/etc -s etc/init.d-posix/rcS -i $(arg ID) -w uav_7 $(arg px4_command_arg1)"/>
         <!-- spawn model -->
         <node name="$(anon vehicle_spawn)" pkg="gazebo_ros" type="spawn_model" output="log" args="-sdf -param sdf_$(arg vehicle)$(arg ID) -model uav_7 -x $(arg x) -y $(arg y) -z $(arg z) -R $(arg R) -P $(arg P) -Y $(arg Y)"/>
         <!-- mavros -->
@@ -439,7 +439,7 @@
         <env name="PX4_ESTIMATOR" value="$(arg est)"/>
         <arg unless="$(arg interactive)" name="px4_command_arg1" value=""/>
         <arg if="$(arg interactive)" name="px4_command_arg1" value="-d"/>
-        <node name="sitl_$(arg ID)" pkg="px4" type="px4" output="screen" args="$(find px4_cmd)/config/etc -s etc/init.d-posix/rcS -i $(arg ID) -w uav_8 $(arg px4_command_arg1)"/>
+        <node name="sitl_$(arg ID)" pkg="px4" type="px4" output="screen" args="$(find px4_cmd)/config/px4/etc -s etc/init.d-posix/rcS -i $(arg ID) -w uav_8 $(arg px4_command_arg1)"/>
         <!-- spawn model -->
         <node name="$(anon vehicle_spawn)" pkg="gazebo_ros" type="spawn_model" output="log" args="-sdf -param sdf_$(arg vehicle)$(arg ID) -model uav_8 -x $(arg x) -y $(arg y) -z $(arg z) -R $(arg R) -P $(arg P) -Y $(arg Y)"/>
         <!-- mavros -->
@@ -487,7 +487,7 @@
         <env name="PX4_ESTIMATOR" value="$(arg est)"/>
         <arg unless="$(arg interactive)" name="px4_command_arg1" value=""/>
         <arg if="$(arg interactive)" name="px4_command_arg1" value="-d"/>
-        <node name="sitl_$(arg ID)" pkg="px4" type="px4" output="screen" args="$(find px4_cmd)/config/etc -s etc/init.d-posix/rcS -i $(arg ID) -w uav_9 $(arg px4_command_arg1)"/>
+        <node name="sitl_$(arg ID)" pkg="px4" type="px4" output="screen" args="$(find px4_cmd)/config/px4/etc -s etc/init.d-posix/rcS -i $(arg ID) -w uav_9 $(arg px4_command_arg1)"/>
         <!-- spawn model -->
         <node name="$(anon vehicle_spawn)" pkg="gazebo_ros" type="spawn_model" output="log" args="-sdf -param sdf_$(arg vehicle)$(arg ID) -model uav_9 -x $(arg x) -y $(arg y) -z $(arg z) -R $(arg R) -P $(arg P) -Y $(arg Y)"/>
         <!-- mavros -->
@@ -535,7 +535,7 @@
         <env name="PX4_ESTIMATOR" value="$(arg est)"/>
         <arg unless="$(arg interactive)" name="px4_command_arg1" value=""/>
         <arg if="$(arg interactive)" name="px4_command_arg1" value="-d"/>
-        <node name="sitl_$(arg ID)" pkg="px4" type="px4" output="screen" args="$(find px4_cmd)/config/etc -s etc/init.d-posix/rcS -i $(arg ID) -w uav_10 $(arg px4_command_arg1)"/>
+        <node name="sitl_$(arg ID)" pkg="px4" type="px4" output="screen" args="$(find px4_cmd)/config/px4/etc -s etc/init.d-posix/rcS -i $(arg ID) -w uav_10 $(arg px4_command_arg1)"/>
         <!-- spawn model -->
         <node name="$(anon vehicle_spawn)" pkg="gazebo_ros" type="spawn_model" output="log" args="-sdf -param sdf_$(arg vehicle)$(arg ID) -model uav_10 -x $(arg x) -y $(arg y) -z $(arg z) -R $(arg R) -P $(arg P) -Y $(arg Y)"/>
         <!-- mavros -->
@@ -583,7 +583,7 @@
         <env name="PX4_ESTIMATOR" value="$(arg est)"/>
         <arg unless="$(arg interactive)" name="px4_command_arg1" value=""/>
         <arg if="$(arg interactive)" name="px4_command_arg1" value="-d"/>
-        <node name="sitl_$(arg ID)" pkg="px4" type="px4" output="screen" args="$(find px4_cmd)/config/etc -s etc/init.d-posix/rcS -i $(arg ID) -w uav_11 $(arg px4_command_arg1)"/>
+        <node name="sitl_$(arg ID)" pkg="px4" type="px4" output="screen" args="$(find px4_cmd)/config/px4/etc -s etc/init.d-posix/rcS -i $(arg ID) -w uav_11 $(arg px4_command_arg1)"/>
         <!-- spawn model -->
         <node name="$(anon vehicle_spawn)" pkg="gazebo_ros" type="spawn_model" output="log" args="-sdf -param sdf_$(arg vehicle)$(arg ID) -model uav_11 -x $(arg x) -y $(arg y) -z $(arg z) -R $(arg R) -P $(arg P) -Y $(arg Y)"/>
         <!-- mavros -->
@@ -631,7 +631,7 @@
         <env name="PX4_ESTIMATOR" value="$(arg est)"/>
         <arg unless="$(arg interactive)" name="px4_command_arg1" value=""/>
         <arg if="$(arg interactive)" name="px4_command_arg1" value="-d"/>
-        <node name="sitl_$(arg ID)" pkg="px4" type="px4" output="screen" args="$(find px4_cmd)/config/etc -s etc/init.d-posix/rcS -i $(arg ID) -w uav_12 $(arg px4_command_arg1)"/>
+        <node name="sitl_$(arg ID)" pkg="px4" type="px4" output="screen" args="$(find px4_cmd)/config/px4/etc -s etc/init.d-posix/rcS -i $(arg ID) -w uav_12 $(arg px4_command_arg1)"/>
         <!-- spawn model -->
         <node name="$(anon vehicle_spawn)" pkg="gazebo_ros" type="spawn_model" output="log" args="-sdf -param sdf_$(arg vehicle)$(arg ID) -model uav_12 -x $(arg x) -y $(arg y) -z $(arg z) -R $(arg R) -P $(arg P) -Y $(arg Y)"/>
         <!-- mavros -->
@@ -679,7 +679,7 @@
         <env name="PX4_ESTIMATOR" value="$(arg est)"/>
         <arg unless="$(arg interactive)" name="px4_command_arg1" value=""/>
         <arg if="$(arg interactive)" name="px4_command_arg1" value="-d"/>
-        <node name="sitl_$(arg ID)" pkg="px4" type="px4" output="screen" args="$(find px4_cmd)/config/etc -s etc/init.d-posix/rcS -i $(arg ID) -w uav_13 $(arg px4_command_arg1)"/>
+        <node name="sitl_$(arg ID)" pkg="px4" type="px4" output="screen" args="$(find px4_cmd)/config/px4/etc -s etc/init.d-posix/rcS -i $(arg ID) -w uav_13 $(arg px4_command_arg1)"/>
         <!-- spawn model -->
         <node name="$(anon vehicle_spawn)" pkg="gazebo_ros" type="spawn_model" output="log" args="-sdf -param sdf_$(arg vehicle)$(arg ID) -model uav_13 -x $(arg x) -y $(arg y) -z $(arg z) -R $(arg R) -P $(arg P) -Y $(arg Y)"/>
         <!-- mavros -->
@@ -727,7 +727,7 @@
         <env name="PX4_ESTIMATOR" value="$(arg est)"/>
         <arg unless="$(arg interactive)" name="px4_command_arg1" value=""/>
         <arg if="$(arg interactive)" name="px4_command_arg1" value="-d"/>
-        <node name="sitl_$(arg ID)" pkg="px4" type="px4" output="screen" args="$(find px4_cmd)/config/etc -s etc/init.d-posix/rcS -i $(arg ID) -w uav_14 $(arg px4_command_arg1)"/>
+        <node name="sitl_$(arg ID)" pkg="px4" type="px4" output="screen" args="$(find px4_cmd)/config/px4/etc -s etc/init.d-posix/rcS -i $(arg ID) -w uav_14 $(arg px4_command_arg1)"/>
         <!-- spawn model -->
         <node name="$(anon vehicle_spawn)" pkg="gazebo_ros" type="spawn_model" output="log" args="-sdf -param sdf_$(arg vehicle)$(arg ID) -model uav_14 -x $(arg x) -y $(arg y) -z $(arg z) -R $(arg R) -P $(arg P) -Y $(arg Y)"/>
         <!-- mavros -->
@@ -775,7 +775,7 @@
         <env name="PX4_ESTIMATOR" value="$(arg est)"/>
         <arg unless="$(arg interactive)" name="px4_command_arg1" value=""/>
         <arg if="$(arg interactive)" name="px4_command_arg1" value="-d"/>
-        <node name="sitl_$(arg ID)" pkg="px4" type="px4" output="screen" args="$(find px4_cmd)/config/etc -s etc/init.d-posix/rcS -i $(arg ID) -w uav_15 $(arg px4_command_arg1)"/>
+        <node name="sitl_$(arg ID)" pkg="px4" type="px4" output="screen" args="$(find px4_cmd)/config/px4/etc -s etc/init.d-posix/rcS -i $(arg ID) -w uav_15 $(arg px4_command_arg1)"/>
         <!-- spawn model -->
         <node name="$(anon vehicle_spawn)" pkg="gazebo_ros" type="spawn_model" output="log" args="-sdf -param sdf_$(arg vehicle)$(arg ID) -model uav_15 -x $(arg x) -y $(arg y) -z $(arg z) -R $(arg R) -P $(arg P) -Y $(arg Y)"/>
         <!-- mavros -->
@@ -823,7 +823,7 @@
         <env name="PX4_ESTIMATOR" value="$(arg est)"/>
         <arg unless="$(arg interactive)" name="px4_command_arg1" value=""/>
         <arg if="$(arg interactive)" name="px4_command_arg1" value="-d"/>
-        <node name="sitl_$(arg ID)" pkg="px4" type="px4" output="screen" args="$(find px4_cmd)/config/etc -s etc/init.d-posix/rcS -i $(arg ID) -w uav_16 $(arg px4_command_arg1)"/>
+        <node name="sitl_$(arg ID)" pkg="px4" type="px4" output="screen" args="$(find px4_cmd)/config/px4/etc -s etc/init.d-posix/rcS -i $(arg ID) -w uav_16 $(arg px4_command_arg1)"/>
         <!-- spawn model -->
         <node name="$(anon vehicle_spawn)" pkg="gazebo_ros" type="spawn_model" output="log" args="-sdf -param sdf_$(arg vehicle)$(arg ID) -model uav_16 -x $(arg x) -y $(arg y) -z $(arg z) -R $(arg R) -P $(arg P) -Y $(arg Y)"/>
         <!-- mavros -->
@@ -871,7 +871,7 @@
         <env name="PX4_ESTIMATOR" value="$(arg est)"/>
         <arg unless="$(arg interactive)" name="px4_command_arg1" value=""/>
         <arg if="$(arg interactive)" name="px4_command_arg1" value="-d"/>
-        <node name="sitl_$(arg ID)" pkg="px4" type="px4" output="screen" args="$(find px4_cmd)/config/etc -s etc/init.d-posix/rcS -i $(arg ID) -w uav_17 $(arg px4_command_arg1)"/>
+        <node name="sitl_$(arg ID)" pkg="px4" type="px4" output="screen" args="$(find px4_cmd)/config/px4/etc -s etc/init.d-posix/rcS -i $(arg ID) -w uav_17 $(arg px4_command_arg1)"/>
         <!-- spawn model -->
         <node name="$(anon vehicle_spawn)" pkg="gazebo_ros" type="spawn_model" output="log" args="-sdf -param sdf_$(arg vehicle)$(arg ID) -model uav_17 -x $(arg x) -y $(arg y) -z $(arg z) -R $(arg R) -P $(arg P) -Y $(arg Y)"/>
         <!-- mavros -->
@@ -919,7 +919,7 @@
         <env name="PX4_ESTIMATOR" value="$(arg est)"/>
         <arg unless="$(arg interactive)" name="px4_command_arg1" value=""/>
         <arg if="$(arg interactive)" name="px4_command_arg1" value="-d"/>
-        <node name="sitl_$(arg ID)" pkg="px4" type="px4" output="screen" args="$(find px4_cmd)/config/etc -s etc/init.d-posix/rcS -i $(arg ID) -w uav_18 $(arg px4_command_arg1)"/>
+        <node name="sitl_$(arg ID)" pkg="px4" type="px4" output="screen" args="$(find px4_cmd)/config/px4/etc -s etc/init.d-posix/rcS -i $(arg ID) -w uav_18 $(arg px4_command_arg1)"/>
         <!-- spawn model -->
         <node name="$(anon vehicle_spawn)" pkg="gazebo_ros" type="spawn_model" output="log" args="-sdf -param sdf_$(arg vehicle)$(arg ID) -model uav_18 -x $(arg x) -y $(arg y) -z $(arg z) -R $(arg R) -P $(arg P) -Y $(arg Y)"/>
         <!-- mavros -->
@@ -967,7 +967,7 @@
         <env name="PX4_ESTIMATOR" value="$(arg est)"/>
         <arg unless="$(arg interactive)" name="px4_command_arg1" value=""/>
         <arg if="$(arg interactive)" name="px4_command_arg1" value="-d"/>
-        <node name="sitl_$(arg ID)" pkg="px4" type="px4" output="screen" args="$(find px4_cmd)/config/etc -s etc/init.d-posix/rcS -i $(arg ID) -w uav_19 $(arg px4_command_arg1)"/>
+        <node name="sitl_$(arg ID)" pkg="px4" type="px4" output="screen" args="$(find px4_cmd)/config/px4/etc -s etc/init.d-posix/rcS -i $(arg ID) -w uav_19 $(arg px4_command_arg1)"/>
         <!-- spawn model -->
         <node name="$(anon vehicle_spawn)" pkg="gazebo_ros" type="spawn_model" output="log" args="-sdf -param sdf_$(arg vehicle)$(arg ID) -model uav_19 -x $(arg x) -y $(arg y) -z $(arg z) -R $(arg R) -P $(arg P) -Y $(arg Y)"/>
         <!-- mavros -->
@@ -1015,7 +1015,7 @@
         <env name="PX4_ESTIMATOR" value="$(arg est)"/>
         <arg unless="$(arg interactive)" name="px4_command_arg1" value=""/>
         <arg if="$(arg interactive)" name="px4_command_arg1" value="-d"/>
-        <node name="sitl_$(arg ID)" pkg="px4" type="px4" output="screen" args="$(find px4_cmd)/config/etc -s etc/init.d-posix/rcS -i $(arg ID) -w uav_20 $(arg px4_command_arg1)"/>
+        <node name="sitl_$(arg ID)" pkg="px4" type="px4" output="screen" args="$(find px4_cmd)/config/px4/etc -s etc/init.d-posix/rcS -i $(arg ID) -w uav_20 $(arg px4_command_arg1)"/>
         <!-- spawn model -->
         <node name="$(anon vehicle_spawn)" pkg="gazebo_ros" type="spawn_model" output="log" args="-sdf -param sdf_$(arg vehicle)$(arg ID) -model uav_20 -x $(arg x) -y $(arg y) -z $(arg z) -R $(arg R) -P $(arg P) -Y $(arg Y)"/>
         <!-- mavros -->
@@ -1063,7 +1063,7 @@
         <env name="PX4_ESTIMATOR" value="$(arg est)"/>
         <arg unless="$(arg interactive)" name="px4_command_arg1" value=""/>
         <arg if="$(arg interactive)" name="px4_command_arg1" value="-d"/>
-        <node name="sitl_$(arg ID)" pkg="px4" type="px4" output="screen" args="$(find px4_cmd)/config/etc -s etc/init.d-posix/rcS -i $(arg ID) -w uav_21 $(arg px4_command_arg1)"/>
+        <node name="sitl_$(arg ID)" pkg="px4" type="px4" output="screen" args="$(find px4_cmd)/config/px4/etc -s etc/init.d-posix/rcS -i $(arg ID) -w uav_21 $(arg px4_command_arg1)"/>
         <!-- spawn model -->
         <node name="$(anon vehicle_spawn)" pkg="gazebo_ros" type="spawn_model" output="log" args="-sdf -param sdf_$(arg vehicle)$(arg ID) -model uav_21 -x $(arg x) -y $(arg y) -z $(arg z) -R $(arg R) -P $(arg P) -Y $(arg Y)"/>
         <!-- mavros -->
@@ -1111,7 +1111,7 @@
         <env name="PX4_ESTIMATOR" value="$(arg est)"/>
         <arg unless="$(arg interactive)" name="px4_command_arg1" value=""/>
         <arg if="$(arg interactive)" name="px4_command_arg1" value="-d"/>
-        <node name="sitl_$(arg ID)" pkg="px4" type="px4" output="screen" args="$(find px4_cmd)/config/etc -s etc/init.d-posix/rcS -i $(arg ID) -w uav_22 $(arg px4_command_arg1)"/>
+        <node name="sitl_$(arg ID)" pkg="px4" type="px4" output="screen" args="$(find px4_cmd)/config/px4/etc -s etc/init.d-posix/rcS -i $(arg ID) -w uav_22 $(arg px4_command_arg1)"/>
         <!-- spawn model -->
         <node name="$(anon vehicle_spawn)" pkg="gazebo_ros" type="spawn_model" output="log" args="-sdf -param sdf_$(arg vehicle)$(arg ID) -model uav_22 -x $(arg x) -y $(arg y) -z $(arg z) -R $(arg R) -P $(arg P) -Y $(arg Y)"/>
         <!-- mavros -->
@@ -1159,7 +1159,7 @@
         <env name="PX4_ESTIMATOR" value="$(arg est)"/>
         <arg unless="$(arg interactive)" name="px4_command_arg1" value=""/>
         <arg if="$(arg interactive)" name="px4_command_arg1" value="-d"/>
-        <node name="sitl_$(arg ID)" pkg="px4" type="px4" output="screen" args="$(find px4_cmd)/config/etc -s etc/init.d-posix/rcS -i $(arg ID) -w uav_23 $(arg px4_command_arg1)"/>
+        <node name="sitl_$(arg ID)" pkg="px4" type="px4" output="screen" args="$(find px4_cmd)/config/px4/etc -s etc/init.d-posix/rcS -i $(arg ID) -w uav_23 $(arg px4_command_arg1)"/>
         <!-- spawn model -->
         <node name="$(anon vehicle_spawn)" pkg="gazebo_ros" type="spawn_model" output="log" args="-sdf -param sdf_$(arg vehicle)$(arg ID) -model uav_23 -x $(arg x) -y $(arg y) -z $(arg z) -R $(arg R) -P $(arg P) -Y $(arg Y)"/>
         <!-- mavros -->
@@ -1207,7 +1207,7 @@
         <env name="PX4_ESTIMATOR" value="$(arg est)"/>
         <arg unless="$(arg interactive)" name="px4_command_arg1" value=""/>
         <arg if="$(arg interactive)" name="px4_command_arg1" value="-d"/>
-        <node name="sitl_$(arg ID)" pkg="px4" type="px4" output="screen" args="$(find px4_cmd)/config/etc -s etc/init.d-posix/rcS -i $(arg ID) -w uav_24 $(arg px4_command_arg1)"/>
+        <node name="sitl_$(arg ID)" pkg="px4" type="px4" output="screen" args="$(find px4_cmd)/config/px4/etc -s etc/init.d-posix/rcS -i $(arg ID) -w uav_24 $(arg px4_command_arg1)"/>
         <!-- spawn model -->
         <node name="$(anon vehicle_spawn)" pkg="gazebo_ros" type="spawn_model" output="log" args="-sdf -param sdf_$(arg vehicle)$(arg ID) -model uav_24 -x $(arg x) -y $(arg y) -z $(arg z) -R $(arg R) -P $(arg P) -Y $(arg Y)"/>
         <!-- mavros -->
@@ -1255,7 +1255,7 @@
         <env name="PX4_ESTIMATOR" value="$(arg est)"/>
         <arg unless="$(arg interactive)" name="px4_command_arg1" value=""/>
         <arg if="$(arg interactive)" name="px4_command_arg1" value="-d"/>
-        <node name="sitl_$(arg ID)" pkg="px4" type="px4" output="screen" args="$(find px4_cmd)/config/etc -s etc/init.d-posix/rcS -i $(arg ID) -w uav_25 $(arg px4_command_arg1)"/>
+        <node name="sitl_$(arg ID)" pkg="px4" type="px4" output="screen" args="$(find px4_cmd)/config/px4/etc -s etc/init.d-posix/rcS -i $(arg ID) -w uav_25 $(arg px4_command_arg1)"/>
         <!-- spawn model -->
         <node name="$(anon vehicle_spawn)" pkg="gazebo_ros" type="spawn_model" output="log" args="-sdf -param sdf_$(arg vehicle)$(arg ID) -model uav_25 -x $(arg x) -y $(arg y) -z $(arg z) -R $(arg R) -P $(arg P) -Y $(arg Y)"/>
         <!-- mavros -->
@@ -1303,7 +1303,7 @@
         <env name="PX4_ESTIMATOR" value="$(arg est)"/>
         <arg unless="$(arg interactive)" name="px4_command_arg1" value=""/>
         <arg if="$(arg interactive)" name="px4_command_arg1" value="-d"/>
-        <node name="sitl_$(arg ID)" pkg="px4" type="px4" output="screen" args="$(find px4_cmd)/config/etc -s etc/init.d-posix/rcS -i $(arg ID) -w uav_26 $(arg px4_command_arg1)"/>
+        <node name="sitl_$(arg ID)" pkg="px4" type="px4" output="screen" args="$(find px4_cmd)/config/px4/etc -s etc/init.d-posix/rcS -i $(arg ID) -w uav_26 $(arg px4_command_arg1)"/>
         <!-- spawn model -->
         <node name="$(anon vehicle_spawn)" pkg="gazebo_ros" type="spawn_model" output="log" args="-sdf -param sdf_$(arg vehicle)$(arg ID) -model uav_26 -x $(arg x) -y $(arg y) -z $(arg z) -R $(arg R) -P $(arg P) -Y $(arg Y)"/>
         <!-- mavros -->
@@ -1351,7 +1351,7 @@
         <env name="PX4_ESTIMATOR" value="$(arg est)"/>
         <arg unless="$(arg interactive)" name="px4_command_arg1" value=""/>
         <arg if="$(arg interactive)" name="px4_command_arg1" value="-d"/>
-        <node name="sitl_$(arg ID)" pkg="px4" type="px4" output="screen" args="$(find px4_cmd)/config/etc -s etc/init.d-posix/rcS -i $(arg ID) -w uav_27 $(arg px4_command_arg1)"/>
+        <node name="sitl_$(arg ID)" pkg="px4" type="px4" output="screen" args="$(find px4_cmd)/config/px4/etc -s etc/init.d-posix/rcS -i $(arg ID) -w uav_27 $(arg px4_command_arg1)"/>
         <!-- spawn model -->
         <node name="$(anon vehicle_spawn)" pkg="gazebo_ros" type="spawn_model" output="log" args="-sdf -param sdf_$(arg vehicle)$(arg ID) -model uav_27 -x $(arg x) -y $(arg y) -z $(arg z) -R $(arg R) -P $(arg P) -Y $(arg Y)"/>
         <!-- mavros -->
@@ -1399,7 +1399,7 @@
         <env name="PX4_ESTIMATOR" value="$(arg est)"/>
         <arg unless="$(arg interactive)" name="px4_command_arg1" value=""/>
         <arg if="$(arg interactive)" name="px4_command_arg1" value="-d"/>
-        <node name="sitl_$(arg ID)" pkg="px4" type="px4" output="screen" args="$(find px4_cmd)/config/etc -s etc/init.d-posix/rcS -i $(arg ID) -w uav_28 $(arg px4_command_arg1)"/>
+        <node name="sitl_$(arg ID)" pkg="px4" type="px4" output="screen" args="$(find px4_cmd)/config/px4/etc -s etc/init.d-posix/rcS -i $(arg ID) -w uav_28 $(arg px4_command_arg1)"/>
         <!-- spawn model -->
         <node name="$(anon vehicle_spawn)" pkg="gazebo_ros" type="spawn_model" output="log" args="-sdf -param sdf_$(arg vehicle)$(arg ID) -model uav_28 -x $(arg x) -y $(arg y) -z $(arg z) -R $(arg R) -P $(arg P) -Y $(arg Y)"/>
         <!-- mavros -->
@@ -1447,7 +1447,7 @@
         <env name="PX4_ESTIMATOR" value="$(arg est)"/>
         <arg unless="$(arg interactive)" name="px4_command_arg1" value=""/>
         <arg if="$(arg interactive)" name="px4_command_arg1" value="-d"/>
-        <node name="sitl_$(arg ID)" pkg="px4" type="px4" output="screen" args="$(find px4_cmd)/config/etc -s etc/init.d-posix/rcS -i $(arg ID) -w uav_29 $(arg px4_command_arg1)"/>
+        <node name="sitl_$(arg ID)" pkg="px4" type="px4" output="screen" args="$(find px4_cmd)/config/px4/etc -s etc/init.d-posix/rcS -i $(arg ID) -w uav_29 $(arg px4_command_arg1)"/>
         <!-- spawn model -->
         <node name="$(anon vehicle_spawn)" pkg="gazebo_ros" type="spawn_model" output="log" args="-sdf -param sdf_$(arg vehicle)$(arg ID) -model uav_29 -x $(arg x) -y $(arg y) -z $(arg z) -R $(arg R) -P $(arg P) -Y $(arg Y)"/>
         <!-- mavros -->
@@ -1495,7 +1495,7 @@
         <env name="PX4_ESTIMATOR" value="$(arg est)"/>
         <arg unless="$(arg interactive)" name="px4_command_arg1" value=""/>
         <arg if="$(arg interactive)" name="px4_command_arg1" value="-d"/>
-        <node name="sitl_$(arg ID)" pkg="px4" type="px4" output="screen" args="$(find px4_cmd)/config/etc -s etc/init.d-posix/rcS -i $(arg ID) -w uav_30 $(arg px4_command_arg1)"/>
+        <node name="sitl_$(arg ID)" pkg="px4" type="px4" output="screen" args="$(find px4_cmd)/config/px4/etc -s etc/init.d-posix/rcS -i $(arg ID) -w uav_30 $(arg px4_command_arg1)"/>
         <!-- spawn model -->
         <node name="$(anon vehicle_spawn)" pkg="gazebo_ros" type="spawn_model" output="log" args="-sdf -param sdf_$(arg vehicle)$(arg ID) -model uav_30 -x $(arg x) -y $(arg y) -z $(arg z) -R $(arg R) -P $(arg P) -Y $(arg Y)"/>
         <!-- mavros -->
@@ -1543,7 +1543,7 @@
         <env name="PX4_ESTIMATOR" value="$(arg est)"/>
         <arg unless="$(arg interactive)" name="px4_command_arg1" value=""/>
         <arg if="$(arg interactive)" name="px4_command_arg1" value="-d"/>
-        <node name="sitl_$(arg ID)" pkg="px4" type="px4" output="screen" args="$(find px4_cmd)/config/etc -s etc/init.d-posix/rcS -i $(arg ID) -w uav_31 $(arg px4_command_arg1)"/>
+        <node name="sitl_$(arg ID)" pkg="px4" type="px4" output="screen" args="$(find px4_cmd)/config/px4/etc -s etc/init.d-posix/rcS -i $(arg ID) -w uav_31 $(arg px4_command_arg1)"/>
         <!-- spawn model -->
         <node name="$(anon vehicle_spawn)" pkg="gazebo_ros" type="spawn_model" output="log" args="-sdf -param sdf_$(arg vehicle)$(arg ID) -model uav_31 -x $(arg x) -y $(arg y) -z $(arg z) -R $(arg R) -P $(arg P) -Y $(arg Y)"/>
         <!-- mavros -->
@@ -1591,7 +1591,7 @@
         <env name="PX4_ESTIMATOR" value="$(arg est)"/>
         <arg unless="$(arg interactive)" name="px4_command_arg1" value=""/>
         <arg if="$(arg interactive)" name="px4_command_arg1" value="-d"/>
-        <node name="sitl_$(arg ID)" pkg="px4" type="px4" output="screen" args="$(find px4_cmd)/config/etc -s etc/init.d-posix/rcS -i $(arg ID) -w uav_32 $(arg px4_command_arg1)"/>
+        <node name="sitl_$(arg ID)" pkg="px4" type="px4" output="screen" args="$(find px4_cmd)/config/px4/etc -s etc/init.d-posix/rcS -i $(arg ID) -w uav_32 $(arg px4_command_arg1)"/>
         <!-- spawn model -->
         <node name="$(anon vehicle_spawn)" pkg="gazebo_ros" type="spawn_model" output="log" args="-sdf -param sdf_$(arg vehicle)$(arg ID) -model uav_32 -x $(arg x) -y $(arg y) -z $(arg z) -R $(arg R) -P $(arg P) -Y $(arg Y)"/>
         <!-- mavros -->
@@ -1639,7 +1639,7 @@
         <env name="PX4_ESTIMATOR" value="$(arg est)"/>
         <arg unless="$(arg interactive)" name="px4_command_arg1" value=""/>
         <arg if="$(arg interactive)" name="px4_command_arg1" value="-d"/>
-        <node name="sitl_$(arg ID)" pkg="px4" type="px4" output="screen" args="$(find px4_cmd)/config/etc -s etc/init.d-posix/rcS -i $(arg ID) -w uav_33 $(arg px4_command_arg1)"/>
+        <node name="sitl_$(arg ID)" pkg="px4" type="px4" output="screen" args="$(find px4_cmd)/config/px4/etc -s etc/init.d-posix/rcS -i $(arg ID) -w uav_33 $(arg px4_command_arg1)"/>
         <!-- spawn model -->
         <node name="$(anon vehicle_spawn)" pkg="gazebo_ros" type="spawn_model" output="log" args="-sdf -param sdf_$(arg vehicle)$(arg ID) -model uav_33 -x $(arg x) -y $(arg y) -z $(arg z) -R $(arg R) -P $(arg P) -Y $(arg Y)"/>
         <!-- mavros -->
@@ -1687,7 +1687,7 @@
         <env name="PX4_ESTIMATOR" value="$(arg est)"/>
         <arg unless="$(arg interactive)" name="px4_command_arg1" value=""/>
         <arg if="$(arg interactive)" name="px4_command_arg1" value="-d"/>
-        <node name="sitl_$(arg ID)" pkg="px4" type="px4" output="screen" args="$(find px4_cmd)/config/etc -s etc/init.d-posix/rcS -i $(arg ID) -w uav_34 $(arg px4_command_arg1)"/>
+        <node name="sitl_$(arg ID)" pkg="px4" type="px4" output="screen" args="$(find px4_cmd)/config/px4/etc -s etc/init.d-posix/rcS -i $(arg ID) -w uav_34 $(arg px4_command_arg1)"/>
         <!-- spawn model -->
         <node name="$(anon vehicle_spawn)" pkg="gazebo_ros" type="spawn_model" output="log" args="-sdf -param sdf_$(arg vehicle)$(arg ID) -model uav_34 -x $(arg x) -y $(arg y) -z $(arg z) -R $(arg R) -P $(arg P) -Y $(arg Y)"/>
         <!-- mavros -->
@@ -1735,7 +1735,7 @@
         <env name="PX4_ESTIMATOR" value="$(arg est)"/>
         <arg unless="$(arg interactive)" name="px4_command_arg1" value=""/>
         <arg if="$(arg interactive)" name="px4_command_arg1" value="-d"/>
-        <node name="sitl_$(arg ID)" pkg="px4" type="px4" output="screen" args="$(find px4_cmd)/config/etc -s etc/init.d-posix/rcS -i $(arg ID) -w uav_35 $(arg px4_command_arg1)"/>
+        <node name="sitl_$(arg ID)" pkg="px4" type="px4" output="screen" args="$(find px4_cmd)/config/px4/etc -s etc/init.d-posix/rcS -i $(arg ID) -w uav_35 $(arg px4_command_arg1)"/>
         <!-- spawn model -->
         <node name="$(anon vehicle_spawn)" pkg="gazebo_ros" type="spawn_model" output="log" args="-sdf -param sdf_$(arg vehicle)$(arg ID) -model uav_35 -x $(arg x) -y $(arg y) -z $(arg z) -R $(arg R) -P $(arg P) -Y $(arg Y)"/>
         <!-- mavros -->
@@ -1783,7 +1783,7 @@
         <env name="PX4_ESTIMATOR" value="$(arg est)"/>
         <arg unless="$(arg interactive)" name="px4_command_arg1" value=""/>
         <arg if="$(arg interactive)" name="px4_command_arg1" value="-d"/>
-        <node name="sitl_$(arg ID)" pkg="px4" type="px4" output="screen" args="$(find px4_cmd)/config/etc -s etc/init.d-posix/rcS -i $(arg ID) -w uav_36 $(arg px4_command_arg1)"/>
+        <node name="sitl_$(arg ID)" pkg="px4" type="px4" output="screen" args="$(find px4_cmd)/config/px4/etc -s etc/init.d-posix/rcS -i $(arg ID) -w uav_36 $(arg px4_command_arg1)"/>
         <!-- spawn model -->
         <node name="$(anon vehicle_spawn)" pkg="gazebo_ros" type="spawn_model" output="log" args="-sdf -param sdf_$(arg vehicle)$(arg ID) -model uav_36 -x $(arg x) -y $(arg y) -z $(arg z) -R $(arg R) -P $(arg P) -Y $(arg Y)"/>
         <!-- mavros -->
@@ -1831,7 +1831,7 @@
         <env name="PX4_ESTIMATOR" value="$(arg est)"/>
         <arg unless="$(arg interactive)" name="px4_command_arg1" value=""/>
         <arg if="$(arg interactive)" name="px4_command_arg1" value="-d"/>
-        <node name="sitl_$(arg ID)" pkg="px4" type="px4" output="screen" args="$(find px4_cmd)/config/etc -s etc/init.d-posix/rcS -i $(arg ID) -w uav_37 $(arg px4_command_arg1)"/>
+        <node name="sitl_$(arg ID)" pkg="px4" type="px4" output="screen" args="$(find px4_cmd)/config/px4/etc -s etc/init.d-posix/rcS -i $(arg ID) -w uav_37 $(arg px4_command_arg1)"/>
         <!-- spawn model -->
         <node name="$(anon vehicle_spawn)" pkg="gazebo_ros" type="spawn_model" output="log" args="-sdf -param sdf_$(arg vehicle)$(arg ID) -model uav_37 -x $(arg x) -y $(arg y) -z $(arg z) -R $(arg R) -P $(arg P) -Y $(arg Y)"/>
         <!-- mavros -->
@@ -1879,7 +1879,7 @@
         <env name="PX4_ESTIMATOR" value="$(arg est)"/>
         <arg unless="$(arg interactive)" name="px4_command_arg1" value=""/>
         <arg if="$(arg interactive)" name="px4_command_arg1" value="-d"/>
-        <node name="sitl_$(arg ID)" pkg="px4" type="px4" output="screen" args="$(find px4_cmd)/config/etc -s etc/init.d-posix/rcS -i $(arg ID) -w uav_38 $(arg px4_command_arg1)"/>
+        <node name="sitl_$(arg ID)" pkg="px4" type="px4" output="screen" args="$(find px4_cmd)/config/px4/etc -s etc/init.d-posix/rcS -i $(arg ID) -w uav_38 $(arg px4_command_arg1)"/>
         <!-- spawn model -->
         <node name="$(anon vehicle_spawn)" pkg="gazebo_ros" type="spawn_model" output="log" args="-sdf -param sdf_$(arg vehicle)$(arg ID) -model uav_38 -x $(arg x) -y $(arg y) -z $(arg z) -R $(arg R) -P $(arg P) -Y $(arg Y)"/>
         <!-- mavros -->
@@ -1927,7 +1927,7 @@
         <env name="PX4_ESTIMATOR" value="$(arg est)"/>
         <arg unless="$(arg interactive)" name="px4_command_arg1" value=""/>
         <arg if="$(arg interactive)" name="px4_command_arg1" value="-d"/>
-        <node name="sitl_$(arg ID)" pkg="px4" type="px4" output="screen" args="$(find px4_cmd)/config/etc -s etc/init.d-posix/rcS -i $(arg ID) -w uav_39 $(arg px4_command_arg1)"/>
+        <node name="sitl_$(arg ID)" pkg="px4" type="px4" output="screen" args="$(find px4_cmd)/config/px4/etc -s etc/init.d-posix/rcS -i $(arg ID) -w uav_39 $(arg px4_command_arg1)"/>
         <!-- spawn model -->
         <node name="$(anon vehicle_spawn)" pkg="gazebo_ros" type="spawn_model" output="log" args="-sdf -param sdf_$(arg vehicle)$(arg ID) -model uav_39 -x $(arg x) -y $(arg y) -z $(arg z) -R $(arg R) -P $(arg P) -Y $(arg Y)"/>
         <!-- mavros -->
