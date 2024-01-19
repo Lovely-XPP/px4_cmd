@@ -1015,11 +1015,11 @@ class GeneratorMainWindow : public QDialog
                 px4_node->SetAttribute("output", "screen");
                 if (defalut_sim_dir->isChecked())
                 {
-                    px4_node->SetAttribute("args", ("$(find px4_cmd)/config/etc -s etc/init.d-posix/rcS -i $(arg ID) -w " + topic_name + " $(arg px4_command_arg1)").c_str());
+                    px4_node->SetAttribute("args", ("$(find px4_cmd)/config/px4/etc -s etc/init.d-posix/rcS -i $(arg ID) -w " + topic_name + " $(arg px4_command_arg1)").c_str());
                 }
                 else
                 {
-                    px4_node->SetAttribute("args", ("$(find px4_cmd)/config/etc -s etc/init.d-posix/rcS -i $(arg ID) -w " + sim_dir + "/" + topic_name + " $(arg px4_command_arg1)").c_str());
+                    px4_node->SetAttribute("args", ("$(find px4_cmd)/config/px4/etc -s etc/init.d-posix/rcS -i $(arg ID) -w " + sim_dir + "/" + topic_name + " $(arg px4_command_arg1)").c_str());
                 }
                 
                 agent->InsertEndChild(px4_node);
