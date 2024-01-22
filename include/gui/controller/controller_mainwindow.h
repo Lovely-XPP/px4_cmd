@@ -90,7 +90,7 @@ class ControllerMainWindow : public QDialog
 
     private:
         // settings
-        string version = "V1.0.3";
+        string version = "V1.0.4";
         QString current_cmd = "None";
         double update_time = 0.3;
 
@@ -566,7 +566,7 @@ class ControllerMainWindow : public QDialog
                 cmds[i].desire_cmd[0] = data[i]->home_position[0];
                 cmds[i].desire_cmd[1] = data[i]->home_position[1];
                 cmds[i].desire_cmd[2] = cmd_values[i][2];
-                cmds[i].yaw_cmd = cmd_values[i][3];
+                cmds[i].yaw_cmd = cmd_values[i][3] * PI / 180;
                 err = data[i]->set_mode("Arm");
                 if (err != "")
                 {
@@ -679,15 +679,26 @@ class ControllerMainWindow : public QDialog
                             }
                         }
                     }
-                    cmds[j].yaw_cmd = cmd_values[j][3];
+                    cmds[j].yaw_cmd = cmd_values[j][3] * PI / 180;
                 }
                 operating_info = ("Flying to Trajectory Point [" + to_string(i) + "] ...").c_str();
+                usleep(500000);
                 // judge if achieve desire cmd
-                sleep(1);
                 while (!judge_all_achieve_state(true))
                 {
                     usleep(200000);
                 }
+                // change yaw values to next cmd
+                if (i < (trajectory_win->cmd_values.size() - 1))
+                {
+                    operating_info = ("Wait for Next Point [" + to_string(i + 1) + "] ...").c_str();
+                    for (size_t j = 0; j < cmds.size(); j++)
+                    {
+                        cmd_values[j][3] = trajectory_win->cmd_values[i + 1][j][3];
+                        cmds[j].yaw_cmd = trajectory_win->cmd_values[i + 1][j][3] * PI / 180;
+                    }
+                }
+                // wait for gap time
                 usleep(floor(sleep_time * 1000000));
             }
             operating_info = "Trajectory CMD Done. Change to Hover Mode.";
@@ -757,7 +768,7 @@ class ControllerMainWindow : public QDialog
                         }
                     }
                 }
-                cmds[node_id].yaw_cmd = cmd_values[node_id][3];
+                cmds[node_id].yaw_cmd = cmd_values[node_id][3] * PI / 180;
                 // pubs[node_id].publish(cmds[node_id]);
                 usleep(20000);
             }
@@ -923,7 +934,7 @@ class ControllerMainWindow : public QDialog
                         }
                     }
                 }
-                cmds[i].yaw_cmd = cmd_values[i][3];
+                cmds[i].yaw_cmd = cmd_values[i][3] * PI / 180;
             }
             // judge if achieve desire cmd
             sleep(1);

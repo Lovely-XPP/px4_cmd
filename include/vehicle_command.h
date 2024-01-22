@@ -310,7 +310,7 @@ void vehicle_command::controller_cmd_cb(const px4_cmd::Command::ConstPtr &msg)
             pos_setpoint.position.y = hover_pos[1];
             pos_setpoint.position.z = hover_pos[2];
             pos_setpoint.header.frame_id = 1;
-            pos_setpoint.yaw = 0;
+            //pos_setpoint.yaw = 0;
             return;
         }
         hover = false;
