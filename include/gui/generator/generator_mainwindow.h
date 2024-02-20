@@ -52,7 +52,7 @@ class GeneratorMainWindow : public QDialog
 
     private:
         // settings
-        string version = "V1.1.9";
+        string version = "V1.1.10";
         vector<string> topic_types = {"{Vehicle Type}_{ID}", "uav_{ID}"};
         vector<string> vehicle_types = {"iris", "typhoon_h480", "plane"};
         vector<string> sensor_types = {"None", "Lidar", "Depth Camera", "RGB Camera", "Stereo Camera", "Realsense Camera"};
@@ -1503,6 +1503,45 @@ class GeneratorMainWindow : public QDialog
             QString cam_pose;
             QStringList cam_poses;
             string cam_edited_pose;
+            // realsense camera
+            if (sensor_name == "Realsense Camera")
+            {
+                // set model path
+                XMLElement *model_path_node = link_node->FirstChildElement("visual")->FirstChildElement("geometry")->FirstChildElement("mesh")->FirstChildElement("uri");
+                model_path_node->SetText(("file://" + models_dir + sensor_folder_name + "/meshes/realsense_d435.stl").c_str());
+                // set image resolution
+                for (auto link_item = model_node->FirstChildElement("link"); link_item; link_item = link_item->NextSiblingElement("link"))
+                {
+                    for (auto item = link_item->FirstChildElement("sensor"); item; item = item->NextSiblingElement("sensor"))
+                    {
+                        for (auto cam_item = item->FirstChildElement("camera"); cam_item; cam_item = cam_item->NextSiblingElement("camera"))
+                        {
+                            node_1 = cam_item->FirstChildElement("image");
+                            if (!node_1)
+                            {
+                                msg_box->exec();
+                                return false;
+                            }
+                            para_1 = node_1->FirstChildElement("width");
+                            para_2 = node_1->FirstChildElement("height");
+                            if (!para_1 || !para_2)
+                            {
+                                msg_box->exec();
+                                return false;
+                            }
+                            para_1->SetText(sensor_load_data->width.c_str());
+                            para_2->SetText(sensor_load_data->height.c_str());
+                        }
+                    }
+                }
+                // set update rate
+                XMLElement *cam_plugin = model_node->FirstChildElement("plugin");
+                cam_plugin->FirstChildElement("depthUpdateRate")->SetText(sensor_load_data->update_rate.c_str());
+                cam_plugin->FirstChildElement("colorUpdateRate")->SetText(sensor_load_data->update_rate.c_str());
+                cam_plugin->FirstChildElement("infraredUpdateRate")->SetText(sensor_load_data->update_rate.c_str());
+            }
+
+            // other sensors
             for (auto item = link_node->FirstChildElement("sensor"); item; item = item->NextSiblingElement("sensor"))
             {
                 node_0 = item->FirstChildElement("update_rate");

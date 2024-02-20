@@ -101,6 +101,8 @@ class GeneratorSensorsWindow : public QDialog
                 stereo_cam.name = "Stereo Camera";
                 stereo_cam.position = {"0.1", "0.0", "0.0"};
                 realsense_cam.name = "Realsense Camera";
+                realsense_cam.position = {"0.12", "0.0", "0.0"};
+                realsense_cam.pose = {"1.57079632675", "0", "1.57079632675"};
                 sensors_data.push_back(&lidar);
                 sensors_data.push_back(&depth_cam);
                 sensors_data.push_back(&rgb_cam);
