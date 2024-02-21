@@ -1,3 +1,6 @@
+# Copyright (c) 2023 易鹏 中山大学航空航天学院
+# Copyright (c) 2023 Peng Yi, Sun Yat-Sen University, School of Aeronautics and Astronautics
+
 cmake_minimum_required(VERSION 3.10)
 
 # project name version languages
@@ -75,7 +78,7 @@ add_dependencies(recieve_video ${${PROJECT_NAME}_EXPORTED_TARGETS})
 target_link_libraries(recieve_video ${catkin_LIBRARIES} ${OpenCV_LIBS})
 
 
-################## External cmd  ##################
+################## External cmd API ##################
 add_library(${PROJECT_NAME} src/template/vehicle_external_command.cpp src/template/single_vehicle_external_command.cpp)
 add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS})
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
