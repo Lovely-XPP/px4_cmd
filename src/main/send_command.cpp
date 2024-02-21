@@ -49,14 +49,31 @@ int main(int argc, char **argv)
     ros::init(argc, argv, "send_command");
     ros::NodeHandle nh;
 
+    // 获取 robot 名
+    ros::master::V_TopicInfo topics;
+    ros::master::getTopics(topics);
+    string node_name = "";
+    for (auto topic = topics.begin(); topic != topics.end(); topic++)
+    {
+        auto position = topic->name.find("/mavros");
+        if (position != std::string::npos)
+        {
+            if (position != 0)
+            {
+                node_name = topic->name.substr(0, position);
+            }
+            break;
+        }
+    }
+
     // 广播和节点
     set_cmd_sub = nh.subscribe<px4_cmd::Command>("/px4_cmd/control_command", 10, sub_set_cmd_cb);
-    current_state_sub = nh.subscribe<mavros_msgs::State>("/mavros/state", 20, state_cb);
-    current_pos_sub = nh.subscribe<geometry_msgs::PoseStamped>("/mavros/local_position/pose", 10, pos_cb);
-    setpoint_raw_local_pub = nh.advertise<mavros_msgs::PositionTarget>("/mavros/setpoint_raw/local", 10);
+    current_state_sub = nh.subscribe<mavros_msgs::State>(node_name + "/mavros/state", 20, state_cb);
+    current_pos_sub = nh.subscribe<geometry_msgs::PoseStamped>(node_name + "/mavros/local_position/pose", 10, pos_cb);
+    setpoint_raw_local_pub = nh.advertise<mavros_msgs::PositionTarget>(node_name + "/mavros/setpoint_raw/local", 10);
 
     // 服务
-    ros::ServiceClient mode_client = nh.serviceClient<mavros_msgs::SetMode>("/mavros/set_mode");
+    ros::ServiceClient mode_client = nh.serviceClient<mavros_msgs::SetMode>(node_name + "/mavros/set_mode");
 
     // 等待节点初始化完成
     sleep(1);

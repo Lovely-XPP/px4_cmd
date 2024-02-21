@@ -12,7 +12,7 @@
 #include <tf/LinearMath/Quaternion.h>
 #include <tf/LinearMath/Transform.h>
 #include <tf/transform_datatypes.h>
-
+#include <std_msgs/Bool.h>
 #include <mavros_msgs/CommandBool.h>
 #include <mavros_msgs/State.h>
 #include <mavros_msgs/PositionTarget.h>
@@ -35,6 +35,7 @@ class vehicle_command
         ros::Subscriber current_extend_state_sub;
         ros::Subscriber ext_cmd_sub;
         ros::Publisher setpoint_raw_local_pub;
+        ros::Publisher ext_cmd_state_pub;
         ros::ServiceClient mode_client;
         ros::ServiceClient arming_client;
         tf::Quaternion quat;
@@ -42,6 +43,7 @@ class vehicle_command
         mavros_msgs::PositionTarget pos_setpoint;
         mavros_msgs::SetMode mode_cmd;
         mavros_msgs::CommandBool arm_cmd;
+        std_msgs::Bool ext_cmd_state_msg;
         double R;
         double P;
         double Y;
@@ -68,7 +70,8 @@ class vehicle_command
         px4_cmd::Command ext_cmd;
         bool arm_state = false;
         bool land_state = true;
-        bool ext_cmd_state = false;
+        bool ext_cmd_pub_state = false;
+        bool ext_cmd_sub_state = false;
         bool thread_stop = false;
         bool ros_stop = false;
         bool achieve_desire = false;
@@ -111,6 +114,7 @@ void vehicle_command::start(string node)
     ext_cmd_sub = nh.subscribe<px4_cmd::Command>((node_name + "/px4_cmd/external_command").c_str(), 50, &vehicle_command::ext_cmd_cb, this);
     current_extend_state_sub = nh.subscribe<mavros_msgs::ExtendedState>((topic_header + "extended_state").c_str(), 20, &vehicle_command::extend_state_cb, this);
     setpoint_raw_local_pub = nh.advertise<mavros_msgs::PositionTarget>((topic_header + "setpoint_raw/local").c_str(), 50);
+    ext_cmd_state_pub = nh.advertise<std_msgs::Bool>("/" + node_name + "/px4_cmd/ext_cmd_state", 20);
     mode_client = nh.serviceClient<mavros_msgs::SetMode>((topic_header + "set_mode").c_str());
     arming_client = nh.serviceClient<mavros_msgs::CommandBool>((topic_header + "cmd/arming").c_str());
     std::thread ros_thread(&vehicle_command::ros_thread_fun, this);
@@ -226,13 +230,15 @@ void vehicle_command::ros_thread_fun()
         }
         if (ext_cmd_sub.getNumPublishers() > 0)
         {
-            ext_cmd_state = true;
+            ext_cmd_pub_state = true;
         }
         else
         {
-            ext_cmd_state = false;
+            ext_cmd_pub_state = false;
         }
         setpoint_raw_local_pub.publish(pos_setpoint);
+        ext_cmd_state_msg.data = ext_cmd_sub_state;
+        ext_cmd_state_pub.publish(ext_cmd_state_msg);
         usleep(floor(1000000 * update_time));
         ros::spinOnce();
     }

@@ -24,14 +24,14 @@ using namespace std;
 
 // 发布消息初始化
 ros::Publisher cmd_pub;
-ros::Publisher ext_on_pub;
+ros::Publisher ext_cmd_state_pub;
 ros::Subscriber state_sub;
 ros::Subscriber cmd_sub;
 ros::Subscriber mode_sub;
 
 // 订阅信息
 geometry_msgs::PoseStamped current_state;
-std_msgs::Bool ext_on_msg;
+std_msgs::Bool ext_cmd_state_msg;
 px4_cmd::Command external_cmd;
 string state_mode;
 bool arm_state;
@@ -43,7 +43,7 @@ void mode_cb(const mavros_msgs::State::ConstPtr &msg);
 
 // 初始化命令
 px4_cmd::Command cmd;
-bool ext_on = false;
+bool ext_cmd_state = false;
 
 // 定义列表储存所有模式
 std::vector<string> command_list = {
@@ -134,18 +134,35 @@ int main(int argc, char **argv)
     ros::NodeHandle nh;
     ros::Rate cmd_rate(10.0);
 
+    // 获取 robot 名
+    ros::master::V_TopicInfo topics;
+    ros::master::getTopics(topics);
+    string node_name = "";
+    for (auto topic = topics.begin(); topic != topics.end(); topic++)
+    {
+        auto position = topic->name.find("/mavros");
+        if (position != std::string::npos)
+        {
+            if (position != 0)
+            {
+                node_name = topic->name.substr(0, position);
+            }
+            break;
+        }
+    }
+
     // 外部命令默认话题名，支持通过命令行参数输入
-    std::string topic_name = "/px4_cmd/ext_command";
+    std::string topic_name = node_name + "/px4_cmd/ext_command";
     bool get_topic = nh.getParam("cmd_topic", topic_name);
 
     // 订阅
-    state_sub = nh.subscribe<geometry_msgs::PoseStamped>("/mavros/local_position/pose", 10, state_cb);
+    state_sub = nh.subscribe<geometry_msgs::PoseStamped>(node_name + "/mavros/local_position/pose", 10, state_cb);
     cmd_sub = nh.subscribe<px4_cmd::Command>(topic_name, 20, external_cmd_cb);
-    mode_sub = nh.subscribe<mavros_msgs::State>("/mavros/state", 20, mode_cb);
+    mode_sub = nh.subscribe<mavros_msgs::State>(node_name + "/mavros/state", 20, mode_cb);
 
     // 广播初始化
-    cmd_pub = nh.advertise<px4_cmd::Command>("/px4_cmd/control_command", 10);
-    ext_on_pub = nh.advertise<std_msgs::Bool>("/px4_cmd/ext_on", 20);
+    cmd_pub = nh.advertise<px4_cmd::Command>(node_name + "/px4_cmd/control_command", 10);
+    ext_cmd_state_pub = nh.advertise<std_msgs::Bool>(node_name + "/px4_cmd/ext_cmd_state", 20);
 
     // 命令信息
     desire_cmd_value[0] = 0.0;
@@ -526,9 +543,9 @@ int main(int argc, char **argv)
                 judge_esc_thread.detach();
                 while (true) // 按ESC退出
                 {
-                    ext_on = true;
-                    ext_on_msg.data = ext_on;
-                    ext_on_pub.publish(ext_on_msg);
+                    ext_cmd_state = true;
+                    ext_cmd_state_msg.data = ext_cmd_state;
+                    ext_cmd_state_pub.publish(ext_cmd_state_msg);
                     ros::spinOnce();
                     cmd_rate.sleep();
                     if (cmd_sub.getNumPublishers() < 1)
@@ -540,9 +557,9 @@ int main(int argc, char **argv)
                         cmd.Mode = px4_cmd::Command::Hover;
                         cmd.Move_frame = px4_cmd::Command::ENU;
                         switch_cmd = px4_cmd::Command::Hover;
-                        ext_on = false;
-                        ext_on_msg.data = ext_on;
-                        ext_on_pub.publish(ext_on_msg);
+                        ext_cmd_state = false;
+                        ext_cmd_state_msg.data = ext_cmd_state;
+                        ext_cmd_state_pub.publish(ext_cmd_state_msg);
                         ros::Duration(1).sleep();
                         while (!ext_exit)
                         {
@@ -560,9 +577,9 @@ int main(int argc, char **argv)
                         cmd.Mode = px4_cmd::Command::Hover;
                         cmd.Move_frame = px4_cmd::Command::ENU;
                         switch_cmd = px4_cmd::Command::Hover;
-                        ext_on = false;
-                        ext_on_msg.data = ext_on;
-                        ext_on_pub.publish(ext_on_msg);
+                        ext_cmd_state = false;
+                        ext_cmd_state_msg.data = ext_cmd_state;
+                        ext_cmd_state_pub.publish(ext_cmd_state_msg);
                         ext_exit = false;
                         break;
                     }

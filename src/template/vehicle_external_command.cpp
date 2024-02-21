@@ -26,6 +26,7 @@ void vehicle_external_command::start(string node)
     pos_pose_sub = nh.subscribe<geometry_msgs::PoseStamped>(topic_header + "local_position/pose", 20, &vehicle_external_command::pos_cb, this);
     vel_angle_rate_sub = nh.subscribe<geometry_msgs::TwistStamped>(topic_header + "local_position/velocity_local", 20, &vehicle_external_command::vel_cb, this);
     ext_cmd_pub = nh.advertise<px4_cmd::Command>("external_command", 50);
+    ext_state_sub = nh.subscribe<std_msgs::Bool>("/" + node_name + "px4_cmd/ext_cmd_state", 20, &vehicle_external_command::ext_state_cb, this);
     while (!ros::ok())
     {
         usleep(floor(1000000 * update_time));
@@ -68,6 +69,11 @@ void vehicle_external_command::vel_cb(const geometry_msgs::TwistStamped::ConstPt
     angle_rate[0] = msg->twist.angular.x * 180 / PI;
     angle_rate[1] = msg->twist.angular.y * 180 / PI;
     angle_rate[2] = msg->twist.angular.z * 180 / PI;
+};
+
+void vehicle_external_command::ext_state_cb(const std_msgs::Bool::ConstPtr &msg)
+{
+    ext_cmd_state = msg->data;
 };
 
 void vehicle_external_command::set_position(double x, double y, double z, int frame)

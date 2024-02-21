@@ -11,6 +11,7 @@
 #include <tf/LinearMath/Quaternion.h>
 #include <tf/LinearMath/Transform.h>
 #include <tf/transform_datatypes.h>
+#include <std_msgs/Bool.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/TwistStamped.h>
 
@@ -34,8 +35,10 @@ class vehicle_external_command
         ros::Subscriber pos_pose_sub;
         /// @brief subscriber for velocity and angle rate
         ros::Subscriber vel_angle_rate_sub;
-        /// @brief publish if recive external command
+        /// @brief publisher for external command
         ros::Publisher ext_cmd_pub;
+        /// @brief subscriber for external command state
+        ros::Subscriber ext_state_sub;
 
         /// @brief position and pose subscriber callback function
         /// @param msg message
@@ -45,12 +48,18 @@ class vehicle_external_command
         /// @param msg message
         void vel_cb(const geometry_msgs::TwistStamped::ConstPtr &msg);
 
+        /// @brief external command state subsceiber callback function
+        /// @param msg message
+        void ext_state_cb(const std_msgs::Bool::ConstPtr &msg);
+
         /// @brief main thread function
         void ros_thread_fun();
 
     public:
         /// @brief update time for API
         double update_time = 0.02;
+        /// @brief if reciving external command
+        bool ext_cmd_state = false;
         /// @brief initial position in x axis, m
         double init_x;
         /// @brief initial position in y axis, m

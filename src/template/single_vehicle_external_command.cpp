@@ -8,7 +8,22 @@ using namespace std;
 
 void single_vehicle_external_command::start()
 {
-    string topic_header = "/mavros/";
+    ros::master::V_TopicInfo topics;
+    ros::master::getTopics(topics);
+    string node_name = "";
+    for (auto topic = topics.begin(); topic != topics.end(); topic++)
+    {
+        auto position = topic->name.find("/mavros");
+        if (position != std::string::npos)
+        {
+            if (position != 0)
+            {
+                node_name = topic->name.substr(0, position);
+            }
+            break;
+        }
+    }
+    string topic_header = node_name + "/mavros/";
     external_cmd.Mode = px4_cmd::Command::Move;
     external_cmd.Move_frame = px4_cmd::Command::ENU;
     external_cmd.Move_mode = px4_cmd::Command::XYZ_POS;
@@ -18,8 +33,8 @@ void single_vehicle_external_command::start()
     ros::NodeHandle nh("~");
     pos_pose_sub = nh.subscribe<geometry_msgs::PoseStamped>(topic_header + "local_position/pose", 20, &single_vehicle_external_command::pos_cb, this);
     vel_angle_rate_sub = nh.subscribe<geometry_msgs::TwistStamped>(topic_header + "local_position/velocity_local", 20, &single_vehicle_external_command::vel_cb, this);
-    ext_state_sub = nh.subscribe<std_msgs::Bool>("/px4_cmd/ext_on", 20, &single_vehicle_external_command::ext_state_cb, this);
-    ext_cmd_pub = nh.advertise<px4_cmd::Command>("/px4_cmd/ext_command", 50);
+    ext_state_sub = nh.subscribe<std_msgs::Bool>(node_name + "/px4_cmd/ext_cmd_state", 20, &single_vehicle_external_command::ext_state_cb, this);
+    ext_cmd_pub = nh.advertise<px4_cmd::Command>(node_name + "/px4_cmd/ext_command", 50);
     while (!ros::ok())
     {
         usleep(floor(1000000 * update_time));
@@ -71,7 +86,7 @@ void single_vehicle_external_command::vel_cb(const geometry_msgs::TwistStamped::
 
 void single_vehicle_external_command::ext_state_cb(const std_msgs::Bool::ConstPtr &msg)
 {
-    ext_on = msg->data;
+    ext_cmd_state = msg->data;
 }
 
 void single_vehicle_external_command::set_position(double x, double y, double z, int frame)

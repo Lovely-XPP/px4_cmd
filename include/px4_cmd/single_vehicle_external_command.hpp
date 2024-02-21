@@ -30,10 +30,10 @@ class single_vehicle_external_command
         ros::Subscriber pos_pose_sub;
         /// @brief subscriber for velocity and angle rate
         ros::Subscriber vel_angle_rate_sub;
-        /// @brief subscriber for external command state
-        ros::Subscriber ext_state_sub;
         /// @brief publish if recive external command
         ros::Publisher ext_cmd_pub;
+        /// @brief subscriber for external command state
+        ros::Subscriber ext_state_sub;
 
         /// @brief position and pose subscriber callback function
         /// @param msg message
@@ -44,7 +44,7 @@ class single_vehicle_external_command
         void vel_cb(const geometry_msgs::TwistStamped::ConstPtr &msg);
 
         /// @brief external command state subsceiber callback function
-        /// @param msg 
+        /// @param msg message
         void ext_state_cb(const std_msgs::Bool::ConstPtr &msg);
 
         /// @brief main thread function
@@ -54,7 +54,7 @@ class single_vehicle_external_command
         /// @brief update time for API
         double update_time = 0.05;
         /// @brief if reciving external command
-        bool ext_on = false;
+        bool ext_cmd_state = false;
         /// @brief set external command total time
         double total_time = -1;
         /// @brief vehicle position [x y z], m

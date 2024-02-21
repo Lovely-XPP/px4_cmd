@@ -769,9 +769,10 @@ class ControllerMainWindow : public QDialog
                     }
                 }
                 cmds[node_id].yaw_cmd = cmd_values[node_id][3] * PI / 180;
-                // pubs[node_id].publish(cmds[node_id]);
+                data[node_id]->ext_cmd_sub_state = true;
                 usleep(20000);
             }
+            data[node_id]->ext_cmd_sub_state = false;
             if (!ext_cmd_state)
             {
                 if (data[node_id]->vehicle_name == "plane")
@@ -1182,7 +1183,7 @@ class ControllerMainWindow : public QDialog
             ext_cmd_state_single = false;
             for (size_t i = 0; i < nodes.size(); i++)
             {
-                if (data[i]->ext_cmd_state)
+                if (data[i]->ext_cmd_pub_state)
                 {
                     ext_cmd_state_single = true;
                     continue;
