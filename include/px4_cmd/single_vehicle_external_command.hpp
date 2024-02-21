@@ -70,47 +70,47 @@ class single_vehicle_external_command
         void start();
 
         /// @brief setting position command in 3 axis for vehicle
-        /// @param x desire position in x axis
-        /// @param y desire position in y axis
-        /// @param z desire position in z axis
+        /// @param x desire position in x axis, m
+        /// @param y desire position in y axis, m
+        /// @param z desire position in z axis, m
         /// @param frame position in which frame, px4_cmd::Command::ENU (default) / px4_cmd::Command::BODY
         void set_position(double x, double y, double z, int frame = px4_cmd::Command::ENU);
 
         /// @brief setting position command in 3 axis for vehicle
-        /// @param x desire position in x axis
-        /// @param y desire position in y axis
-        /// @param z desire position in z axis
-        /// @param yaw_cmd desire yaw command
+        /// @param x desire position in x axis, m
+        /// @param y desire position in y axis, m
+        /// @param z desire position in z axis, m
+        /// @param yaw_cmd desire yaw command, rad
         /// @param frame position in which frame, px4_cmd::Command::ENU (default) / px4_cmd::Command::BODY
         void set_position(double x, double y, double z, double yaw_cmd, int frame = px4_cmd::Command::ENU);
 
         /// @brief setting velocity command in 3 axis for vehicle
-        /// @param vx desire velocity in x axis
-        /// @param vy desire velocity in y axis
-        /// @param vz desire velocity in z axis
+        /// @param vx desire velocity in x axis, m
+        /// @param vy desire velocity in y axis, m
+        /// @param vz desire velocity in z axis, m
         /// @param frame velocity in which frame, px4_cmd::Command::ENU (default) / px4_cmd::Command::BODY
         void set_velocity(double vx, double vy, double vz, int frame = px4_cmd::Command::ENU);
 
         /// @brief setting velocity command in 3 axis for vehicle
-        /// @param vx desire velocity in x axis
-        /// @param vy desire velocity in y axis
-        /// @param vz desire velocity in z axis
-        /// @param yaw_cmd desire yaw command
+        /// @param vx desire velocity in x axis, m/s
+        /// @param vy desire velocity in y axis, m/s
+        /// @param vz desire velocity in z axis, m/s
+        /// @param yaw_cmd desire yaw command, rad
         /// @param frame velocity in which frame, px4_cmd::Command::ENU (default) / px4_cmd::Command::BODY
         void set_velocity(double vx, double vy, double vz, double yaw_cmd, int frame = px4_cmd::Command::ENU);
 
         /// @brief setting velocity command in 2 axis with height command for vehicle
-        /// @param vx desire velocity in x axis
-        /// @param vy desire velocity in y axis
-        /// @param z desire height
+        /// @param vx desire velocity in x axis, m/s
+        /// @param vy desire velocity in y axis, m/s
+        /// @param z desire height, m
         /// @param frame velocity in which frame, px4_cmd::Command::ENU (default) / px4_cmd::Command::BODY
         void set_velocity_with_height(double vx, double vy, double z, int frame = px4_cmd::Command::ENU);
 
         /// @brief setting velocity command in 2 axis with height command for vehicle
-        /// @param vx desire velocity in x axis
-        /// @param vy desire velocity in y axis
-        /// @param z desire height
-        /// @param yaw_cmd desire yaw command
+        /// @param vx desire velocity in x axis, m/s
+        /// @param vy desire velocity in y axis, m/s
+        /// @param z desire height, m
+        /// @param yaw_cmd desire yaw command, rad
         /// @param frame velocity in which frame, px4_cmd::Command::ENU (default) / px4_cmd::Command::BODY
         void set_velocity_with_height(double vx, double vy, double z, double yaw_cmd, int frame = px4_cmd::Command::ENU);
 
@@ -118,7 +118,7 @@ class single_vehicle_external_command
         void set_hover();
 
         /// @brief setting vehicle to hover mode
-        /// @param yaw_cmd desire yaw command
+        /// @param yaw_cmd desire yaw command, rad
         void set_hover(double yaw);
 
         /// @brief shutdown API node
