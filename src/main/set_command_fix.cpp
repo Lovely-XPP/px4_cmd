@@ -142,7 +142,7 @@ int main(int argc, char **argv)
     }
 
     // 外部命令默认话题名，支持通过命令行参数输入
-    std::string topic_name = "/px4_cmd/ext_command";
+    std::string topic_name = "/px4_cmd/external_command";
     bool get_topic = nh.getParam("cmd_topic", topic_name);
 
     // 订阅
