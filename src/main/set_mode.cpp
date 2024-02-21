@@ -1,3 +1,6 @@
+// Copyright (c) 2023 易鹏 中山大学航空航天学院
+// Copyright (c) 2023 Peng Yi, Sun Yat-Sen University, School of Aeronautics and Astronautics
+
 #include <ros/ros.h>
 
 #include <iostream>
@@ -27,13 +30,30 @@ int main(int argc, char **argv)
     ros::init(argc, argv, "set_mode");
     ros::NodeHandle nh("~");
 
+    // 获取 robot 名
+    ros::master::V_TopicInfo topics;
+    ros::master::getTopics(topics);
+    string node_name = "";
+    for (auto topic = topics.begin(); topic != topics.end(); topic++)
+    {
+        auto position = topic->name.find("/mavros");
+        if (position != std::string::npos)
+        {
+            if (position != 0)
+            {
+                node_name = topic->name.substr(0, position);
+            }
+            break;
+        }
+    }
+
     // 订阅
-    ros::Subscriber state_sub = nh.subscribe<mavros_msgs::State>("/mavros/state", 10, state_cb);
-    ros::Subscriber pos_sub = nh.subscribe<geometry_msgs::PoseStamped>("/mavros/local_position/pose", 10, pos_cb);
+    ros::Subscriber state_sub = nh.subscribe<mavros_msgs::State>(node_name + "/mavros/state", 10, state_cb);
+    ros::Subscriber pos_sub = nh.subscribe<geometry_msgs::PoseStamped>(node_name + "/mavros/local_position/pose", 10, pos_cb);
 
     // 服务
-    ros::ServiceClient mode_client = nh.serviceClient<mavros_msgs::SetMode>("/mavros/set_mode");
-    ros::ServiceClient arming_client = nh.serviceClient<mavros_msgs::CommandBool>("/mavros/cmd/arming");
+    ros::ServiceClient mode_client = nh.serviceClient<mavros_msgs::SetMode>(node_name + "/mavros/set_mode");
+    ros::ServiceClient arming_client = nh.serviceClient<mavros_msgs::CommandBool>(node_name + "/mavros/cmd/arming");
 
     //设置频率
     ros::Rate rate(50.0);
@@ -78,7 +98,7 @@ int main(int argc, char **argv)
     while (ros::ok())
     {
         // 清屏及初始化
-        system("clear");
+        int sys_res = system("clear");
         cout << POINTER;
         error_times = 0;
 

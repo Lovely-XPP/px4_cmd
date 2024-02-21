@@ -1,14 +1,7 @@
+// Copyright (c) 2023 易鹏 中山大学航空航天学院
+// Copyright (c) 2023 Peng Yi, Sun Yat-Sen University, School of Aeronautics and Astronautics
+
 #include <px4_cmd/vehicle_external_command.hpp>
-#include <vector>
-#include <string>
-#include <thread>
-#include <ros/ros.h>
-#include <px4_cmd/Command.h>
-#include <tf/LinearMath/Quaternion.h>
-#include <tf/LinearMath/Transform.h>
-#include <tf/transform_datatypes.h>
-#include <geometry_msgs/PoseStamped.h>
-#include <geometry_msgs/TwistStamped.h>
 
 #define PI 3.14159265358979323846
 using namespace std;
@@ -33,9 +26,10 @@ void vehicle_external_command::start(string node)
     pos_pose_sub = nh.subscribe<geometry_msgs::PoseStamped>(topic_header + "local_position/pose", 20, &vehicle_external_command::pos_cb, this);
     vel_angle_rate_sub = nh.subscribe<geometry_msgs::TwistStamped>(topic_header + "local_position/velocity_local", 20, &vehicle_external_command::vel_cb, this);
     ext_cmd_pub = nh.advertise<px4_cmd::Command>("external_command", 50);
+    ext_state_sub = nh.subscribe<std_msgs::Bool>("/" + node_name + "px4_cmd/ext_cmd_state", 20, &vehicle_external_command::ext_state_cb, this);
     while (!ros::ok())
     {
-        ros::Duration(update_time).sleep();
+        usleep(floor(1000000 * update_time));
     }
     std::thread ros_thread(&vehicle_external_command::ros_thread_fun, this);
     ros_thread.detach();
@@ -46,7 +40,7 @@ void vehicle_external_command::ros_thread_fun()
     while (ros::ok() && !ros_shutdown_flag)
     {
         ext_cmd_pub.publish(external_cmd);
-        ros::Duration(update_time).sleep();
+        usleep(floor(1000000 * update_time));
         ros::spinOnce();
     }
 };
@@ -56,6 +50,10 @@ void vehicle_external_command::pos_cb(const geometry_msgs::PoseStamped::ConstPtr
     position[0] = msg->pose.position.x + init_x;
     position[1] = msg->pose.position.y + init_y;
     position[2] = msg->pose.position.z + init_z;
+    tf::Quaternion quat;
+    double R;
+    double P;
+    double Y;
     tf::quaternionMsgToTF(msg->pose.orientation, quat);
     tf::Matrix3x3(quat).getRPY(R, P, Y);
     attitude[0] = P + init_P;
@@ -71,6 +69,11 @@ void vehicle_external_command::vel_cb(const geometry_msgs::TwistStamped::ConstPt
     angle_rate[0] = msg->twist.angular.x * 180 / PI;
     angle_rate[1] = msg->twist.angular.y * 180 / PI;
     angle_rate[2] = msg->twist.angular.z * 180 / PI;
+};
+
+void vehicle_external_command::ext_state_cb(const std_msgs::Bool::ConstPtr &msg)
+{
+    ext_cmd_state = msg->data;
 };
 
 void vehicle_external_command::set_position(double x, double y, double z, int frame)

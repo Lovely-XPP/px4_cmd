@@ -1,22 +1,29 @@
+// Copyright (c) 2023 易鹏 中山大学航空航天学院
+// Copyright (c) 2023 Peng Yi, Sun Yat-Sen University, School of Aeronautics and Astronautics
+
 #include <px4_cmd/single_vehicle_external_command.hpp>
-#include <vector>
-#include <string>
-#include <thread>
-#include <ros/ros.h>
-#include <px4_cmd/Command.h>
-#include <geometry_msgs/PoseStamped.h>
-#include <geometry_msgs/TwistStamped.h>
-#include <std_msgs/Bool.h>
-#include <tf/LinearMath/Quaternion.h>
-#include <tf/LinearMath/Transform.h>
-#include <tf/transform_datatypes.h>
 
 #define PI 3.14159265358979323846
 using namespace std;
 
 void single_vehicle_external_command::start()
 {
-    string topic_header = "/mavros/";
+    ros::master::V_TopicInfo topics;
+    ros::master::getTopics(topics);
+    string node_name = "";
+    for (auto topic = topics.begin(); topic != topics.end(); topic++)
+    {
+        auto position = topic->name.find("/mavros");
+        if (position != std::string::npos)
+        {
+            if (position != 0)
+            {
+                node_name = topic->name.substr(0, position);
+            }
+            break;
+        }
+    }
+    string topic_header = node_name + "/mavros/";
     external_cmd.Mode = px4_cmd::Command::Move;
     external_cmd.Move_frame = px4_cmd::Command::ENU;
     external_cmd.Move_mode = px4_cmd::Command::XYZ_POS;
@@ -26,11 +33,11 @@ void single_vehicle_external_command::start()
     ros::NodeHandle nh("~");
     pos_pose_sub = nh.subscribe<geometry_msgs::PoseStamped>(topic_header + "local_position/pose", 20, &single_vehicle_external_command::pos_cb, this);
     vel_angle_rate_sub = nh.subscribe<geometry_msgs::TwistStamped>(topic_header + "local_position/velocity_local", 20, &single_vehicle_external_command::vel_cb, this);
-    ext_state_sub = nh.subscribe<std_msgs::Bool>("/px4_cmd/ext_on", 20, &single_vehicle_external_command::ext_state_cb, this);
-    ext_cmd_pub = nh.advertise<px4_cmd::Command>("/px4_cmd/ext_command", 50);
+    ext_state_sub = nh.subscribe<std_msgs::Bool>(node_name + "/px4_cmd/ext_cmd_state", 20, &single_vehicle_external_command::ext_state_cb, this);
+    ext_cmd_pub = nh.advertise<px4_cmd::Command>(node_name + "/px4_cmd/external_command", 50);
     while (!ros::ok())
     {
-        ros::Duration(update_time).sleep();
+        usleep(floor(1000000 * update_time));
     }
     std::thread ros_thread(&single_vehicle_external_command::ros_thread_fun, this);
     ros_thread.detach();
@@ -44,14 +51,14 @@ void single_vehicle_external_command::ros_thread_fun()
         while (ext_cmd_pub.getNumSubscribers() < 1)
         {
             ROS_INFO("External Command: Waiting for user-define mode!");
-            ros::Duration(1).sleep();
+            sleep(1);
             t = 0;
         }
         external_cmd.ext_time = t;
         external_cmd.ext_total_time = total_time;
         ext_cmd_pub.publish(external_cmd);
         t = t + update_time;
-        ros::Duration(update_time).sleep();
+        usleep(floor(1000000 * update_time));
         ros::spinOnce();
     }
     ros::shutdown();
@@ -62,6 +69,7 @@ void single_vehicle_external_command::pos_cb(const geometry_msgs::PoseStamped::C
     position[0] = msg->pose.position.x;
     position[1] = msg->pose.position.y;
     position[2] = msg->pose.position.z;
+    tf::Quaternion quat;
     tf::quaternionMsgToTF(msg->pose.orientation, quat);
     tf::Matrix3x3(quat).getRPY(attitude[0], attitude[1], attitude[2]);
 };
@@ -78,7 +86,7 @@ void single_vehicle_external_command::vel_cb(const geometry_msgs::TwistStamped::
 
 void single_vehicle_external_command::ext_state_cb(const std_msgs::Bool::ConstPtr &msg)
 {
-    ext_on = msg->data;
+    ext_cmd_state = msg->data;
 }
 
 void single_vehicle_external_command::set_position(double x, double y, double z, int frame)

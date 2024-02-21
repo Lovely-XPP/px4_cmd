@@ -1,3 +1,6 @@
+// Copyright (c) 2023 易鹏 中山大学航空航天学院
+// Copyright (c) 2023 Peng Yi, Sun Yat-Sen University, School of Aeronautics and Astronautics
+
 #include <ros/ros.h>
 
 #include <thread>
@@ -21,13 +24,13 @@ using namespace std;
 
 // 发布消息初始化
 ros::Publisher cmd_pub;
-ros::Publisher ext_on_pub;
+ros::Publisher ext_cmd_state_pub;
 ros::Subscriber state_sub;
 ros::Subscriber cmd_sub;
 
 // 订阅信息
 geometry_msgs::PoseStamped current_state;
-std_msgs::Bool ext_on_msg;
+std_msgs::Bool ext_cmd_state_msg;
 px4_cmd::Command external_cmd;
 
 // 声明回调函数
@@ -36,7 +39,7 @@ void external_cmd_cb(const px4_cmd::Command::ConstPtr &msg);
 
 // 初始化命令
 px4_cmd::Command cmd;
-bool ext_on = false;
+bool ext_cmd_state = false;
 
 // 定义列表储存所有模式
 std::vector<string> command_list = {
@@ -120,18 +123,35 @@ int main(int argc, char **argv)
     ros::init(argc, argv, "set_command");
     ros::NodeHandle nh;
     ros::Rate cmd_rate(10.0);
+    
+    // 获取 robot 名
+    ros::master::V_TopicInfo topics;
+    ros::master::getTopics(topics);
+    string node_name = "";
+    for (auto topic = topics.begin(); topic != topics.end(); topic++)
+    {
+        auto position = topic->name.find("/mavros");
+        if (position != std::string::npos)
+        {
+            if (position != 0)
+            {
+                node_name = topic->name.substr(0, position);
+            }
+            break;
+        }
+    }
 
     // 外部命令默认话题名，支持通过命令行参数输入
-    std::string topic_name = "/px4_cmd/ext_command";
+    std::string topic_name = "/px4_cmd/external_command";
     bool get_topic = nh.getParam("cmd_topic", topic_name);
 
     // 订阅
-    state_sub = nh.subscribe<geometry_msgs::PoseStamped>("/mavros/local_position/pose", 10, state_cb);
+    state_sub = nh.subscribe<geometry_msgs::PoseStamped>(node_name + "/mavros/local_position/pose", 10, state_cb);
     cmd_sub = nh.subscribe<px4_cmd::Command>(topic_name, 20, external_cmd_cb);
 
     // 广播初始化
     cmd_pub = nh.advertise<px4_cmd::Command>("/px4_cmd/control_command", 10);
-    ext_on_pub = nh.advertise<std_msgs::Bool>("/px4_cmd/ext_on", 20);
+    ext_cmd_state_pub = nh.advertise<std_msgs::Bool>("/px4_cmd/ext_cmd_state", 20);
 
     // 命令信息
     desire_cmd_value[0] = 0.0;
@@ -154,7 +174,7 @@ int main(int argc, char **argv)
     while (ros::ok())
     {
         // 清屏及初始化
-        system("clear");
+        int sys_res = system("clear");
         cout << POINTER;
 
         // 输出标题及选项
@@ -222,7 +242,7 @@ int main(int argc, char **argv)
                 correct = false;
                 while (!correct)
                 {
-                    system("clear");
+                    sys_res = system("clear");
                     print_title("PX4 Command Center", frame_list);
                     cout << WHITE << "Input frame id: ";
                     cin >> switch_frame;
@@ -246,7 +266,7 @@ int main(int argc, char **argv)
 
 
                 // 输入Move模式类型
-                system("clear");
+                sys_res = system("clear");
                 print_title("PX4 Command Center", move_list);
                 cout << WHITE << "Input Move Mode Number: ";
                 cin >> switch_cmd_mode;
@@ -316,7 +336,7 @@ int main(int argc, char **argv)
                 trajectory_next = true;
                 trajectory_points = init_trajectory_points;
                 // 输入模式：相对位置/绝对位置
-                system("clear");
+                sys_res = system("clear");
                 print_title("PX4 Trajectory Center", trajectory_list);
                 cout << YELLOW << "Tip: Trajectory Only Support Frame [" << GREEN << "ENU" << YELLOW << "]" << endl;
                 cout << WHITE << "\n" << "Input Trajectory Mode Number: ";
@@ -338,7 +358,7 @@ int main(int argc, char **argv)
                     while (!correct)
                     {
                         // 清空并显示轨迹航点输入模式
-                        system("clear");
+                        sys_res = system("clear");
                         print_head("PX4 Trajectory Center");
                         print_trajectory_info(switch_trajectory_mode, trajectory_point, trajectory_points, 1);
                         cout << "\n\n"
@@ -393,7 +413,7 @@ int main(int argc, char **argv)
                 trajectory_points.erase(trajectory_points.begin());
 
                 //输出标题
-                system("clear");
+                sys_res = system("clear");
                 print_head("PX4 Trajectory Center");
                 print_trajectory_info(switch_trajectory_mode, trajectory_point, trajectory_points, 0);
                 //用户确认航点
@@ -405,7 +425,7 @@ int main(int argc, char **argv)
                 }
 
                 //开始执行
-                system("clear");
+                sys_res = system("clear");
                 print_head("PX4 Trajectory Center");
                 print_trajectory_info(switch_trajectory_mode, trajectory_point, trajectory_points, 0);
                 cout << "\n" << endl;
@@ -457,23 +477,23 @@ int main(int argc, char **argv)
                 judge_esc_thread.detach();
                 while (true) // 按ESC退出
                 {
-                    ext_on = true;
-                    ext_on_msg.data = ext_on;
-                    ext_on_pub.publish(ext_on_msg);
+                    ext_cmd_state = true;
+                    ext_cmd_state_msg.data = ext_cmd_state;
+                    ext_cmd_state_pub.publish(ext_cmd_state_msg);
                     ros::spinOnce();
                     cmd_rate.sleep();
                     if (cmd_sub.getNumPublishers() < 1)
                     {
-                        system("clear");
+                        sys_res = system("clear");
                         print_title("PX4 External Command", null_string);
                         cout << RED << "[ERROR] External Cmd Topic Disconneted!" << WHITE << endl;
                         cout << "\nPress [ESC] to exit." << endl;
                         cmd.Mode = px4_cmd::Command::Loiter;
                         cmd.Move_frame = px4_cmd::Command::ENU;
                         switch_cmd = px4_cmd::Command::Loiter;
-                        ext_on = false;
-                        ext_on_msg.data = ext_on;
-                        ext_on_pub.publish(ext_on_msg);
+                        ext_cmd_state = false;
+                        ext_cmd_state_msg.data = ext_cmd_state;
+                        ext_cmd_state_pub.publish(ext_cmd_state_msg);
                         ros::Duration(1).sleep();
                         while (!ext_exit)
                         {
@@ -484,16 +504,16 @@ int main(int argc, char **argv)
                     }
                     if (ext_exit)
                     {
-                        system("clear");
+                        sys_res = system("clear");
                         print_title("PX4 External Command", null_string);
                         cout << YELLOW << "[INFO] User Terminate External Cmd!" << WHITE << endl;
                         ros::Duration(1).sleep();
                         cmd.Mode = px4_cmd::Command::Loiter;
                         cmd.Move_frame = px4_cmd::Command::ENU;
                         switch_cmd = px4_cmd::Command::Loiter;
-                        ext_on = false;
-                        ext_on_msg.data = ext_on;
-                        ext_on_pub.publish(ext_on_msg);
+                        ext_cmd_state = false;
+                        ext_cmd_state_msg.data = ext_cmd_state;
+                        ext_cmd_state_pub.publish(ext_cmd_state_msg);
                         ext_exit = false;
                         break;
                     }
@@ -504,7 +524,7 @@ int main(int argc, char **argv)
                     cmd.desire_cmd[1] = external_cmd.desire_cmd[1];
                     cmd.desire_cmd[2] = external_cmd.desire_cmd[2];
                     cmd.yaw_cmd = external_cmd.yaw_cmd;
-                    system("clear");
+                    sys_res = system("clear");
                     print_title("PX4 External Command", null_string);
                     cout << "Exit: Press [ESC]" << endl;
                     cout << "Time: " << fixed << setprecision(2) << external_cmd.ext_time << "/" << external_cmd.ext_total_time << endl;
