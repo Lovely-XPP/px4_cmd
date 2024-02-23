@@ -106,7 +106,7 @@ target_link_libraries(controller ${catkin_LIBRARIES})
 # Monitor
 add_executable(monitor src/gui/monitor.cpp)
 add_dependencies(monitor ${${PROJECT_NAME}_EXPORTED_TARGETS})
-target_link_libraries(monitor ${catkin_LIBRARIES})
+target_link_libraries(monitor ${catkin_LIBRARIES} ${OpenCV_LIBS})
 target_link_libraries(monitor qcustomplot)
 
 ################## External cmd API ##################
