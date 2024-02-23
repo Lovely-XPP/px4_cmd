@@ -52,7 +52,7 @@ class GeneratorMainWindow : public QDialog
 
     private:
         // settings
-        string version = "V1.1.10";
+        string version = "V1.1.11";
         vector<string> topic_types = {"{Vehicle Type}_{ID}", "uav_{ID}"};
         vector<string> vehicle_types = {"iris", "typhoon_h480", "plane"};
         vector<string> sensor_types = {"None", "Lidar", "Depth Camera", "RGB Camera", "Stereo Camera", "Realsense Camera"};
@@ -778,6 +778,7 @@ class GeneratorMainWindow : public QDialog
             string model;
             string topic_type;
             string topic_name;
+            string sensor_model_path;
             int ID = 0;
             int local_port = 34580;
             // not must be 14540 ~ 14549, see 
@@ -791,6 +792,7 @@ class GeneratorMainWindow : public QDialog
             XMLElement *agent_arg_3;
             XMLElement *agent_arg_4;
             XMLElement *agent_arg_5;
+            XMLElement *agent_arg_6;
             XMLElement *agent_arg_x;
             XMLElement *agent_arg_y;
             XMLElement *agent_arg_z;
@@ -852,7 +854,8 @@ class GeneratorMainWindow : public QDialog
                     }
                     transform(sensor_folder_name.begin(), sensor_folder_name.end(), sensor_folder_name.begin(), ::tolower);
                     model = vehicle + "_" + sensor_folder_name;
-                    if(!generate_sdf(vehicle, sensor))
+                    sensor_model_path.clear();
+                    if (!generate_sdf(vehicle, sensor, sensor_model_path))
                     {
                         return;
                     }
@@ -891,6 +894,10 @@ class GeneratorMainWindow : public QDialog
                 agent_arg_5->SetAttribute("name", "model");
                 agent_arg_5->SetAttribute("value", model.c_str());
                 agent->InsertEndChild(agent_arg_5);
+                agent_arg_6 = doc.NewElement("arg");
+                agent_arg_6->SetAttribute("name", "sensor_model_path");
+                agent_arg_6->SetAttribute("value", sensor_model_path.c_str());
+                agent->InsertEndChild(agent_arg_6);
                 agent_arg_x = doc.NewElement("arg");
                 agent_arg_x->SetAttribute("name", "x");
                 agent_arg_x->SetAttribute("value", init_pos[i][0].c_str());
@@ -947,7 +954,7 @@ class GeneratorMainWindow : public QDialog
                 agent->InsertEndChild(agent_cmd_comment);
                 agent_arg_cmd = doc.NewElement("arg");
                 agent_arg_cmd->SetAttribute("name", "cmd");
-                agent_arg_cmd->SetAttribute("value", "$(find px4_cmd)/scripts/model_gen.py --stdout --mavlink_id=$(arg mavlink_id) --mavlink_udp_port=$(arg mavlink_udp_port) --sdk_udp_port=$(arg sdk_udp_port) --mavlink_tcp_port=$(arg mavlink_tcp_port) --gst_udp_port=$(arg gst_udp_port) --video_uri=$(arg video_uri) --mavlink_cam_udp_port=$(arg mavlink_cam_udp_port) $(find px4_cmd)/models/$(arg model)/$(arg model).sdf.jinja $(find px4_cmd)");
+                agent_arg_cmd->SetAttribute("value", "$(find px4_cmd)/scripts/model_gen.py --stdout --sensor_model_path=$(arg sensor_model_path) --mavlink_id=$(arg mavlink_id) --mavlink_udp_port=$(arg mavlink_udp_port) --sdk_udp_port=$(arg sdk_udp_port) --mavlink_tcp_port=$(arg mavlink_tcp_port) --gst_udp_port=$(arg gst_udp_port) --video_uri=$(arg video_uri) --mavlink_cam_udp_port=$(arg mavlink_cam_udp_port) $(find px4_cmd)/models/$(arg model)/$(arg model).sdf.jinja $(find px4_cmd)");
                 agent->InsertEndChild(agent_arg_cmd);
                 agent_arg_cmd_param = doc.NewElement("param");
                 agent_arg_cmd_param->SetAttribute("command", "$(arg cmd)");
@@ -1425,7 +1432,7 @@ class GeneratorMainWindow : public QDialog
             return true;
         }
 
-        bool generate_sdf(string vehicle_name, string sensor_name)
+        bool generate_sdf(string vehicle_name, string sensor_name, string &sensor_model_path)
         {
             // get data 
             sensor_data *sensor_load_data;
@@ -1459,6 +1466,7 @@ class GeneratorMainWindow : public QDialog
             models_dir = models_dir + "/models/";
             sensor_origin_sdf_dir = models_dir + sensor_folder_name + "/" + sensor_folder_name + "_origin.sdf";
             sensor_sdf_dir = models_dir + sensor_folder_name + "/" + sensor_folder_name + ".sdf";
+            sensor_model_path = "file://" + models_dir + sensor_folder_name;
             // err msg
             msg_box = new QMessageBox();
             msg_box->setIcon(QMessageBox::Icon::Critical);
@@ -1507,8 +1515,8 @@ class GeneratorMainWindow : public QDialog
             if (sensor_name == "Realsense Camera")
             {
                 // set model path
-                XMLElement *model_path_node = link_node->FirstChildElement("visual")->FirstChildElement("geometry")->FirstChildElement("mesh")->FirstChildElement("uri");
-                model_path_node->SetText(("file://" + models_dir + sensor_folder_name + "/meshes/realsense_d435.stl").c_str());
+                // XMLElement *model_path_node = link_node->FirstChildElement("visual")->FirstChildElement("geometry")->FirstChildElement("mesh")->FirstChildElement("uri");
+                // model_path_node->SetText("{{ sensor_model_path }}/meshes/realsense_d435.stl");
                 // set image resolution
                 for (auto link_item = model_node->FirstChildElement("link"); link_item; link_item = link_item->NextSiblingElement("link"))
                 {
@@ -1697,7 +1705,7 @@ class GeneratorMainWindow : public QDialog
             XMLElement *sensor_sdf = doc.NewElement("include");
             model->InsertEndChild(sensor_sdf);
             XMLElement *sensor_uri = doc.NewElement("uri");
-            sensor_uri->SetText(("file://" + models_dir + sensor_folder_name).c_str());
+            sensor_uri->SetText("{{ sensor_model_path }}");
             sensor_sdf->InsertEndChild(sensor_uri);
             // joint
             XMLComment *joint_info = doc.NewComment(" joint ");

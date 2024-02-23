@@ -20,7 +20,7 @@
             <visual name="visual">
                 <geometry>
                     <mesh>
-                        <uri>file:///home/microlab/Documents/px4_simulation/src/px4_cmd/models/realsense_camera/meshes/realsense_d435.stl</uri>
+                        <uri>model://realsense_ros_gazebo/meshes/realsense_d435.stl</uri>
                         <!--uri>model://realsense_camera/meshes/D435i.dae</uri-->
                     </mesh>
                 </geometry>

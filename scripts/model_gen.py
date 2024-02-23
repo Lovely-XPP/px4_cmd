@@ -21,6 +21,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('filename', help="file that the sdf file should be generated from")
     parser.add_argument('env_dir')
+    parser.add_argument('--sensor_model_path', default="", help="Sensor Model Path for PX4 SITL")
     parser.add_argument('--mavlink_tcp_port', default=4560, help="TCP port for PX4 SITL")
     parser.add_argument('--mavlink_udp_port', default=14560, help="Mavlink UDP port for mavlink access")
     parser.add_argument('--sdk_udp_port', default=14540, help="UDP port for PX4 SITL")
@@ -56,6 +57,7 @@ if __name__ == "__main__":
         rospack = None
 
     d = {'np': np, 'rospack': rospack, \
+         'sensor_model_path': args.sensor_model_path, \
          'mavlink_tcp_port': args.mavlink_tcp_port, \
          'mavlink_udp_port': args.mavlink_udp_port, \
          'serial_enabled': args.serial_enabled, \
