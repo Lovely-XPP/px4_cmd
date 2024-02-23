@@ -737,7 +737,7 @@ class ControllerMainWindow : public QDialog
                 cmd_values[node_id][0] = data[node_id]->ext_cmd.desire_cmd[0];
                 cmd_values[node_id][1] = data[node_id]->ext_cmd.desire_cmd[1];
                 cmd_values[node_id][2] = data[node_id]->ext_cmd.desire_cmd[2];
-                cmd_values[node_id][3] = data[node_id]->ext_cmd.yaw_cmd;
+                cmd_values[node_id][3] = data[node_id]->ext_cmd.yaw_cmd * 180 / PI;
                 cmd_mutex.unlock();
                 cmds[node_id].Mode = data[node_id]->ext_cmd.Mode;
                 cmds[node_id].Move_mode = data[node_id]->ext_cmd.Move_mode;
