@@ -50,12 +50,11 @@ void vehicle_external_command::pos_cb(const geometry_msgs::PoseStamped::ConstPtr
     position[0] = msg->pose.position.x + init_x;
     position[1] = msg->pose.position.y + init_y;
     position[2] = msg->pose.position.z + init_z;
-    tf::Quaternion quat;
     double R;
     double P;
     double Y;
-    tf::quaternionMsgToTF(msg->pose.orientation, quat);
-    tf::Matrix3x3(quat).getRPY(R, P, Y);
+    tf::quaternionMsgToTF(msg->pose.orientation, quaternion);
+    tf::Matrix3x3(quaternion).getRPY(R, P, Y);
     attitude[0] = P + init_P;
     attitude[1] = R + init_R;
     attitude[2] = Y + init_Y;

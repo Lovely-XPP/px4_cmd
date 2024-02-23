@@ -65,6 +65,8 @@ class single_vehicle_external_command
         double velocity[3];
         /// @brief vehicle angle rate [x, y, z], rad/s
         double angle_rate[3];
+        /// @brief vehicle quaternion
+        tf::Quaternion quaternion;
 
         /// @brief start API node
         void start();

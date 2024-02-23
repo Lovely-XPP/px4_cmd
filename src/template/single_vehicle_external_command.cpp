@@ -69,9 +69,8 @@ void single_vehicle_external_command::pos_cb(const geometry_msgs::PoseStamped::C
     position[0] = msg->pose.position.x;
     position[1] = msg->pose.position.y;
     position[2] = msg->pose.position.z;
-    tf::Quaternion quat;
-    tf::quaternionMsgToTF(msg->pose.orientation, quat);
-    tf::Matrix3x3(quat).getRPY(attitude[0], attitude[1], attitude[2]);
+    tf::quaternionMsgToTF(msg->pose.orientation, quaternion);
+    tf::Matrix3x3(quaternion).getRPY(attitude[0], attitude[1], attitude[2]);
 };
 
 void single_vehicle_external_command::vel_cb(const geometry_msgs::TwistStamped::ConstPtr &msg)

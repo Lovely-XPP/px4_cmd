@@ -74,6 +74,8 @@ class vehicle_external_command
         double velocity[3];
         /// @brief vehicle angle rate [x, y, z], rad/s
         double angle_rate[3];
+        /// @brief vehicle quaternion
+        tf::Quaternion quaternion;
 
         /// @brief start API node
         /// @param node node name for vehicle, defined in topic name: /{node}/mavros/....
