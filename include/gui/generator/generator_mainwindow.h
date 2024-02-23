@@ -1466,7 +1466,7 @@ class GeneratorMainWindow : public QDialog
             models_dir = models_dir + "/models/";
             sensor_origin_sdf_dir = models_dir + sensor_folder_name + "/" + sensor_folder_name + "_origin.sdf";
             sensor_sdf_dir = models_dir + sensor_folder_name + "/" + sensor_folder_name + ".sdf";
-            sensor_model_path = "file://" + models_dir + sensor_folder_name;
+            sensor_model_path = "file://$(find px4_cmd)/models/" + sensor_folder_name;
             // err msg
             msg_box = new QMessageBox();
             msg_box->setIcon(QMessageBox::Icon::Critical);
