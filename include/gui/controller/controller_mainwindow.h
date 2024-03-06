@@ -281,6 +281,7 @@ class ControllerMainWindow : public QDialog
             // add table
             QStringList table_headers_ext_cmd = {
                 "Node",
+                "Vehicle Type",
                 "CMD Mode",
                 "Frame",
                 "CMD 1",
@@ -305,8 +306,17 @@ class ControllerMainWindow : public QDialog
                 QStandardItem *item_7 = new QStandardItem();
                 QStandardItem *item_8 = new QStandardItem();
                 QStandardItem *item_9 = new QStandardItem();
+                QStandardItem *item_10 = new QStandardItem();
                 item_1->setText("  " + nodes[i] + "  ");
-                item_9->setText((nodes[i] + "/px4_cmd/external_command").toStdString().c_str());
+                if (data[i]->vehicle_name == "plane")
+                {
+                    item_2->setText("FixWing");
+                }
+                else
+                {
+                    item_2->setText("Multicopter");
+                }
+                item_10->setText((nodes[i] + "/px4_cmd/external_command").toStdString().c_str());
                 item_1->setEditable(false);
                 item_2->setEditable(false);
                 item_3->setEditable(false);
@@ -316,6 +326,7 @@ class ControllerMainWindow : public QDialog
                 item_7->setEditable(false);
                 item_8->setEditable(false);
                 item_9->setEditable(false);
+                item_10->setEditable(false);
                 item_1->setTextAlignment(Qt::AlignCenter);
                 item_2->setTextAlignment(Qt::AlignCenter);
                 item_3->setTextAlignment(Qt::AlignCenter);
@@ -325,6 +336,7 @@ class ControllerMainWindow : public QDialog
                 item_7->setTextAlignment(Qt::AlignCenter);
                 item_8->setTextAlignment(Qt::AlignCenter);
                 item_9->setTextAlignment(Qt::AlignCenter);
+                item_10->setTextAlignment(Qt::AlignCenter);
                 info_model->setItem(i, 0, item_1);
                 info_model->setItem(i, 1, item_2);
                 info_model->setItem(i, 2, item_3);
@@ -334,6 +346,7 @@ class ControllerMainWindow : public QDialog
                 info_model->setItem(i, 6, item_7);
                 info_model->setItem(i, 7, item_8);
                 info_model->setItem(i, 8, item_9);
+                info_model->setItem(i, 9, item_10);
                 table_item.push_back(item_1);
                 table_item.push_back(item_2);
                 table_item.push_back(item_3);
@@ -343,6 +356,7 @@ class ControllerMainWindow : public QDialog
                 table_item.push_back(item_7);
                 table_item.push_back(item_8);
                 table_item.push_back(item_9);
+                table_item.push_back(item_10);
                 table_items.push_back(table_item);
             }
             info_table->setModel(info_model);
@@ -988,6 +1002,7 @@ class ControllerMainWindow : public QDialog
             string pre_mode = "";
             QStringList table_headers_ext_cmd = {
                 "Node",
+                "Vehicle Type",
                 "CMD Mode",
                 "Frame",
                 "CMD 1",
@@ -995,7 +1010,8 @@ class ControllerMainWindow : public QDialog
                 "CMD 3",
                 "CMD 4  [Yaw]",
                 "External State",
-                "External CMD Topic"};
+                "External CMD Topic"
+            };
         
             // ros state
             if (ros::master::check())
@@ -1215,13 +1231,13 @@ class ControllerMainWindow : public QDialog
             info5.node_id = node_id;
             info6.node_id = node_id;
             info7.node_id = node_id;
-            info1.cell_id = 1;
-            info2.cell_id = 2;
-            info3.cell_id = 3;
-            info4.cell_id = 4;
-            info5.cell_id = 5;
-            info6.cell_id = 6;
-            info7.cell_id = 7;
+            info1.cell_id = 2;
+            info2.cell_id = 3;
+            info3.cell_id = 4;
+            info4.cell_id = 5;
+            info5.cell_id = 6;
+            info6.cell_id = 7;
+            info7.cell_id = 8;
             while (ros::master::check() && !thread_stop)
             {
                 // current mode
@@ -1372,11 +1388,11 @@ class ControllerMainWindow : public QDialog
             table_items[data.node_id][data.cell_id]->setText(data.str);
             if (ext_cmd_state)
             {
-                info_model->setData(info_model->index(data.node_id, 7), QBrush(QColor(0, 150, 0)), Qt::TextColorRole);
+                info_model->setData(info_model->index(data.node_id, 8), QBrush(QColor(0, 150, 0)), Qt::TextColorRole);
             }
             else
             {
-                info_model->setData(info_model->index(data.node_id, 7), QBrush(Qt::red), Qt::TextColorRole);
+                info_model->setData(info_model->index(data.node_id, 8), QBrush(Qt::red), Qt::TextColorRole);
             }
         };
 

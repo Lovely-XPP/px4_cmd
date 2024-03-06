@@ -168,6 +168,7 @@ int main(int argc, char **argv)
     desire_cmd_value[0] = 0.0;
     desire_cmd_value[1] = 0.0;
     desire_cmd_value[2] = 0.0;
+    cmd.Vehicle = px4_cmd::Command::Multicopter;
     cmd.Mode = px4_cmd::Command::Idle;
     cmd.Move_frame = px4_cmd::Command::ENU;
     cmd.Move_mode = px4_cmd::Command::XYZ_POS;
@@ -175,6 +176,7 @@ int main(int argc, char **argv)
     cmd.desire_cmd[1] = desire_cmd_value[1];
     cmd.desire_cmd[2] = desire_cmd_value[2];
     cmd.yaw_cmd = yaw_value;
+    cmd.header.frame_id = 1;
 
     // 开启广播线程
     sleep(1);

@@ -177,6 +177,7 @@ int main(int argc, char **argv)
                     if (current_state.armed == desire_arm_cmd)
                     {
                         Info(desire_mode + " Command Sent and " + desire_mode + " Successfully!");
+                        break;
                     }
                     else
                     {

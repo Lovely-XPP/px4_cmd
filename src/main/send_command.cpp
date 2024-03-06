@@ -67,7 +67,7 @@ int main(int argc, char **argv)
     }
 
     // 广播和节点
-    set_cmd_sub = nh.subscribe<px4_cmd::Command>("/px4_cmd/control_command", 10, sub_set_cmd_cb);
+    set_cmd_sub = nh.subscribe<px4_cmd::Command>(node_name + "/px4_cmd/control_command", 10, sub_set_cmd_cb);
     current_state_sub = nh.subscribe<mavros_msgs::State>(node_name + "/mavros/state", 20, state_cb);
     current_pos_sub = nh.subscribe<geometry_msgs::PoseStamped>(node_name + "/mavros/local_position/pose", 10, pos_cb);
     setpoint_raw_local_pub = nh.advertise<mavros_msgs::PositionTarget>(node_name + "/mavros/setpoint_raw/local", 10);

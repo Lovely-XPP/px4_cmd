@@ -53,11 +53,28 @@ class vehicle_command
         int desire_time = 0;
         bool hover = false;
         vector<double> hover_pos = {0, 0, 0};
+
+        /// @brief controller command subscribe call back function
+        /// @param msg controller command message 
         void controller_cmd_cb(const px4_cmd::Command::ConstPtr &msg);
+
+        /// @brief vehicle pose subscribe call back function
+        /// @param msg controller command message
         void pos_cb(const geometry_msgs::PoseStamped::ConstPtr &msg);
+
+        /// @brief vehicle state subscribe call back function
+        /// @param msg controller command message 
         void state_cb(const mavros_msgs::State::ConstPtr &msg);
+
+        /// @brief external command subscribe call back function
+        /// @param msg external command message 
         void ext_cmd_cb(const px4_cmd::Command::ConstPtr &msg);
+
+        /// @brief vehicle extended state subscribe call back function
+        /// @param msg mavros extended state message
         void extend_state_cb(const mavros_msgs::ExtendedState::ConstPtr &msg);
+
+        /// @brief ROS node thread function 
         void ros_thread_fun();
 
     public:
@@ -83,7 +100,14 @@ class vehicle_command
         double init_y;
         double init_z;
         vector<double> home_position = {0, 0};
+
+        /// @brief start vehicle control
+        /// @param node node name for vehicle
         void start(string node);
+
+        /// @brief set desire mode for vehicle and return execute state
+        /// @param desire_mode desire mode for vehicle
+        /// @return error string, if success, return empty string
         string set_mode(string desire_mode);
 };
 
