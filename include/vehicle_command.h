@@ -83,6 +83,7 @@ class vehicle_command
         string state_mode;
         string node_name;
         string vehicle_name;
+        int vehicle_type = px4_cmd::Command::Multicopter;
         px4_cmd::Command controller_cmd;
         px4_cmd::Command ext_cmd;
         bool arm_state = false;
@@ -128,6 +129,11 @@ void vehicle_command::start(string node)
     ros::param::get(("/" + node_name + "/init_R").c_str(), init_R);
     ros::param::get(("/" + node_name + "/init_P").c_str(), init_P);
     ros::param::get(("/" + node_name + "/init_Y").c_str(), init_Y);
+    if (vehicle_name == "plane")
+    {
+        vehicle_type = px4_cmd::Command::FixWing;
+    }
+
     while (!ros::ok())
     {
         usleep(floor(1000000 * update_time));
@@ -169,7 +175,7 @@ string vehicle_command::set_mode(string desire_mode)
                 return "";
             }
             arm_cmd.request.value = desire_arm_cmd;
-            if (arming_client.call(arm_cmd) && arm_cmd.response.success)
+            if (arming_client.call(arm_cmd))
             {
                 // 执行回调函数
                 ros::spinOnce();

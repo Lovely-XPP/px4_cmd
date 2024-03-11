@@ -159,7 +159,7 @@ class ControllerMainWindow : public QDialog
             for (size_t i = 0; i < nodes.size(); i++)
             {
                 px4_cmd::Command cmd;
-                if (data[i]->vehicle_name == "plane")
+                if (data[i]->vehicle_type == px4_cmd::Command::FixWing)
                 {
                     cmd.Vehicle = px4_cmd::Command::FixWing;
                     fix_wing_include = true;
@@ -308,7 +308,7 @@ class ControllerMainWindow : public QDialog
                 QStandardItem *item_9 = new QStandardItem();
                 QStandardItem *item_10 = new QStandardItem();
                 item_1->setText("  " + nodes[i] + "  ");
-                if (data[i]->vehicle_name == "plane")
+                if (data[i]->vehicle_type == px4_cmd::Command::FixWing)
                 {
                     item_2->setText("FixWing");
                 }
@@ -433,6 +433,7 @@ class ControllerMainWindow : public QDialog
             QObject::connect(generate_button, &QPushButton::clicked, this, &ControllerMainWindow::ext_cmd_generate_slot);
             QObject::connect(this, &ControllerMainWindow::update_cell_info_signal, this, &ControllerMainWindow::update_cell_info_slot);
             QObject::connect(this, &ControllerMainWindow::update_info_signal, this, &ControllerMainWindow::update_info_slot);
+            QObject::connect(this, &ControllerMainWindow::update_button_state_signal, this, &ControllerMainWindow::update_button_state_slot);
 
             // thread
             for (size_t i = 0; i < nodes.size(); i++)
@@ -789,7 +790,7 @@ class ControllerMainWindow : public QDialog
             data[node_id]->ext_cmd_sub_state = false;
             if (!ext_cmd_state)
             {
-                if (data[node_id]->vehicle_name == "plane")
+                if (data[node_id]->vehicle_type == px4_cmd::Command::FixWing)
                 {
                     cmds[node_id].Mode = px4_cmd::Command::Loiter;
                 }
@@ -815,7 +816,7 @@ class ControllerMainWindow : public QDialog
         {
             for (size_t i = 0; i < nodes.size(); i++)
             {
-                if (data[i]->vehicle_name == "plane")
+                if (data[i]->vehicle_type == px4_cmd::Command::FixWing)
                 {
                     cmds[i].Mode = px4_cmd::Command::Loiter;
                     continue;
@@ -1138,45 +1139,45 @@ class ControllerMainWindow : public QDialog
             {
                 if (current_cmd == "Take Off")
                 {
-                    table_headers_ext_cmd[3] = "CMD 1  [x]";
-                    table_headers_ext_cmd[4] = "CMD 2  [y]";
-                    table_headers_ext_cmd[5] = "CMD 3  [z]";
+                    table_headers_ext_cmd[4] = "CMD 1  [x]";
+                    table_headers_ext_cmd[5] = "CMD 2  [y]";
+                    table_headers_ext_cmd[6] = "CMD 3  [z]";
                 }
                 else
                 {
                     switch (cmds[0].Move_mode)
                     {
                         case px4_cmd::Command::XYZ_POS:
-                            table_headers_ext_cmd[3] = "CMD 1  [x]";
-                            table_headers_ext_cmd[4] = "CMD 2  [y]";
-                            table_headers_ext_cmd[5] = "CMD 3  [z]";
+                            table_headers_ext_cmd[4] = "CMD 1  [x]";
+                            table_headers_ext_cmd[5] = "CMD 2  [y]";
+                            table_headers_ext_cmd[6] = "CMD 3  [z]";
                             break;
 
                         case px4_cmd::Command::XYZ_REL_POS:
-                            table_headers_ext_cmd[3] = "CMD 1  [Rel x]";
-                            table_headers_ext_cmd[4] = "CMD 2  [Rel y]";
-                            table_headers_ext_cmd[5] = "CMD 3  [Rel z]";
+                            table_headers_ext_cmd[4] = "CMD 1  [Rel x]";
+                            table_headers_ext_cmd[5] = "CMD 2  [Rel y]";
+                            table_headers_ext_cmd[6] = "CMD 3  [Rel z]";
                             break;
 
                         case px4_cmd::Command::XYZ_VEL:
-                            table_headers_ext_cmd[3] = "CMD 1  [vx]";
-                            table_headers_ext_cmd[4] = "CMD 2  [vy]";
-                            table_headers_ext_cmd[5] = "CMD 3  [vz]";
+                            table_headers_ext_cmd[4] = "CMD 1  [vx]";
+                            table_headers_ext_cmd[5] = "CMD 2  [vy]";
+                            table_headers_ext_cmd[6] = "CMD 3  [vz]";
                             break;
 
                         case px4_cmd::Command::XY_VEL_Z_POS:
-                            table_headers_ext_cmd[3] = "CMD 1  [vx]";
-                            table_headers_ext_cmd[4] = "CMD 2  [vy]";
-                            table_headers_ext_cmd[5] = "CMD 3  [z]";
+                            table_headers_ext_cmd[4] = "CMD 1  [vx]";
+                            table_headers_ext_cmd[5] = "CMD 2  [vy]";
+                            table_headers_ext_cmd[6] = "CMD 3  [z]";
                             break;
                     }
                 }
             }
             else
             {
-                table_headers_ext_cmd[3] = "CMD 1";
-                table_headers_ext_cmd[4] = "CMD 2";
-                table_headers_ext_cmd[5] = "CMD 3";
+                table_headers_ext_cmd[4] = "CMD 1";
+                table_headers_ext_cmd[5] = "CMD 2";
+                table_headers_ext_cmd[6] = "CMD 3";
             }
             info_model->setHorizontalHeaderLabels(table_headers_ext_cmd);
 
@@ -1446,4 +1447,5 @@ class ControllerMainWindow : public QDialog
             return desire;
         }
 };
+
 #endif
