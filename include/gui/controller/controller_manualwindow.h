@@ -237,12 +237,35 @@ class ControllerManualWindow : public QDialog
 
         void frame_change_slot(int index)
         {
+            if (set_frame == frames_msg[index])
+            {
+                return;
+            }
+            // update frame
             set_frame = frames_msg[index];
+            mode_select->setCurrentIndex(0);
+            if (set_frame == px4_cmd::Command::BODY)
+            {
+                mode_select->clear();
+                mode_select->addItem("[Velocity] vx - vy - vz");
+            }
+            else
+            {
+                mode_select->clear();
+                mode_select->addItems(modes);
+            }
         }
 
         void mode_change_slot(int index)
         {
-            set_mode = modes_msg[index];
+            if (set_frame == px4_cmd::Command::BODY)
+            {
+                set_mode = px4_cmd::Command::XYZ_VEL;
+            }
+            else
+            {
+                set_mode = modes_msg[index];
+            }
             switch (set_mode)
             {
                 case px4_cmd::Command::XYZ_POS:

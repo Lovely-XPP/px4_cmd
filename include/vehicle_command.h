@@ -309,12 +309,14 @@ void vehicle_command::controller_cmd_cb(const px4_cmd::Command::ConstPtr &msg)
         case px4_cmd::Command::ENU:
         {
             pos_setpoint.coordinate_frame = mavros_msgs::PositionTarget::FRAME_LOCAL_NED;
+            pos_setpoint.header.frame_id = mavros_msgs::PositionTarget::FRAME_LOCAL_NED;
             break;
         }
 
         case px4_cmd::Command::BODY:
         {
             pos_setpoint.coordinate_frame = mavros_msgs::PositionTarget::FRAME_BODY_NED;
+            pos_setpoint.header.frame_id = mavros_msgs::PositionTarget::FRAME_BODY_NED;
             break;
         }
     }
@@ -339,8 +341,6 @@ void vehicle_command::controller_cmd_cb(const px4_cmd::Command::ConstPtr &msg)
             pos_setpoint.position.x = hover_pos[0];
             pos_setpoint.position.y = hover_pos[1];
             pos_setpoint.position.z = hover_pos[2];
-            pos_setpoint.header.frame_id = 1;
-            //pos_setpoint.yaw = 0;
             return;
         }
         hover = false;
@@ -351,7 +351,6 @@ void vehicle_command::controller_cmd_cb(const px4_cmd::Command::ConstPtr &msg)
             pos_setpoint.position.x = home_position[0];
             pos_setpoint.position.y = home_position[1];
             pos_setpoint.position.z = controller_cmd.desire_cmd[2];
-            pos_setpoint.header.frame_id = 1;
             pos_setpoint.yaw = 0;
             return;
         }
@@ -395,8 +394,6 @@ void vehicle_command::controller_cmd_cb(const px4_cmd::Command::ConstPtr &msg)
             }
         }
 
-        pos_setpoint.header.frame_id = 1;
-
         pos_setpoint.yaw = controller_cmd.yaw_cmd;
     }
     // 固定翼信息
@@ -415,7 +412,6 @@ void vehicle_command::controller_cmd_cb(const px4_cmd::Command::ConstPtr &msg)
             pos_setpoint.position.x = hover_pos[0];
             pos_setpoint.position.y = hover_pos[1];
             pos_setpoint.position.z = hover_pos[2];
-            pos_setpoint.header.frame_id = 1;
             return;
         }
         hover = false;
@@ -426,7 +422,6 @@ void vehicle_command::controller_cmd_cb(const px4_cmd::Command::ConstPtr &msg)
             pos_setpoint.position.x = home_position[0];
             pos_setpoint.position.y = home_position[1];
             pos_setpoint.position.z = controller_cmd.desire_cmd[2];
-            pos_setpoint.header.frame_id = 1;
             return;
         }
 
@@ -452,7 +447,6 @@ void vehicle_command::controller_cmd_cb(const px4_cmd::Command::ConstPtr &msg)
         pos_setpoint.position.x = controller_cmd.desire_cmd[0];
         pos_setpoint.position.y = controller_cmd.desire_cmd[1];
         pos_setpoint.position.z = controller_cmd.desire_cmd[2];
-        pos_setpoint.header.frame_id = 1;
     }
 }
 

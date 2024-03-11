@@ -90,7 +90,7 @@ class ControllerMainWindow : public QDialog
 
     private:
         // settings
-        string version = "V1.0.4";
+        string version = "V1.0.5";
         QString current_cmd = "None";
         double update_time = 0.3;
 
@@ -907,7 +907,14 @@ class ControllerMainWindow : public QDialog
             if (manual_win->exec_state)
             {
                 current_cmd = "Manual CMD";
-                operating_info = "Flying to Set Point...";
+                if (cmds[0].Move_mode == px4_cmd::Command::XYZ_REL_POS || cmds[0].Move_mode == px4_cmd::Command::XYZ_POS)
+                {
+                    operating_info = "Flying to Set Point...";
+                }
+                else
+                {
+                    operating_info = "Flying with Desire Velocity ...";
+                }
                 std::thread manual_cmd_thread(&ControllerMainWindow::manual_cmd_thread_func, this);
                 manual_cmd_thread.detach();
             }
