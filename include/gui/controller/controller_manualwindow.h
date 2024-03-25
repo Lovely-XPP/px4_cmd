@@ -1,8 +1,8 @@
 // Copyright (c) 2023 易鹏 中山大学航空航天学院
 // Copyright (c) 2023 Peng Yi, Sun Yat-Sen University, School of Aeronautics and Astronautics
 
-#ifndef CONTROLLERMANUALWINDOW_H
-#define CONTROLLERMANUALWINDOW_H
+#ifndef CONTROLLER_MANUALWINDOW_H
+#define CONTROLLER_MANUALWINDOW_H
 #include <QDialog>
 #include <QLineEdit>
 #include <QPushButton>

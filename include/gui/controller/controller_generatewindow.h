@@ -1,8 +1,8 @@
 // Copyright (c) 2023 易鹏 中山大学航空航天学院
 // Copyright (c) 2023 Peng Yi, Sun Yat-Sen University, School of Aeronautics and Astronautics
 
-#ifndef CONTROLLERGENERATEWINDOW_H
-#define CONTROLLERGENERATEWINDOW_H
+#ifndef CONTROLLER_GENERATEWINDOW_H
+#define CONTROLLER_GENERATEWINDOW_H
 #include <QDialog>
 #include <QPushButton>
 #include <QCheckBox>
@@ -15,7 +15,7 @@
 #include <vector>
 #include <iostream>
 #include <fstream>
-#include <print_utility/printf_utility.h>
+#include <ros/package.h>
 
 using namespace std;
 
@@ -349,9 +349,7 @@ class ControllerGenerateWindow : public QDialog
             class_h = class_h + "#endif";
 
             string root_dir;
-            get_cmd_output("rospack find px4_cmd", root_dir);
-            strip(root_dir, "\n");
-            strip(root_dir);
+            ros::package::getPath(root_dir);
             std::ofstream outputFile(root_dir + "/include/vehicle_external_command.h");
             if (outputFile.is_open())
             {
@@ -568,9 +566,7 @@ class ControllerGenerateWindow : public QDialog
             python_class = python_class + "\n";
 
             string root_dir;
-            get_cmd_output("rospack find px4_cmd", root_dir);
-            strip(root_dir, "\n");
-            strip(root_dir);
+            ros::package::getPath(root_dir);
             std::ofstream outputFile(root_dir + "/template/vehicle_external_command.py");
             if (outputFile.is_open())
             {

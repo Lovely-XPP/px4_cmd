@@ -6,6 +6,9 @@
 #include "gui/controller/moc_controller_mainwindow.cpp"
 #include "gui/controller/moc_controller_modewindow.cpp"
 #include "gui/controller/moc_controller_takeoffwindow.cpp"
+#include "gui/controller/moc_controller_imagewindow.cpp"
+#include "gui/controller/moc_controller_runnodewindow.cpp"
+#include "gui/widgets/moc_MultiComboBox.cpp"
 #include <QApplication>
 
 int main(int argc, char *argv[])

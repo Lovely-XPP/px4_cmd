@@ -1,8 +1,8 @@
 // Copyright (c) 2023 易鹏 中山大学航空航天学院
 // Copyright (c) 2023 Peng Yi, Sun Yat-Sen University, School of Aeronautics and Astronautics
 
-#ifndef CONTROLLERLOADWINDOW_H
-#define CONTROLLERLOADWINDOW_H
+#ifndef CONTROLLER_LOADWINDOW_H
+#define CONTROLLER_LOADWINDOW_H
 #include <QApplication>
 #include <QStyle>
 #include <QDialog>
@@ -17,7 +17,8 @@
 #include <thread>
 
 #include <ros/ros.h>
-#include <print_utility/printf_utility.h>
+#include <ros/master.h>
+#include <ros/package.h>
 
 using namespace std;
 
@@ -38,7 +39,7 @@ class ControllerLoadWindow : public QDialog
 
     private:
         // settings
-        string version = "V1.0.5";
+        string version = "V2.0.0 alpha";
         bool thread_stop = false;
 
         //Widgets
@@ -123,27 +124,20 @@ class ControllerLoadWindow : public QDialog
             string error_msg = "";
             string error_header = "This Programme requires ROS enviroment and PX4 installation and px4_cmd ROS Package.\n";
             string res = "";
-            get_cmd_output("which rospack", res);
-            strip(res, "\n");
-            if (res.length() == 0)
-            {
-                error_msg = error_header + "Please Check ROS Installation & rospack command.";
-                return error_msg;
-            }
-            res.clear();
-            get_cmd_output("rospack list-names", res);
-            strip(res, "\n");
-            if (res.find("px4") == res.npos)
+            res = ros::package::getPath("px4");
+            if (res.size() < 1)
             {
                 error_msg = error_header + "Please Check PX4 ROS Package Installation.";
                 return error_msg;
             }
-            if (res.find("mavlink_sitl_gazebo") == res.npos)
+            res = ros::package::getPath("mavlink_sitl_gazebo");
+            if (res.size() < 1)
             {
                 error_msg = error_header + "Please Check mavlink_sitl_gazebo ROS Package Installation.";
                 return error_msg;
             }
-            if (res.find("px4_cmd") == res.npos)
+            res = ros::package::getPath("px4_cmd");
+            if (res.size() < 1)
             {
                 error_msg = error_header + "Please Check px4_cmd ROS Package Installation.\nGithub: https://github.com/Lovely-XPP/PX4_cmd/";
                 return error_msg;
@@ -206,23 +200,26 @@ class ControllerLoadWindow : public QDialog
 
         bool detect_px4()
         {
+            nodes.clear();
             string tmp;
-            QString node;
-            QStringList nodes_tmp;
-            get_cmd_output("rosnode list | grep 'mavros'", tmp);
-            node = tmp.c_str();
-            nodes_tmp = node.split("/mavros\n");
-            for (auto item = nodes_tmp.begin(); item != nodes_tmp.end(); item++)
+            ros::V_string ros_nodes;
+            ros::master::getNodes(ros_nodes);
+            for (auto ros_node : ros_nodes)
             {
-                (*item).remove(0, 1);
-            }
-            if (tmp.size() > 0)
-            {
-                if (nodes.size() == 0)
+                tmp = ros_node;
+                if (tmp.find("/mavros") == std::string::npos)
                 {
-                    nodes_tmp.removeLast();
-                    nodes = nodes_tmp;
+                    continue;
                 }
+                tmp.erase(tmp.find("/mavros"), 7);
+                if (tmp.size() > 0)
+                {
+                    tmp.erase(0, 1);
+                }
+                nodes.append(QString::fromStdString(tmp));
+            }
+            if (nodes.size() > 0)
+            {
                 return true;
             }
             return false;

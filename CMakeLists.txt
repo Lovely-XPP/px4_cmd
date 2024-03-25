@@ -8,17 +8,18 @@ project(px4_cmd VERSION 1.0.3 LANGUAGES CXX)
 
 # set C++ standard
 # set(CMAKE_BUILD_TYPE Release)
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
 # find package
 # opencv
-find_package(OpenCV REQUIRED)
+find_package(OpenCV 4 REQUIRED)
 # catkin package
 find_package(catkin REQUIRED COMPONENTS
     cv_bridge
     roscpp
     rospy
+    roslib
     std_msgs
     mavros_msgs
     geometry_msgs
@@ -95,19 +96,12 @@ target_link_libraries(recieve_video ${catkin_LIBRARIES} ${OpenCV_LIBS})
 link_libraries(Qt5::Widgets)
 add_executable(generator src/gui/generator.cpp)
 add_dependencies(generator ${${PROJECT_NAME}_EXPORTED_TARGETS})
-target_link_libraries(generator jsoncpp)
-target_link_libraries(generator tinyxml2)
+target_link_libraries(generator jsoncpp tinyxml2 ${catkin_LIBRARIES})
 
 # Controller
 add_executable(controller src/gui/controller.cpp)
 add_dependencies(controller ${${PROJECT_NAME}_EXPORTED_TARGETS})
-target_link_libraries(controller ${catkin_LIBRARIES})
-
-# Monitor
-add_executable(monitor src/gui/monitor.cpp)
-add_dependencies(monitor ${${PROJECT_NAME}_EXPORTED_TARGETS})
-target_link_libraries(monitor ${catkin_LIBRARIES} ${OpenCV_LIBS})
-target_link_libraries(monitor qcustomplot)
+target_link_libraries(controller ${catkin_LIBRARIES} qcustomplot)
 
 ################## External cmd API ##################
 add_library(${PROJECT_NAME} src/template/vehicle_external_command.cpp src/template/single_vehicle_external_command.cpp)

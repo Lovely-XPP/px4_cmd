@@ -4,6 +4,7 @@
 #ifndef VEHICEL_STATE_H
 #define VEHICEL_STATE_H
 #include <ros/ros.h>
+#include <ros/master.h>
 #include <string>
 #include <QStringList>
 #include <QVector>
@@ -39,7 +40,9 @@ class vehicle_state
         double init_R;
         double init_P;
         double init_Y;
-        double t_count;
+        double t_count_pose;
+        double t_count_vel;
+        const ros::Time init_time = ros::Time::now();
         void get_sensor_topic();
         void pos_cb(const geometry_msgs::PoseStamped::ConstPtr &msg);
         void vel_cb(const geometry_msgs::TwistStamped::ConstPtr &msg);
@@ -48,7 +51,10 @@ class vehicle_state
 
     public:
         double update_time = 0.02;
-        QVector<double> t;
+        QVector<double> count_pose;
+        QVector<double> count_vel;
+        QVector<double> t_pose;
+        QVector<double> t_vel;
         QVector<double> x;
         QVector<double> y;
         QVector<double> z;
@@ -71,7 +77,8 @@ class vehicle_state
 void vehicle_state::get_state(string node)
 {
     node_name = node;
-    t_count = 0;
+    t_count_pose = 0;
+    t_count_vel = 0;
     int argc = 0;
     char **argv;
     string topic_header = "/" + node_name + "/mavros/";
@@ -114,21 +121,25 @@ void vehicle_state::pos_cb(const geometry_msgs::PoseStamped::ConstPtr &msg)
     tf::quaternionMsgToTF(msg->pose.orientation, quat);
     // 将旋转矩阵转换为欧拉角
     tf::Matrix3x3(quat).getRPY(R, P, Y);
-    t.push_back(t_count);
+    count_pose.push_back(t_count_pose);
+    t_pose.push_back((msg->header.stamp - init_time).toSec());
     x.push_back(msg->pose.position.x + init_x);
     y.push_back(msg->pose.position.y + init_y);
     z.push_back(msg->pose.position.z + init_z);
     pitch.push_back(P + init_P);
     roll.push_back(R + init_R);
     yaw.push_back(Y + init_Y);
-    t_count++;
+    t_count_pose++;
 }
 
 void vehicle_state::vel_cb(const geometry_msgs::TwistStamped::ConstPtr &msg)
 {
+    count_vel.push_back(t_count_vel);
+    t_vel.push_back((msg->header.stamp - init_time).toSec());
     vx.push_back(msg->twist.linear.x);
     vy.push_back(msg->twist.linear.y);
     vz.push_back(msg->twist.linear.z);
+    t_count_vel++;
 }
 
 void vehicle_state::state_cb(const mavros_msgs::State::ConstPtr &msg)
@@ -138,28 +149,25 @@ void vehicle_state::state_cb(const mavros_msgs::State::ConstPtr &msg)
 
 void vehicle_state::get_sensor_topic()
 {
-    QString node = node_name.c_str();
-    QString sensor_type = sensor_name.c_str();
-    sensor_type = sensor_type.toLower();
-    if (sensor_type.toStdString().find("camera") == std::string::npos)
+    ros::master::V_TopicInfo topic_list;
+    ros::master::getTopics(topic_list);
+    for (auto topic : topic_list)
     {
-        sensor_topics.push_back("None");
-        return;
-    }
-    sensor_type = sensor_type.split(" ")[0];
-    sensor_type = "/" + node + "/" + sensor_type + "_cam";
-    if (sensor_type.toStdString().find("stereo") != std::string::npos)
-    {
-        sensor_topics.push_back(sensor_type + "/left/image_raw");
-        sensor_topics.push_back(sensor_type + "/right/image_raw");
-    }
-    else
-    {
-        sensor_topics.push_back(sensor_type + "/image_raw");
-        if (sensor_type.toStdString().find("depth") != std::string::npos)
+        std::string topic_name = topic.name;
+        if (topic_name.find(node_name) == std::string::npos)
         {
-            sensor_topics.push_back(sensor_type + "/depth/image_raw");
+            continue;
         }
+        if (topic.datatype.find("sensor_msgs/Image") == std::string::npos)
+        {
+            continue;
+        }
+        if (node_name.size() > 0)
+        {
+            topic_name.erase(0, node_name.size() + 1);
+        }
+        topic_name.erase(0, 1);
+        sensor_topics.push_back(QString::fromStdString(topic_name));
     }
 }
 

@@ -25,10 +25,11 @@
 #include <iostream>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <filesystem>
 
 #include <gui/generator/generator_infowindow.h>
 #include <gui/generator/generator_sensorswindow.h>
-#include <print_utility/printf_utility.h>
+#include <ros/package.h>
 #include <tinyxml2.h>
 
 #define PI 3.14159265358979323846
@@ -52,7 +53,7 @@ class GeneratorMainWindow : public QDialog
 
     private:
         // settings
-        string version = "V1.1.11";
+        string version = "V1.1.12";
         vector<string> topic_types = {"{Vehicle Type}_{ID}", "uav_{ID}"};
         vector<string> vehicle_types = {"iris", "typhoon_h480", "plane"};
         vector<string> sensor_types = {"None", "Lidar", "Depth Camera", "RGB Camera", "Stereo Camera", "Realsense Camera"};
@@ -139,27 +140,20 @@ class GeneratorMainWindow : public QDialog
             string error_msg = "";
             string error_header = "This Programme requires ROS enviroment and PX4 installation and px4_cmd ROS Package.\n";
             string res = "";
-            get_cmd_output("which rospack", res);
-            strip(res, "\n");
-            if (res.length() == 0)
-            {
-                error_msg = error_header + "Please Check ROS Installation & rospack command.";
-                return error_msg;
-            }
-            res.clear();
-            get_cmd_output("rospack list-names", res);
-            strip(res, "\n");
-            if (res.find("px4") == res.npos)
+            res = ros::package::getPath("px4");
+            if (res.size() < 1)
             {
                 error_msg = error_header + "Please Check PX4 ROS Package Installation.";
                 return error_msg;
             }
-            if (res.find("mavlink_sitl_gazebo") == res.npos)
+            res = ros::package::getPath("mavlink_sitl_gazebo");
+            if (res.size() < 1)
             {
                 error_msg = error_header + "Please Check mavlink_sitl_gazebo ROS Package Installation.";
                 return error_msg;
             }
-            if (res.find("px4_cmd") == res.npos)
+            res = ros::package::getPath("px4_cmd");
+            if (res.size() < 1)
             {
                 error_msg = error_header + "Please Check px4_cmd ROS Package Installation.\nGithub: https://github.com/Lovely-XPP/PX4_cmd/";
                 return error_msg;
@@ -467,10 +461,12 @@ class GeneratorMainWindow : public QDialog
         void get_world_files()
         {
             string world_files_dir;
-            get_cmd_output("echo $(rospack find mavlink_sitl_gazebo)/worlds/", world_files_dir);
-            strip(world_files_dir, "\n");
-            strip(world_files_dir);
-            world_files = get_files(world_files_dir);
+            world_files_dir = ros::package::getPath("mavlink_sitl_gazebo");
+            world_files_dir = world_files_dir + "/worlds/";
+            for (auto &i : filesystem::directory_iterator(world_files_dir))
+            {
+                world_files.emplace_back(i.path().filename().string());
+            }
             sort(world_files.begin(), world_files.end());
         }
 
@@ -1460,9 +1456,7 @@ class GeneratorMainWindow : public QDialog
                 }
             }
             transform(sensor_folder_name.begin(), sensor_folder_name.end(), sensor_folder_name.begin(), ::tolower);
-            get_cmd_output("rospack find px4_cmd", models_dir);
-            strip(models_dir, "\n");
-            strip(models_dir);
+            models_dir = ros::package::getPath("px4_cmd");
             models_dir = models_dir + "/models/";
             sensor_origin_sdf_dir = models_dir + sensor_folder_name + "/" + sensor_folder_name + "_origin.sdf";
             sensor_sdf_dir = models_dir + sensor_folder_name + "/" + sensor_folder_name + ".sdf";
@@ -1807,6 +1801,7 @@ class GeneratorMainWindow : public QDialog
             }
             return true;
         }
-};
 
+        
+};
 #endif
