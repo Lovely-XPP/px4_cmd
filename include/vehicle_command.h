@@ -5,6 +5,7 @@
 #define VEHICEL_COMMAND_H
 #include <ros/ros.h>
 #include <string>
+#include <cmath>
 #include <QStringList>
 #include <QVector>
 #include <QThread>
@@ -15,11 +16,14 @@
 #include <std_msgs/Bool.h>
 #include <mavros_msgs/CommandBool.h>
 #include <mavros_msgs/State.h>
-#include <mavros_msgs/PositionTarget.h>
 #include <mavros_msgs/SetMode.h>
 #include <mavros_msgs/ExtendedState.h>
+#include <mavros_msgs/PositionTarget.h>
+#include <mavros_msgs/GlobalPositionTarget.h>
+#include <mavros_msgs/AttitudeTarget.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <px4_cmd/Command.h>
+#include <px4_cmd/custom_command.h>
 
 #define PI 3.14159265358979323846
 
@@ -29,6 +33,7 @@ class vehicle_command
 {
     private:
         // setting
+        ros::NodeHandle nh;
         ros::Subscriber controller_cmd_sub;
         ros::Subscriber current_pos_sub;
         ros::Subscriber current_state_sub;
@@ -41,6 +46,8 @@ class vehicle_command
         tf::Quaternion quat;
         mavros_msgs::State current_state;
         mavros_msgs::PositionTarget pos_setpoint;
+        mavros_msgs::GlobalPositionTarget pos_setpoint_global;
+        mavros_msgs::AttitudeTarget attitude_setpoint;
         mavros_msgs::SetMode mode_cmd;
         mavros_msgs::CommandBool arm_cmd;
         std_msgs::Bool ext_cmd_state_msg;
@@ -52,6 +59,8 @@ class vehicle_command
         double init_Y;
         int desire_time = 0;
         bool hover = false;
+        int current_custom_mode = 0;
+        std::string topic_header;
         vector<double> hover_pos = {0, 0, 0};
 
         /// @brief controller command subscribe call back function
@@ -119,9 +128,8 @@ void vehicle_command::start(string node)
     pos_setpoint.coordinate_frame = mavros_msgs::PositionTarget::FRAME_LOCAL_NED;
     int argc = 0;
     char **argv;
-    string topic_header = "/" + node_name + "/mavros/";
+    topic_header = "/" + node_name + "/mavros/";
     ros::init(argc, argv, "px4_cmd/" + node_name + "_cmd");
-    ros::NodeHandle nh;
     ros::param::get(("/" + node_name + "/vehicle").c_str(), vehicle_name);
     ros::param::get(("/" + node_name + "/init_x").c_str(), init_x);
     ros::param::get(("/" + node_name + "/init_y").c_str(), init_y);
@@ -279,6 +287,237 @@ void vehicle_command::ros_thread_fun()
 void vehicle_command::controller_cmd_cb(const px4_cmd::Command::ConstPtr &msg)
 {
     controller_cmd = *msg;
+    std::string error;
+    CustomCommand cmd;
+
+    // custom command
+    while (state_mode == mavros_msgs::State::MODE_PX4_OFFBOARD && msg->Move_mode == px4_cmd::Command::Custom_Command)
+    {
+        // convert origin message to custom command
+        px4_msg_to_custom_command(controller_cmd, cmd);
+
+        // check command
+        if (!check_custom_command(cmd, vehicle_type ,error))
+        {
+            // if not pass check, set mode to hover
+            if (controller_cmd.Vehicle == px4_cmd::Command::FixWing)
+            {
+                controller_cmd.Mode = px4_cmd::Command::Loiter;
+            }
+            else
+            {
+                controller_cmd.Mode = px4_cmd::Command::Hover;
+            }
+            std::cout << error << std::endl;
+            break;
+        }
+
+        // get frame
+        int frame;
+        switch (controller_cmd.Move_frame)
+        {
+            case px4_cmd::Command::ENU:
+            {
+                frame = mavros_msgs::PositionTarget::FRAME_LOCAL_NED;
+                break;
+            }
+
+            case px4_cmd::Command::BODY:
+            {
+                frame = mavros_msgs::PositionTarget::FRAME_BODY_NED;
+                break;
+            }
+
+            case px4_cmd::Command::GLOBAL:
+            {
+                frame = mavros_msgs::GlobalPositionTarget::FRAME_GLOBAL_INT;
+            }
+        }
+
+        // generate message
+        switch (cmd.mode)
+        {
+            case CommandMode::TargetLocal:
+            {
+                // frame
+                pos_setpoint.coordinate_frame = frame;
+                pos_setpoint.header.frame_id = frame;
+
+                // position
+                pos_setpoint.position.x = cmd.position[0];
+                pos_setpoint.position.y = cmd.position[1];
+                pos_setpoint.position.z = cmd.position[2];
+                pos_setpoint.type_mask += isnan(cmd.position[0]) ? mavros_msgs::PositionTarget::IGNORE_PX : 0;
+                pos_setpoint.type_mask += isnan(cmd.position[1]) ? mavros_msgs::PositionTarget::IGNORE_PY : 0;
+                pos_setpoint.type_mask += isnan(cmd.position[2]) ? mavros_msgs::PositionTarget::IGNORE_PZ : 0;
+
+                // fixwing only support position setpoint
+                if (controller_cmd.Vehicle == px4_cmd::Command::FixWing)
+                {
+                    pos_setpoint.type_mask = cmd.fw_mode;
+                    break;
+                }
+                
+                // velocity
+                pos_setpoint.velocity.x = cmd.velocity[0];
+                pos_setpoint.velocity.y = cmd.velocity[1];
+                pos_setpoint.velocity.z = cmd.velocity[2];
+                pos_setpoint.type_mask += isnan(cmd.velocity[0]) ? mavros_msgs::PositionTarget::IGNORE_VX : 0;
+                pos_setpoint.type_mask += isnan(cmd.velocity[1]) ? mavros_msgs::PositionTarget::IGNORE_VY : 0;
+                pos_setpoint.type_mask += isnan(cmd.velocity[2]) ? mavros_msgs::PositionTarget::IGNORE_VZ : 0;
+
+                // accelerate
+                pos_setpoint.acceleration_or_force.x = cmd.accelerate[0];
+                pos_setpoint.acceleration_or_force.y = cmd.accelerate[1];
+                pos_setpoint.acceleration_or_force.z = cmd.accelerate[2];
+                pos_setpoint.type_mask += isnan(cmd.accelerate[0]) ? mavros_msgs::PositionTarget::IGNORE_AFX : 0;
+                pos_setpoint.type_mask += isnan(cmd.accelerate[1]) ? mavros_msgs::PositionTarget::IGNORE_AFY : 0;
+                pos_setpoint.type_mask += isnan(cmd.accelerate[2]) ? mavros_msgs::PositionTarget::IGNORE_AFZ : 0;
+
+                // Force flag
+                pos_setpoint.type_mask += cmd.force_flag ? mavros_msgs::PositionTarget::FORCE : 0;
+
+                // yaw and yaw rate
+                pos_setpoint.yaw = cmd.yaw;
+                pos_setpoint.yaw_rate = cmd.yaw_rate;
+                pos_setpoint.type_mask += isnan(cmd.yaw) ? mavros_msgs::PositionTarget::IGNORE_YAW : 0;
+                pos_setpoint.type_mask += isnan(cmd.yaw_rate) ? mavros_msgs::PositionTarget::IGNORE_YAW_RATE : 0;
+                break;
+            }
+
+            case CommandMode::TargetGlobal:
+            {
+                // frame
+                pos_setpoint_global.coordinate_frame = frame;
+                pos_setpoint_global.header.frame_id = frame;
+
+                // position
+                pos_setpoint_global.latitude = cmd.position[0];
+                pos_setpoint_global.longitude = cmd.position[1];
+                pos_setpoint_global.altitude = cmd.position[2];
+                pos_setpoint_global.type_mask += isnan(cmd.position[0]) ? mavros_msgs::GlobalPositionTarget::IGNORE_LATITUDE : 0;
+                pos_setpoint_global.type_mask += isnan(cmd.position[1]) ? mavros_msgs::GlobalPositionTarget::IGNORE_LONGITUDE : 0;
+                pos_setpoint_global.type_mask += isnan(cmd.position[2]) ? mavros_msgs::GlobalPositionTarget::IGNORE_ALTITUDE : 0;
+
+                // fixwing only support position setpoint
+                if (controller_cmd.Vehicle == px4_cmd::Command::FixWing)
+                {
+                    pos_setpoint_global.type_mask = cmd.fw_mode;
+                    break;
+                }
+
+                // velocity
+                pos_setpoint_global.velocity.x = cmd.velocity[0];
+                pos_setpoint_global.velocity.y = cmd.velocity[1];
+                pos_setpoint_global.velocity.z = cmd.velocity[2];
+                pos_setpoint_global.type_mask += isnan(cmd.velocity[0]) ? mavros_msgs::GlobalPositionTarget::IGNORE_VX : 0;
+                pos_setpoint_global.type_mask += isnan(cmd.velocity[1]) ? mavros_msgs::GlobalPositionTarget::IGNORE_VY : 0;
+                pos_setpoint_global.type_mask += isnan(cmd.velocity[2]) ? mavros_msgs::GlobalPositionTarget::IGNORE_VZ : 0;
+
+                // accelerate
+                pos_setpoint_global.acceleration_or_force.x = cmd.accelerate[0];
+                pos_setpoint_global.acceleration_or_force.y = cmd.accelerate[1];
+                pos_setpoint_global.acceleration_or_force.z = cmd.accelerate[2];
+                pos_setpoint_global.type_mask += isnan(cmd.accelerate[0]) ? mavros_msgs::GlobalPositionTarget::IGNORE_AFX : 0;
+                pos_setpoint_global.type_mask += isnan(cmd.accelerate[1]) ? mavros_msgs::GlobalPositionTarget::IGNORE_AFY : 0;
+                pos_setpoint_global.type_mask += isnan(cmd.accelerate[2]) ? mavros_msgs::GlobalPositionTarget::IGNORE_AFZ : 0;
+
+                // Force flag
+                pos_setpoint_global.type_mask += cmd.force_flag ? mavros_msgs::GlobalPositionTarget::FORCE : 0;
+
+                // yaw and yaw rate
+                pos_setpoint_global.yaw = cmd.yaw;
+                pos_setpoint_global.yaw_rate = cmd.yaw_rate;
+                pos_setpoint_global.type_mask += isnan(cmd.yaw) ? mavros_msgs::GlobalPositionTarget::IGNORE_YAW : 0;
+                pos_setpoint_global.type_mask += isnan(cmd.yaw_rate) ? mavros_msgs::GlobalPositionTarget::IGNORE_YAW_RATE : 0;
+                break;
+            }
+
+            case CommandMode::TargetAttitude:
+            {
+                // attitude
+                attitude_setpoint.orientation.x = cmd.attitude[0];
+                attitude_setpoint.orientation.y = cmd.attitude[1];
+                attitude_setpoint.orientation.z = cmd.attitude[2];
+                attitude_setpoint.orientation.w = cmd.attitude[3];
+                attitude_setpoint.type_mask += isnan(cmd.attitude[0]) ? mavros_msgs::AttitudeTarget::IGNORE_ATTITUDE : 0;
+
+                // attitude rate
+                attitude_setpoint.body_rate.x = cmd.attitude_rate[0];
+                attitude_setpoint.body_rate.y = cmd.attitude_rate[1];
+                attitude_setpoint.body_rate.z = cmd.attitude_rate[2];
+                attitude_setpoint.type_mask += isnan(cmd.attitude_rate[0]) ? mavros_msgs::AttitudeTarget::IGNORE_ROLL_RATE : 0;
+                attitude_setpoint.type_mask += isnan(cmd.attitude_rate[1]) ? mavros_msgs::AttitudeTarget::IGNORE_PITCH_RATE : 0;
+                attitude_setpoint.type_mask += isnan(cmd.attitude_rate[2]) ? mavros_msgs::AttitudeTarget::IGNORE_YAW_RATE : 0;
+
+                // thrust
+                attitude_setpoint.thrust = cmd.thrust;
+                attitude_setpoint.type_mask += isnan(cmd.thrust) ? mavros_msgs::AttitudeTarget::IGNORE_THRUST : 0;
+                break;
+            }
+        }
+
+        // update publisher
+        if (current_custom_mode != cmd.mode)
+        {
+            current_custom_mode = cmd.mode;
+            setpoint_raw_local_pub.shutdown();
+            switch (cmd.mode)
+            {
+                case CommandMode::TargetLocal:
+                {
+                    setpoint_raw_local_pub = nh.advertise<mavros_msgs::PositionTarget>((topic_header + "setpoint_raw/local").c_str(), 50);
+                    break;
+                }
+
+                case CommandMode::TargetGlobal:
+                {
+                    setpoint_raw_local_pub = nh.advertise<mavros_msgs::GlobalPositionTarget>((topic_header + "setpoint_raw/global").c_str(), 50);
+                    break;
+                }
+
+                case CommandMode::TargetAttitude:
+                {
+                    setpoint_raw_local_pub = nh.advertise<mavros_msgs::AttitudeTarget>((topic_header + "setpoint_raw/attitude").c_str(), 50);
+                    break;
+                }
+            }
+        }
+
+        // send command
+        switch (cmd.mode)
+        {
+            case CommandMode::TargetLocal:
+            {
+                setpoint_raw_local_pub.publish(pos_setpoint);
+                break;
+            }
+
+            case CommandMode::TargetGlobal:
+            {
+                setpoint_raw_local_pub.publish(pos_setpoint_global);
+                break;
+            }
+
+            case CommandMode::TargetAttitude:
+            {
+                setpoint_raw_local_pub.publish(attitude_setpoint);
+                break;
+            }
+        }
+
+        // custom command end
+        return;
+    }
+    
+    // non-custom command mode be local mode
+    if (current_custom_mode != CommandMode::TargetLocal)
+    {
+        setpoint_raw_local_pub.shutdown();
+        setpoint_raw_local_pub = nh.advertise<mavros_msgs::PositionTarget>((topic_header + "setpoint_raw/local").c_str(), 50);
+    }
+    current_custom_mode = CommandMode::TargetLocal;
+
     // judge if achieve desire cmd
     double dx = x - controller_cmd.desire_cmd[0];
     double dy = y - controller_cmd.desire_cmd[1];
@@ -456,7 +695,6 @@ void vehicle_command::controller_cmd_cb(const px4_cmd::Command::ConstPtr &msg)
     }
 }
 
-// 订阅回调返回状态信息
 void vehicle_command::state_cb(const mavros_msgs::State::ConstPtr &msg)
 {
     current_state = *msg;
@@ -476,7 +714,6 @@ void vehicle_command::extend_state_cb(const mavros_msgs::ExtendedState::ConstPtr
     }
 }
 
-// 订阅回调返回位置信息
 void vehicle_command::pos_cb(const geometry_msgs::PoseStamped::ConstPtr &msg)
 {
     x = msg->pose.position.x;

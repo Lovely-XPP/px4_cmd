@@ -64,6 +64,11 @@ catkin_package(
     CATKIN_DEPENDS message_runtime std_msgs
 )
 
+################## External cmd API ##################
+add_library(${PROJECT_NAME} src/template/vehicle_external_command.cpp src/template/custom_command.cpp)
+add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS})
+target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
+
 ###################  Exec  ###################
 ## Hover ##
 # set_mode
@@ -78,7 +83,7 @@ target_link_libraries(set_cmd ${catkin_LIBRARIES} ${OpenCV_LIBS})
 # send_command
 add_executable(send_cmd src/main/send_command.cpp)
 add_dependencies(send_cmd ${${PROJECT_NAME}_EXPORTED_TARGETS})
-target_link_libraries(send_cmd ${catkin_LIBRARIES})
+target_link_libraries(send_cmd ${catkin_LIBRARIES} ${PROJECT_NAME})
 
 ## Fix wing ##
 # set_command
@@ -101,9 +106,4 @@ target_link_libraries(generator jsoncpp tinyxml2 ${catkin_LIBRARIES})
 # Controller
 add_executable(controller src/gui/controller.cpp)
 add_dependencies(controller ${${PROJECT_NAME}_EXPORTED_TARGETS})
-target_link_libraries(controller ${catkin_LIBRARIES} qcustomplot)
-
-################## External cmd API ##################
-add_library(${PROJECT_NAME} src/template/vehicle_external_command.cpp src/template/single_vehicle_external_command.cpp)
-add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS})
-target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
+target_link_libraries(controller ${catkin_LIBRARIES} qcustomplot ${PROJECT_NAME})

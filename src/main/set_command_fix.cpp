@@ -519,17 +519,31 @@ int main(int argc, char **argv)
                         ext_exit = false;
                         break;
                     }
-                    cmd.Mode = external_cmd.Mode;
-                    cmd.Move_frame = external_cmd.Move_frame;
-                    cmd.Move_mode = external_cmd.Move_mode;
-                    cmd.desire_cmd[0] = external_cmd.desire_cmd[0];
-                    cmd.desire_cmd[1] = external_cmd.desire_cmd[1];
-                    cmd.desire_cmd[2] = external_cmd.desire_cmd[2];
-                    cmd.yaw_cmd = external_cmd.yaw_cmd;
+                    if (external_cmd.Move_mode == px4_cmd::Command::Custom_Command)
+                    {
+                        
+                    }
+                    else
+                    {
+                        cmd.Mode = external_cmd.Mode;
+                        cmd.Move_frame = external_cmd.Move_frame;
+                        cmd.Move_mode = external_cmd.Move_mode;
+                        cmd.desire_cmd[0] = external_cmd.desire_cmd[0];
+                        cmd.desire_cmd[1] = external_cmd.desire_cmd[1];
+                        cmd.desire_cmd[2] = external_cmd.desire_cmd[2];
+                        cmd.yaw_cmd = external_cmd.yaw_cmd;
+                    }
                     sys_res = system("clear");
                     print_title("PX4 External Command", null_string);
                     cout << "Exit: Press [ESC]" << endl;
                     cout << "Time: " << fixed << setprecision(2) << external_cmd.ext_time << "/" << external_cmd.ext_total_time << endl;
+                    // custom command output info
+                    if (external_cmd.Move_mode == px4_cmd::Command::Custom_Command)
+                    {
+                        std::cout << "Custom Command: " << std::endl;
+                        
+                        continue;
+                    }
                     print_current_cmd(cmd, "", false);
                 }
                 break;

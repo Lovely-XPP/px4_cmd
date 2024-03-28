@@ -14,6 +14,7 @@
 #include <std_msgs/Bool.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/TwistStamped.h>
+#include <px4_cmd/custom_command.h>
 
 #define PI 3.14159265358979323846
 using namespace std;
@@ -24,11 +25,11 @@ class vehicle_external_command
         /// @brief ros shutdown flag
         bool ros_shutdown_flag = false;
         /// @brief initial roll angle in rad
-        double init_R;
+        double init_R = 0;
         /// @brief initial pitch angle in rad
-        double init_P;
+        double init_P = 0;
         /// @brief initial yaw angle in rad
-        double init_Y;
+        double init_Y = 0;
         /// @brief external command
         px4_cmd::Command external_cmd;
         /// @brief subscriber for position and pose
@@ -60,12 +61,14 @@ class vehicle_external_command
         double update_time = 0.02;
         /// @brief if reciving external command
         bool ext_cmd_state = false;
+        /// @brief set external command total time
+        double total_time = -1;
         /// @brief initial position in x axis, m
-        double init_x;
+        double init_x = 0;
         /// @brief initial position in y axis, m
-        double init_y;
+        double init_y = 0;
         /// @brief initial position in z axis, m
-        double init_z;
+        double init_z = 0;
         /// @brief vehicle position [x y z], m
         double position[3];
         /// @brief vehicle attitude [roll pitch yaw], rad
@@ -80,6 +83,9 @@ class vehicle_external_command
         /// @brief start API node
         /// @param node node name for vehicle, defined in topic name: /{node}/mavros/....
         void start(string node);
+
+        /// @brief start API node - for single vehicle simualtion
+        void start();
 
         /// @brief setting position command in 3 axis for vehicle
         /// @param x desire position in x axis, m
@@ -125,6 +131,10 @@ class vehicle_external_command
         /// @param yaw_cmd desire yaw command, rad
         /// @param frame velocity in which frame, px4_cmd::Command::ENU (default) / px4_cmd::Command::BODY
         void set_velocity_with_height(double vx, double vy, double z, double yaw_cmd, int frame = px4_cmd::Command::ENU);
+
+        /// @brief setting custom command
+        /// @param cmd custom command
+        void set_custom_command(const CustomCommand cmd);
 
         /// @brief setting vehicle to hover mode
         void set_hover();
