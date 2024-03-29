@@ -4,7 +4,7 @@
 cmake_minimum_required(VERSION 3.10)
 
 # project name version languages
-project(px4_cmd VERSION 1.0.3 LANGUAGES CXX)
+project(px4_cmd VERSION 2.0.0 LANGUAGES CXX)
 
 # set C++ standard
 # set(CMAKE_BUILD_TYPE Release)
@@ -44,9 +44,9 @@ include_directories(
 )
 
 # third party lib
-add_subdirectory(third_party/jsoncpp)
-add_subdirectory(third_party/tinyxml2)
-add_subdirectory(third_party/qcustomplot)
+add_subdirectory(libs/jsoncpp)
+add_subdirectory(libs/tinyxml2)
+add_subdirectory(libs/qcustomplot)
 
 # install python module
 catkin_python_setup()

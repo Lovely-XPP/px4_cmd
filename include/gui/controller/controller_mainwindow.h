@@ -931,33 +931,51 @@ class ControllerMainWindow : public QDialog
         {
             while (ext_cmd_state && (current_cmd == "External Command"))
             {
+                // basic information
+                cmds[node_id].Mode = data[node_id]->ext_cmd.Mode;
+                cmds[node_id].Move_mode = data[node_id]->ext_cmd.Move_mode;
+                cmds[node_id].Move_frame = data[node_id]->ext_cmd.Move_frame;
+                cmds[node_id].Vehicle = data[node_id]->ext_cmd.Vehicle;
+
                 // custom command 
-                if (cmds[node_id].Move_mode == px4_cmd::Command::XYZ_REL_POS)
+                if (cmds[node_id].Move_mode == px4_cmd::Command::Custom_Command)
                 {
+                    // update Gui info
                     cmd_mutex.lock();
-                    cmd_values[node_id][0] = data[node_id]->ext_cmd.desire_cmd[0];
-                    cmd_values[node_id][1] = data[node_id]->ext_cmd.desire_cmd[1];
-                    cmd_values[node_id][2] = data[node_id]->ext_cmd.desire_cmd[2];
-                    cmd_values[node_id][3] = data[node_id]->ext_cmd.yaw_cmd * 180 / PI;
-                    cmd_mutex.unlock();
-                    cmds[node_id].Mode = data[node_id]->ext_cmd.Mode;
-                    cmds[node_id].Move_mode = data[node_id]->ext_cmd.Move_mode;
-                    cmds[node_id].Move_frame = data[node_id]->ext_cmd.Move_frame;
-                    cmds[node_id].Vehicle = data[node_id]->ext_cmd.Vehicle;
-                    cmds[node_id].desire_cmd[0] = cmd_values[node_id][0];
-                    cmds[node_id].desire_cmd[1] = cmd_values[node_id][1];
-                    cmds[node_id].desire_cmd[2] = cmd_values[node_id][2];
-                    if (cmds[node_id].Move_mode == px4_cmd::Command::XYZ_POS)
+                    int count = 0;
+                    while (count < 3)
                     {
-                        cmds[node_id].desire_cmd[0] = cmds[node_id].desire_cmd[0] - data[node_id]->init_x;
-                        cmds[node_id].desire_cmd[1] = cmds[node_id].desire_cmd[1] - data[node_id]->init_y;
-                        cmds[node_id].desire_cmd[2] = cmds[node_id].desire_cmd[2] - data[node_id]->init_z;
-                    }
-                    else
-                    {
-                        if (cmds[node_id].Move_mode == px4_cmd::Command::XY_VEL_Z_POS)
+                        int i = 0;
+                        if (isnan(data[node_id]->ext_cmd.custom_cmd[i]))
                         {
-                            cmds[node_id].desire_cmd[2] = cmds[node_id].desire_cmd[2] - data[node_id]->init_z;
+                            i++;
+                            continue;
+                        }
+                        cmd_values[node_id][count] = data[node_id]->ext_cmd.custom_cmd[i];
+                        i++;
+                        count++;
+                    }
+                    cmd_mutex.unlock();
+
+                    // transform data
+                    for (size_t i = 0; i < 20; i++)
+                    {
+                        cmds[node_id].custom_cmd[i] = data[node_id]->ext_cmd.custom_cmd[i];
+                    }
+
+                    if (cmds[node_id].Custom_Command_Mode == px4_cmd::Command::Custom_Command_TargetLocal)
+                    {
+                        if (!isnan(cmds[node_id].custom_cmd[0]))
+                        {
+                            cmds[node_id].custom_cmd[0] = cmds[node_id].custom_cmd[0] - data[node_id]->init_x;
+                        }
+                        if (!isnan(cmds[node_id].custom_cmd[1]))
+                        {
+                            cmds[node_id].custom_cmd[1] = cmds[node_id].custom_cmd[1] - data[node_id]->init_y;
+                        }
+                        if (!isnan(cmds[node_id].custom_cmd[2]))
+                        {
+                            cmds[node_id].custom_cmd[2] = cmds[node_id].custom_cmd[2] - data[node_id]->init_z;
                         }
                     }
                     cmds[node_id].yaw_cmd = cmd_values[node_id][3] * PI / 180;
@@ -965,16 +983,14 @@ class ControllerMainWindow : public QDialog
                     usleep(20000);
                     continue;
                 }
+
+                // common command
                 cmd_mutex.lock();
                 cmd_values[node_id][0] = data[node_id]->ext_cmd.desire_cmd[0];
                 cmd_values[node_id][1] = data[node_id]->ext_cmd.desire_cmd[1];
                 cmd_values[node_id][2] = data[node_id]->ext_cmd.desire_cmd[2];
                 cmd_values[node_id][3] = data[node_id]->ext_cmd.yaw_cmd * 180 / PI;
                 cmd_mutex.unlock();
-                cmds[node_id].Mode = data[node_id]->ext_cmd.Mode;
-                cmds[node_id].Move_mode = data[node_id]->ext_cmd.Move_mode;
-                cmds[node_id].Move_frame = data[node_id]->ext_cmd.Move_frame;
-                cmds[node_id].Vehicle = data[node_id]->ext_cmd.Vehicle;
                 if (cmds[node_id].Move_mode == px4_cmd::Command::XYZ_REL_POS)
                 {
                     cmds[node_id].desire_cmd[0] = cmds[node_id].desire_cmd[0] + cmd_values[node_id][0] + data[node_id]->home_position[0];
