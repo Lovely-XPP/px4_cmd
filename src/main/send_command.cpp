@@ -22,7 +22,7 @@
 using namespace std;
 
 // 初始化信息用于接受设置命令,发送指定位置信息
-ros::NodeHandle nh;
+ros::NodeHandle *nh_ptr;
 px4_cmd::Command set_cmd;
 mavros_msgs::PositionTarget pos_setpoint;
 mavros_msgs::GlobalPositionTarget pos_setpoint_global;
@@ -60,6 +60,8 @@ int main(int argc, char **argv)
 {
     // 节点初始化
     ros::init(argc, argv, "send_command");
+    ros::NodeHandle nh;
+    nh_ptr = &nh;
 
     // 获取 robot 名
     ros::master::V_TopicInfo topics;
@@ -287,19 +289,19 @@ void sub_set_cmd_cb(const px4_cmd::Command::ConstPtr &msg)
             {
                 case CommandMode::TargetLocal:
                 {
-                    setpoint_raw_local_pub = nh.advertise<mavros_msgs::PositionTarget>((node_name +"mavros/setpoint_raw/local").c_str(), 50);
+                    setpoint_raw_local_pub = nh_ptr->advertise<mavros_msgs::PositionTarget>((node_name + "mavros/setpoint_raw/local").c_str(), 50);
                     break;
                 }
 
                 case CommandMode::TargetGlobal:
                 {
-                    setpoint_raw_local_pub = nh.advertise<mavros_msgs::GlobalPositionTarget>((node_name +"mavros/setpoint_raw/global").c_str(), 50);
+                    setpoint_raw_local_pub = nh_ptr->advertise<mavros_msgs::GlobalPositionTarget>((node_name + "mavros/setpoint_raw/global").c_str(), 50);
                     break;
                 }
 
                 case CommandMode::TargetAttitude:
                 {
-                    setpoint_raw_local_pub = nh.advertise<mavros_msgs::AttitudeTarget>((node_name +"mavros/setpoint_raw/attitude").c_str(), 50);
+                    setpoint_raw_local_pub = nh_ptr->advertise<mavros_msgs::AttitudeTarget>((node_name + "mavros/setpoint_raw/attitude").c_str(), 50);
                     break;
                 }
             }
@@ -335,7 +337,7 @@ void sub_set_cmd_cb(const px4_cmd::Command::ConstPtr &msg)
     if (current_custom_mode != CommandMode::TargetLocal)
     {
         setpoint_raw_local_pub.shutdown();
-        setpoint_raw_local_pub = nh.advertise<mavros_msgs::PositionTarget>((node_name + "/mavros/setpoint_raw/local").c_str(), 50);
+        setpoint_raw_local_pub = nh_ptr->advertise<mavros_msgs::PositionTarget>((node_name + "/mavros/setpoint_raw/local").c_str(), 50);
     }
     current_custom_mode = CommandMode::TargetLocal;
 

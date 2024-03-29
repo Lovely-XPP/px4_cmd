@@ -931,6 +931,40 @@ class ControllerMainWindow : public QDialog
         {
             while (ext_cmd_state && (current_cmd == "External Command"))
             {
+                // custom command 
+                if (cmds[node_id].Move_mode == px4_cmd::Command::XYZ_REL_POS)
+                {
+                    cmd_mutex.lock();
+                    cmd_values[node_id][0] = data[node_id]->ext_cmd.desire_cmd[0];
+                    cmd_values[node_id][1] = data[node_id]->ext_cmd.desire_cmd[1];
+                    cmd_values[node_id][2] = data[node_id]->ext_cmd.desire_cmd[2];
+                    cmd_values[node_id][3] = data[node_id]->ext_cmd.yaw_cmd * 180 / PI;
+                    cmd_mutex.unlock();
+                    cmds[node_id].Mode = data[node_id]->ext_cmd.Mode;
+                    cmds[node_id].Move_mode = data[node_id]->ext_cmd.Move_mode;
+                    cmds[node_id].Move_frame = data[node_id]->ext_cmd.Move_frame;
+                    cmds[node_id].Vehicle = data[node_id]->ext_cmd.Vehicle;
+                    cmds[node_id].desire_cmd[0] = cmd_values[node_id][0];
+                    cmds[node_id].desire_cmd[1] = cmd_values[node_id][1];
+                    cmds[node_id].desire_cmd[2] = cmd_values[node_id][2];
+                    if (cmds[node_id].Move_mode == px4_cmd::Command::XYZ_POS)
+                    {
+                        cmds[node_id].desire_cmd[0] = cmds[node_id].desire_cmd[0] - data[node_id]->init_x;
+                        cmds[node_id].desire_cmd[1] = cmds[node_id].desire_cmd[1] - data[node_id]->init_y;
+                        cmds[node_id].desire_cmd[2] = cmds[node_id].desire_cmd[2] - data[node_id]->init_z;
+                    }
+                    else
+                    {
+                        if (cmds[node_id].Move_mode == px4_cmd::Command::XY_VEL_Z_POS)
+                        {
+                            cmds[node_id].desire_cmd[2] = cmds[node_id].desire_cmd[2] - data[node_id]->init_z;
+                        }
+                    }
+                    cmds[node_id].yaw_cmd = cmd_values[node_id][3] * PI / 180;
+                    data[node_id]->ext_cmd_sub_state = true;
+                    usleep(20000);
+                    continue;
+                }
                 cmd_mutex.lock();
                 cmd_values[node_id][0] = data[node_id]->ext_cmd.desire_cmd[0];
                 cmd_values[node_id][1] = data[node_id]->ext_cmd.desire_cmd[1];
