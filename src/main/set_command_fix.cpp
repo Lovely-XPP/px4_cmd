@@ -521,7 +521,13 @@ int main(int argc, char **argv)
                     }
                     if (external_cmd.Move_mode == px4_cmd::Command::Custom_Command)
                     {
-                        
+                        cmd.Mode = external_cmd.Mode;
+                        cmd.Move_frame = external_cmd.Move_frame;
+                        cmd.Move_mode = external_cmd.Move_mode;
+                        for (size_t i = 0; i < 20; i++)
+                        {
+                            cmd.custom_cmd[i] = external_cmd.custom_cmd[i];
+                        }
                     }
                     else
                     {
@@ -540,8 +546,67 @@ int main(int argc, char **argv)
                     // custom command output info
                     if (external_cmd.Move_mode == px4_cmd::Command::Custom_Command)
                     {
+                        int id = 0;
                         std::cout << "Custom Command: " << std::endl;
-                        
+                        // position
+                        std::cout << "[Position Local]: ";
+                        for (size_t i = 0; i < 3; i++)
+                        {
+                            std::cout << cmd.custom_cmd[i + id] << " ";
+                        }
+                        std::cout << std::endl;
+
+                        // velocity
+                        id += 3;
+                        std::cout << "[Velocity]: ";
+                        for (size_t i = 0; i < 3; i++)
+                        {
+                            std::cout << cmd.custom_cmd[i + id] << " ";
+                        }
+                        std::cout << std::endl;
+
+                        // accelerate
+                        id += 3;
+                        std::cout << "[accelerate]: ";
+                        for (size_t i = 0; i < 3; i++)
+                        {
+                            std::cout << cmd.custom_cmd[i + id] << " ";
+                        }
+                        std::cout << std::endl;
+
+                        // Force flag
+                        id += 3;
+                        std::cout << "[Force Flag]: " << (bool)cmd.custom_cmd[id] << std::endl;
+
+                        // Yaw
+                        id += 1;
+                        std::cout << "[Yaw]: " << cmd.custom_cmd[id] << std::endl;
+
+                        // Yaw rate
+                        id += 1;
+                        std::cout << "[Yaw Rate]: " << cmd.custom_cmd[id] << std::endl;
+
+                        // Attitude
+                        id += 1;
+                        std::cout << "[Attitude (quaternion)]: ";
+                        for (size_t i = 0; i < 4; i++)
+                        {
+                            std::cout << cmd.custom_cmd[i + id] << " ";
+                        }
+                        std::cout << std::endl;
+
+                        // Attidute Rate
+                        id += 4;
+                        std::cout << "[Attitude Rate]: ";
+                        for (size_t i = 0; i < 3; i++)
+                        {
+                            std::cout << cmd.custom_cmd[i + id] << " ";
+                        }
+                        std::cout << std::endl;
+
+                        // Thrust
+                        id += 3;
+                        std::cout << "[Thrust]: " << cmd.custom_cmd[id] << std::endl;
                         continue;
                     }
                     print_current_cmd(cmd, "", false);
