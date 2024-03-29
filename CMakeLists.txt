@@ -10,6 +10,7 @@ project(px4_cmd VERSION 1.0.3 LANGUAGES CXX)
 # set(CMAKE_BUILD_TYPE Release)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
+set(BUILD_SHARED_LIBS OFF)
 
 # find package
 # opencv
