@@ -177,7 +177,7 @@ void vehicle_external_command::set_velocity_with_height(double vx, double vy, do
     external_cmd.yaw_cmd = yaw - init_Y;
 };
 
-void vehicle_external_command::set_custom_command(const CustomCommand cmd)
+void vehicle_external_command::set_custom_command(CustomCommand cmd)
 {
     custom_command_to_px4_msg(cmd, external_cmd);
 }

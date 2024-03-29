@@ -936,6 +936,11 @@ class ControllerMainWindow : public QDialog
                 cmds[node_id].Move_mode = data[node_id]->ext_cmd.Move_mode;
                 cmds[node_id].Move_frame = data[node_id]->ext_cmd.Move_frame;
                 cmds[node_id].Vehicle = data[node_id]->ext_cmd.Vehicle;
+                cmds[node_id].Custom_Command_Mode = data[node_id]->ext_cmd.Custom_Command_Mode;
+                if (data[node_id]->vehicle_type == px4_cmd::Command::FixWing)
+                {
+                    cmds[node_id].fx_custom_mode = data[node_id]->ext_cmd.fx_custom_mode;
+                }
 
                 // custom command 
                 if (cmds[node_id].Move_mode == px4_cmd::Command::Custom_Command)

@@ -134,7 +134,7 @@ class vehicle_external_command
 
         /// @brief setting custom command
         /// @param cmd custom command
-        void set_custom_command(const CustomCommand cmd);
+        void set_custom_command(CustomCommand cmd);
 
         /// @brief setting vehicle to hover mode
         void set_hover();
