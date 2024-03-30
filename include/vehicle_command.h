@@ -339,6 +339,9 @@ void vehicle_command::controller_cmd_cb(const px4_cmd::Command::ConstPtr &msg)
         {
             case CommandMode::TargetLocal:
             {
+                // init typemask
+                pos_setpoint.type_mask = 0;
+
                 // frame
                 pos_setpoint.coordinate_frame = frame;
                 pos_setpoint.header.frame_id = frame;
@@ -387,6 +390,9 @@ void vehicle_command::controller_cmd_cb(const px4_cmd::Command::ConstPtr &msg)
 
             case CommandMode::TargetGlobal:
             {
+                // init typemask
+                pos_setpoint_global.type_mask = 0;
+
                 // frame
                 pos_setpoint_global.coordinate_frame = frame;
                 pos_setpoint_global.header.frame_id = frame;
@@ -435,6 +441,9 @@ void vehicle_command::controller_cmd_cb(const px4_cmd::Command::ConstPtr &msg)
 
             case CommandMode::TargetAttitude:
             {
+                // init typemask
+                attitude_setpoint.type_mask = 0;
+
                 // attitude
                 attitude_setpoint.orientation.x = cmd.attitude[0];
                 attitude_setpoint.orientation.y = cmd.attitude[1];

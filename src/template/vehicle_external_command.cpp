@@ -67,10 +67,8 @@ void vehicle_external_command::ros_thread_fun()
     // ros main loop
     while (ros::ok() && !ros_shutdown_flag)
     {
-        while (ext_cmd_pub.getNumSubscribers() < 1)
+        if (ext_cmd_pub.getNumSubscribers() < 1)
         {
-            ROS_INFO("External Command: Waiting for user-define mode!");
-            sleep(1);
             t = 0;
         }
         external_cmd.ext_time = t;

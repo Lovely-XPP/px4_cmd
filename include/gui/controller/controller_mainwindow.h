@@ -948,9 +948,9 @@ class ControllerMainWindow : public QDialog
                     // update Gui info
                     cmd_mutex.lock();
                     int count = 0;
-                    while (count < 3)
+                    int i = 0;
+                    while (count < 3 && i < 20)
                     {
-                        int i = 0;
                         if (isnan(data[node_id]->ext_cmd.custom_cmd[i]))
                         {
                             i++;
@@ -983,7 +983,6 @@ class ControllerMainWindow : public QDialog
                             cmds[node_id].custom_cmd[2] = cmds[node_id].custom_cmd[2] - data[node_id]->init_z;
                         }
                     }
-                    cmds[node_id].yaw_cmd = cmd_values[node_id][3] * PI / 180;
                     data[node_id]->ext_cmd_sub_state = true;
                     usleep(20000);
                     continue;
@@ -1408,6 +1407,12 @@ class ControllerMainWindow : public QDialog
                             table_headers_ext_cmd[4] = "CMD 1  [vx]";
                             table_headers_ext_cmd[5] = "CMD 2  [vy]";
                             table_headers_ext_cmd[6] = "CMD 3  [z]";
+                            break;
+                        
+                        case px4_cmd::Command::Custom_Command:
+                            table_headers_ext_cmd[4] = "Custom CMD 1";
+                            table_headers_ext_cmd[5] = "Custom CMD 2";
+                            table_headers_ext_cmd[6] = "Custom CMD 3";
                             break;
                     }
                 }

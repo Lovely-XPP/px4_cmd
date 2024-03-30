@@ -33,18 +33,51 @@ enum FixWingPositionMode : unsigned long
 /// @brief Custom command for vehicle with px4
 struct CustomCommand
 {
-    CommandMode mode;                // command mode: local / global / attitude
-    FixWingPositionMode fw_mode;     // FixWing only support position setpoint in local & global mode, and need speicify position mode
-    int frame_id;                    // frame id in px4_cmd message
-    double position[3] = {NAN};      // position setpoint, xyz for local, lat lon alt for global
-    double velocity[3] = {NAN};      // velocity setpoint
-    double accelerate[3] = {NAN};    // accelerate set point
-    bool force_flag = false;         // flag for accelerate to force
-    double yaw = NAN;                // yaw setpoint
-    double yaw_rate = NAN;           // yaw rate setpoint
-    double attitude[4] = {NAN};      // attitude setpoint [quaternion {xyzw}]
-    double attitude_rate[3] = {NAN}; // attitude rate setpoint
-    double thrust = NAN;             // thrust setpoint
+    // command mode: local / global / attitude
+    CommandMode mode;                
+    // FixWing only support position setpoint in local & global mode, and need speicify position mode
+    FixWingPositionMode fw_mode;     
+    // frame id in px4_cmd message
+    int frame_id;                    
+    // position setpoint, xyz for local, lat lon alt for global
+    double position[3] = {
+        NAN,
+        NAN,
+        NAN
+    };
+    // velocity setpoint
+    double velocity[3] = {
+        NAN,
+        NAN,
+        NAN
+    };
+    // accelerate set point
+    double accelerate[3] = {
+        NAN,
+        NAN,
+        NAN
+    };
+    // flag for accelerate to force
+    bool force_flag = false;
+    // yaw setpoint
+    double yaw = NAN;
+    // yaw rate setpoint
+    double yaw_rate = NAN;
+    // attitude setpoint [quaternion {xyzw}]
+    double attitude[4] = {
+        NAN,
+        NAN,
+        NAN,
+        NAN
+    };
+    // attitude rate setpoint
+    double attitude_rate[3] = {
+        NAN,
+        NAN,
+        NAN
+    };
+    // thrust setpoint
+    double thrust = NAN;             
 };
 
 
