@@ -207,8 +207,8 @@ class ControllerMainWindow : public QDialog
                 {
                     cmd.Vehicle = px4_cmd::Command::Multicopter;
                 }
-                cmd.desire_cmd[0] = data[i]->init_x;
-                cmd.desire_cmd[1] = data[i]->init_y;
+                cmd.desire_cmd[0] = 0;
+                cmd.desire_cmd[1] = 0;
                 cmd.desire_cmd[2] = 0;
                 ros::Publisher pub = nh.advertise<px4_cmd::Command>((nodes[i] + "/px4_cmd/control_command").toStdString().c_str(), 50);
                 pubs.push_back(pub);

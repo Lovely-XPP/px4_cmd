@@ -10,6 +10,7 @@
 #include <QVector>
 #include <QThread>
 #include <thread>
+#include <mutex>
 #include <tf/LinearMath/Quaternion.h>
 #include <tf/LinearMath/Transform.h>
 #include <tf/transform_datatypes.h>
@@ -51,6 +52,7 @@ class vehicle_command
         mavros_msgs::SetMode mode_cmd;
         mavros_msgs::CommandBool arm_cmd;
         std_msgs::Bool ext_cmd_state_msg;
+        std::mutex cmd_mutex;
         double R;
         double P;
         double Y;
@@ -289,6 +291,7 @@ void vehicle_command::controller_cmd_cb(const px4_cmd::Command::ConstPtr &msg)
     controller_cmd = *msg;
     std::string error;
     CustomCommand cmd;
+    cmd_mutex.lock();
 
     // custom command
     while (state_mode == mavros_msgs::State::MODE_PX4_OFFBOARD && msg->Move_mode == px4_cmd::Command::Custom_Command)
@@ -516,6 +519,7 @@ void vehicle_command::controller_cmd_cb(const px4_cmd::Command::ConstPtr &msg)
         }
 
         // custom command end
+        cmd_mutex.unlock();
         return;
     }
     
@@ -595,6 +599,7 @@ void vehicle_command::controller_cmd_cb(const px4_cmd::Command::ConstPtr &msg)
             pos_setpoint.position.x = hover_pos[0];
             pos_setpoint.position.y = hover_pos[1];
             pos_setpoint.position.z = hover_pos[2];
+            cmd_mutex.unlock();
             return;
         }
         hover = false;
@@ -606,6 +611,7 @@ void vehicle_command::controller_cmd_cb(const px4_cmd::Command::ConstPtr &msg)
             pos_setpoint.position.y = home_position[1];
             pos_setpoint.position.z = controller_cmd.desire_cmd[2];
             pos_setpoint.yaw = 0;
+            cmd_mutex.unlock();
             return;
         }
 
@@ -666,6 +672,7 @@ void vehicle_command::controller_cmd_cb(const px4_cmd::Command::ConstPtr &msg)
             pos_setpoint.position.x = hover_pos[0];
             pos_setpoint.position.y = hover_pos[1];
             pos_setpoint.position.z = hover_pos[2];
+            cmd_mutex.unlock();
             return;
         }
         hover = false;
@@ -676,6 +683,7 @@ void vehicle_command::controller_cmd_cb(const px4_cmd::Command::ConstPtr &msg)
             pos_setpoint.position.x = home_position[0];
             pos_setpoint.position.y = home_position[1];
             pos_setpoint.position.z = controller_cmd.desire_cmd[2];
+            cmd_mutex.unlock();
             return;
         }
 
@@ -702,6 +710,7 @@ void vehicle_command::controller_cmd_cb(const px4_cmd::Command::ConstPtr &msg)
         pos_setpoint.position.y = controller_cmd.desire_cmd[1];
         pos_setpoint.position.z = controller_cmd.desire_cmd[2];
     }
+    cmd_mutex.unlock();
 }
 
 void vehicle_command::state_cb(const mavros_msgs::State::ConstPtr &msg)
