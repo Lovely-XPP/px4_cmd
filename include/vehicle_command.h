@@ -63,7 +63,6 @@ class vehicle_command
         bool hover = false;
         int current_custom_mode = 0;
         std::string topic_header;
-        vector<double> hover_pos = {0, 0, 0};
 
         /// @brief controller command subscribe call back function
         /// @param msg controller command message 
@@ -112,6 +111,7 @@ class vehicle_command
         double init_y;
         double init_z;
         vector<double> home_position = {0, 0};
+        vector<double> hover_pos = {0, 0, 0};
 
         /// @brief start vehicle control
         /// @param node node name for vehicle

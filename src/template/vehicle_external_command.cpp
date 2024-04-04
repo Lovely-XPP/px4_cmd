@@ -15,8 +15,8 @@ void vehicle_external_command::start(string node)
     {
         topic_header = "/mavros/";
     }
-    external_cmd.Mode = px4_cmd::Command::Move;
-    external_cmd.Move_frame;
+    external_cmd.Mode = px4_cmd::Command::Hover;
+    external_cmd.Move_frame = px4_cmd::Command::ENU;
     external_cmd.Move_mode = px4_cmd::Command::XYZ_POS;
     int argc = 0;
     char **argv;

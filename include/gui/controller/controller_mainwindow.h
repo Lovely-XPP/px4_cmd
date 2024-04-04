@@ -942,6 +942,17 @@ class ControllerMainWindow : public QDialog
                     cmds[node_id].fx_custom_mode = data[node_id]->ext_cmd.fx_custom_mode;
                 }
 
+                // hover command
+                if (cmds[node_id].Mode == px4_cmd::Command::Hover)
+                {
+                    cmd_values[node_id][0] = data[node_id]->hover_pos[0] + data[node_id]->init_x;
+                    cmd_values[node_id][1] = data[node_id]->hover_pos[1] + data[node_id]->init_y;
+                    cmd_values[node_id][2] = data[node_id]->hover_pos[2] + data[node_id]->init_z;
+                    data[node_id]->ext_cmd_sub_state = true;
+                    usleep(20000);
+                    continue;
+                }
+                
                 // custom command 
                 if (cmds[node_id].Move_mode == px4_cmd::Command::Custom_Command)
                 {
@@ -1570,28 +1581,39 @@ class ControllerMainWindow : public QDialog
                     }
                     else
                     {
-                        switch (cmds[0].Move_mode)
+                        if (cmds[node_id].Mode == px4_cmd::Command::Hover)
                         {
-                            case px4_cmd::Command::XYZ_POS:
-                                cmd_mode = "Postion";
-                                break;
+                            cmd_mode = "Hover";
+                        }
+                        else
+                        {
+                            switch (cmds[node_id].Move_mode)
+                            {
+                                case px4_cmd::Command::XYZ_POS:
+                                    cmd_mode = "Postion";
+                                    break;
 
-                            case px4_cmd::Command::XYZ_REL_POS:
-                                cmd_mode = "Rel Position";
-                                break;
+                                case px4_cmd::Command::XYZ_REL_POS:
+                                    cmd_mode = "Rel Position";
+                                    break;
 
-                            case px4_cmd::Command::XYZ_VEL:
-                                cmd_mode = "Velocity";
-                                break;
+                                case px4_cmd::Command::XYZ_VEL:
+                                    cmd_mode = "Velocity";
+                                    break;
 
-                            case px4_cmd::Command::XY_VEL_Z_POS:
-                                cmd_mode = "Velocity with Height";
-                                break;
+                                case px4_cmd::Command::XY_VEL_Z_POS:
+                                    cmd_mode = "Velocity with Height";
+                                    break;
+                                
+                                case px4_cmd::Command::Custom_Command:
+                                    cmd_mode = "Custom Command";
+                                    break;
+                            }
                         }
                     }
 
                     // update frame info
-                    switch (cmds[0].Move_frame)
+                    switch (cmds[node_id].Move_frame)
                     {
                         case px4_cmd::Command::ENU:
                             frame = "ENU";
