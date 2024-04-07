@@ -6,6 +6,8 @@
 #include <vector>
 #include <string>
 #include <thread>
+#include <mutex>
+#include <chrono>
 #include <ros/ros.h>
 #include <px4_cmd/Command.h>
 #include <tf/LinearMath/Quaternion.h>
@@ -30,6 +32,8 @@ class vehicle_external_command
         double init_P = 0;
         /// @brief initial yaw angle in rad
         double init_Y = 0;
+        /// @brief sync lock, use for Synchronize multiple agents
+        bool *sync_lock = nullptr;
         /// @brief external command
         px4_cmd::Command external_cmd;
         /// @brief subscriber for position and pose
@@ -40,6 +44,13 @@ class vehicle_external_command
         ros::Publisher ext_cmd_pub;
         /// @brief subscriber for external command state
         ros::Subscriber ext_state_sub;
+        /// mutexes
+        /// @brief position callback function mutex
+        std::mutex pos_cb_mutex;
+        /// @brief velocity callback function mutex
+        std::mutex vel_cb_mutex;
+        /// @brief change command mutex
+        std::mutex change_cmd_mutex;
 
         /// @brief position and pose subscriber callback function
         /// @param msg message
@@ -52,6 +63,10 @@ class vehicle_external_command
         /// @brief external command state subsceiber callback function
         /// @param msg message
         void ext_state_cb(const std_msgs::Bool::ConstPtr &msg);
+
+        /// @brief check sync lock state
+        /// @return if not sync lock or unlock - return false, if sync lock - return true
+        bool check_sync_lock();
 
         /// @brief main thread function
         void ros_thread_fun();
@@ -86,6 +101,62 @@ class vehicle_external_command
 
         /// @brief start API node - for single vehicle simualtion
         void start();
+
+        /// @brief setting position command in 3 axis for vehicle - thread function
+        /// @param x desire position in x axis, m
+        /// @param y desire position in y axis, m
+        /// @param z desire position in z axis, m
+        /// @param frame position in which frame, px4_cmd::Command::ENU (default) / px4_cmd::Command::BODY
+        void set_position_thread_func(double x, double y, double z, int frame = px4_cmd::Command::ENU);
+
+        /// @brief setting position command in 3 axis for vehicle - thread function
+        /// @param x desire position in x axis, m
+        /// @param y desire position in y axis, m
+        /// @param z desire position in z axis, m
+        /// @param yaw_cmd desire yaw command, rad
+        /// @param frame position in which frame, px4_cmd::Command::ENU (default) / px4_cmd::Command::BODY
+        void set_position_thread_func(double x, double y, double z, double yaw_cmd, int frame = px4_cmd::Command::ENU);
+
+        /// @brief setting velocity command in 3 axis for vehicle - thread function
+        /// @param vx desire velocity in x axis, m/s
+        /// @param vy desire velocity in y axis, m/s
+        /// @param vz desire velocity in z axis, m/s
+        /// @param frame velocity in which frame, px4_cmd::Command::ENU (default) / px4_cmd::Command::BODY
+        void set_velocity_thread_func(double vx, double vy, double vz, int frame = px4_cmd::Command::ENU);
+
+        /// @brief setting velocity command in 3 axis for vehicle - thread function
+        /// @param vx desire velocity in x axis, m/s
+        /// @param vy desire velocity in y axis, m/s
+        /// @param vz desire velocity in z axis, m/s
+        /// @param yaw_cmd desire yaw command, rad
+        /// @param frame velocity in which frame, px4_cmd::Command::ENU (default) / px4_cmd::Command::BODY
+        void set_velocity_thread_func(double vx, double vy, double vz, double yaw_cmd, int frame = px4_cmd::Command::ENU);
+
+        /// @brief setting velocity command in 2 axis with height command for vehicle - thread function
+        /// @param vx desire velocity in x axis, m/s
+        /// @param vy desire velocity in y axis, m/s
+        /// @param z desire height, m
+        /// @param frame velocity in which frame, px4_cmd::Command::ENU (default) / px4_cmd::Command::BODY
+        void set_velocity_with_height_thread_func(double vx, double vy, double z, int frame = px4_cmd::Command::ENU);
+
+        /// @brief setting velocity command in 2 axis with height command for vehicle - thread function
+        /// @param vx desire velocity in x axis, m/s
+        /// @param vy desire velocity in y axis, m/s
+        /// @param z desire height, m
+        /// @param yaw_cmd desire yaw command, rad
+        /// @param frame velocity in which frame, px4_cmd::Command::ENU (default) / px4_cmd::Command::BODY
+        void set_velocity_with_height_thread_func(double vx, double vy, double z, double yaw_cmd, int frame = px4_cmd::Command::ENU);
+
+        /// @brief setting custom command - thread function
+        /// @param cmd custom command
+        void set_custom_command_thread_func(CustomCommand cmd);
+
+        /// @brief setting vehicle to hover mode  - thread function
+        void set_hover_thread_func();
+
+        /// @brief setting vehicle to hover mode  - thread function
+        /// @param yaw_cmd desire yaw command, rad
+        void set_hover_thread_func(double yaw);
 
         /// @brief setting position command in 3 axis for vehicle
         /// @param x desire position in x axis, m
@@ -142,6 +213,13 @@ class vehicle_external_command
         /// @brief setting vehicle to hover mode
         /// @param yaw_cmd desire yaw command, rad
         void set_hover(double yaw);
+
+        /// @brief set sync lock with bool ptr
+        /// @param sync_lock bool ptr
+        void set_sync_lock(bool *sync_lock_);
+
+        /// @brief reset sync lock to nullptr
+        void reset_sync_lock();
 
         /// @brief shutdown API node
         void shutdown();

@@ -84,6 +84,7 @@ void vehicle_external_command::ros_thread_fun()
 
 void vehicle_external_command::pos_cb(const geometry_msgs::PoseStamped::ConstPtr &msg)
 {
+    pos_cb_mutex.lock();
     position[0] = msg->pose.position.x + init_x;
     position[1] = msg->pose.position.y + init_y;
     position[2] = msg->pose.position.z + init_z;
@@ -95,35 +96,48 @@ void vehicle_external_command::pos_cb(const geometry_msgs::PoseStamped::ConstPtr
     attitude[0] = P + init_P;
     attitude[1] = R + init_R;
     attitude[2] = Y + init_Y;
+    pos_cb_mutex.unlock();
 };
 
 void vehicle_external_command::vel_cb(const geometry_msgs::TwistStamped::ConstPtr &msg)
 {
+    vel_cb_mutex.lock();
     velocity[0] = msg->twist.linear.x;
     velocity[1] = msg->twist.linear.y;
     velocity[2] = msg->twist.linear.z;
     angle_rate[0] = msg->twist.angular.x * 180 / PI;
     angle_rate[1] = msg->twist.angular.y * 180 / PI;
     angle_rate[2] = msg->twist.angular.z * 180 / PI;
+    vel_cb_mutex.unlock();
 };
 
 void vehicle_external_command::ext_state_cb(const std_msgs::Bool::ConstPtr &msg)
 {
     ext_cmd_state = msg->data;
 };
-
-void vehicle_external_command::set_position(double x, double y, double z, int frame)
+void vehicle_external_command::set_position_thread_func(double x, double y, double z, int frame)
 {
+    while (check_sync_lock())
+    {
+        usleep(50);
+    }
+    change_cmd_mutex.lock();
     external_cmd.Mode = px4_cmd::Command::Move;
     external_cmd.Move_frame = frame;
     external_cmd.Move_mode = px4_cmd::Command::XYZ_POS;
     external_cmd.desire_cmd[0] = x;
     external_cmd.desire_cmd[1] = y;
     external_cmd.desire_cmd[2] = z;
+    change_cmd_mutex.unlock();
 };
 
-void vehicle_external_command::set_position(double x, double y, double z, double yaw, int frame)
+void vehicle_external_command::set_position_thread_func(double x, double y, double z, double yaw, int frame)
 {
+    while (check_sync_lock())
+    {
+        usleep(50);
+    }
+    change_cmd_mutex.lock();
     external_cmd.Mode = px4_cmd::Command::Move;
     external_cmd.Move_frame = frame;
     external_cmd.Move_mode = px4_cmd::Command::XYZ_POS;
@@ -131,20 +145,31 @@ void vehicle_external_command::set_position(double x, double y, double z, double
     external_cmd.desire_cmd[1] = y;
     external_cmd.desire_cmd[2] = z;
     external_cmd.yaw_cmd = yaw - init_Y;
+    change_cmd_mutex.unlock();
 };
 
-void vehicle_external_command::set_velocity(double vx, double vy, double vz, int frame)
+void vehicle_external_command::set_velocity_thread_func(double vx, double vy, double vz, int frame)
 {
+    while (check_sync_lock())
+    {
+        usleep(50);
+    }
+    change_cmd_mutex.lock();
     external_cmd.Mode = px4_cmd::Command::Move;
     external_cmd.Move_frame = frame;
     external_cmd.Move_mode = px4_cmd::Command::XYZ_VEL;
     external_cmd.desire_cmd[0] = vx;
     external_cmd.desire_cmd[1] = vy;
     external_cmd.desire_cmd[2] = vz;
+    change_cmd_mutex.unlock();
 };
 
-void vehicle_external_command::set_velocity(double vx, double vy, double vz, double yaw, int frame)
+void vehicle_external_command::set_velocity_thread_func(double vx, double vy, double vz, double yaw, int frame)
 {
+    while (check_sync_lock())
+    {
+        usleep(50);
+    }
     external_cmd.Mode = px4_cmd::Command::Move;
     external_cmd.Move_frame = frame;
     external_cmd.Move_mode = px4_cmd::Command::XYZ_VEL;
@@ -154,18 +179,29 @@ void vehicle_external_command::set_velocity(double vx, double vy, double vz, dou
     external_cmd.yaw_cmd = yaw - init_Y;
 };
 
-void vehicle_external_command::set_velocity_with_height(double vx, double vy, double z, int frame)
+void vehicle_external_command::set_velocity_with_height_thread_func(double vx, double vy, double z, int frame)
 {
+    while (check_sync_lock())
+    {
+        usleep(50);
+    }
+    change_cmd_mutex.lock();
     external_cmd.Mode = px4_cmd::Command::Move;
     external_cmd.Move_frame = frame;
     external_cmd.Move_mode = px4_cmd::Command::XY_VEL_Z_POS;
     external_cmd.desire_cmd[0] = vx;
     external_cmd.desire_cmd[1] = vy;
     external_cmd.desire_cmd[2] = z;
+    change_cmd_mutex.unlock();
 };
 
-void vehicle_external_command::set_velocity_with_height(double vx, double vy, double z, double yaw, int frame)
+void vehicle_external_command::set_velocity_with_height_thread_func(double vx, double vy, double z, double yaw, int frame)
 {
+    while (check_sync_lock())
+    {
+        usleep(50);
+    }
+    change_cmd_mutex.lock();
     external_cmd.Mode = px4_cmd::Command::Move;
     external_cmd.Move_frame = frame;
     external_cmd.Move_mode = px4_cmd::Command::XY_VEL_Z_POS;
@@ -173,26 +209,126 @@ void vehicle_external_command::set_velocity_with_height(double vx, double vy, do
     external_cmd.desire_cmd[1] = vy;
     external_cmd.desire_cmd[2] = z;
     external_cmd.yaw_cmd = yaw - init_Y;
+    change_cmd_mutex.unlock();
 };
 
-void vehicle_external_command::set_custom_command(CustomCommand cmd)
+void vehicle_external_command::set_custom_command_thread_func(CustomCommand cmd)
 {
+    while (check_sync_lock())
+    {
+        usleep(50);
+    }
+    change_cmd_mutex.lock();
     custom_command_to_px4_msg(cmd, external_cmd);
+    change_cmd_mutex.unlock();
 }
 
-void vehicle_external_command::set_hover()
+void vehicle_external_command::set_hover_thread_func()
 {
+    while (check_sync_lock())
+    {
+        usleep(50);
+    }
+    change_cmd_mutex.lock();
     external_cmd.Mode = px4_cmd::Command::Hover;
     external_cmd.Move_frame = px4_cmd::Command::ENU;
     external_cmd.Move_mode = px4_cmd::Command::XYZ_POS;
+    change_cmd_mutex.unlock();
 };
 
-void vehicle_external_command::set_hover(double yaw)
+void vehicle_external_command::set_hover_thread_func(double yaw)
 {
+    while (check_sync_lock())
+    {
+        usleep(50);
+    }
+    change_cmd_mutex.lock();
     external_cmd.Mode = px4_cmd::Command::Hover;
     external_cmd.Move_frame = px4_cmd::Command::ENU;
     external_cmd.Move_mode = px4_cmd::Command::XYZ_POS;
     external_cmd.yaw_cmd = yaw;
+    change_cmd_mutex.unlock();
+};
+
+void vehicle_external_command::set_position(double x, double y, double z, int frame)
+{
+    void (vehicle_external_command::*thread_func)(double, double, double, int) = &vehicle_external_command::set_position_thread_func;
+    std::thread set_cmd_thread(std::bind(thread_func, this, x, y, z, frame));
+    set_cmd_thread.detach();
+};
+
+void vehicle_external_command::set_position(double x, double y, double z, double yaw, int frame)
+{
+    void (vehicle_external_command::*thread_func)(double, double, double, double, int) = &vehicle_external_command::set_position_thread_func;
+    std::thread set_cmd_thread(std::bind(thread_func, this, x, y, z, yaw, frame));
+    set_cmd_thread.detach();
+};
+
+void vehicle_external_command::set_velocity(double vx, double vy, double vz, int frame)
+{
+    void (vehicle_external_command::*thread_func)(double, double, double, int) = &vehicle_external_command::set_velocity_thread_func;
+    std::thread set_cmd_thread(std::bind(thread_func, this, vx, vy, vz, frame));
+    set_cmd_thread.detach();
+};
+
+void vehicle_external_command::set_velocity(double vx, double vy, double vz, double yaw, int frame)
+{
+    void (vehicle_external_command::*thread_func)(double, double, double, double, int) = &vehicle_external_command::set_velocity_thread_func;
+    std::thread set_cmd_thread(std::bind(thread_func, this, vx, vy, vz, yaw, frame));
+    set_cmd_thread.detach();
+};
+
+void vehicle_external_command::set_velocity_with_height(double vx, double vy, double z, int frame)
+{
+    void (vehicle_external_command::*thread_func)(double, double, double, int) = &vehicle_external_command::set_velocity_with_height_thread_func;
+    std::thread set_cmd_thread(std::bind(thread_func, this, vx, vy, z, frame));
+    set_cmd_thread.detach();
+};
+
+void vehicle_external_command::set_velocity_with_height(double vx, double vy, double z, double yaw, int frame)
+{
+    void (vehicle_external_command::*thread_func)(double, double, double, double, int) = &vehicle_external_command::set_velocity_with_height_thread_func;
+    std::thread set_cmd_thread(std::bind(thread_func, this, vx, vy, z, yaw, frame));
+    set_cmd_thread.detach();
+};
+
+void vehicle_external_command::set_custom_command(CustomCommand cmd)
+{
+    std::thread set_cmd_thread(&vehicle_external_command::set_custom_command_thread_func, this, cmd);
+    set_cmd_thread.detach();
+}
+
+void vehicle_external_command::set_hover()
+{
+    void (vehicle_external_command::*thread_func)() = &vehicle_external_command::set_hover_thread_func;
+    std::thread set_cmd_thread(std::bind(thread_func, this));
+    set_cmd_thread.detach();
+};
+
+void vehicle_external_command::set_hover(double yaw)
+{
+    void (vehicle_external_command::*thread_func)(double) = &vehicle_external_command::set_hover_thread_func;
+    std::thread set_cmd_thread(std::bind(thread_func, this, yaw));
+    set_cmd_thread.detach();
+};
+
+bool vehicle_external_command::check_sync_lock()
+{
+    if (sync_lock == nullptr)
+    {
+        return false;
+    }
+    return *sync_lock;
+};
+
+void vehicle_external_command::set_sync_lock(bool *sync_lock_)
+{
+    sync_lock = sync_lock_;
+};
+
+void vehicle_external_command::reset_sync_lock()
+{
+    sync_lock = nullptr;
 };
 
 void vehicle_external_command::shutdown()

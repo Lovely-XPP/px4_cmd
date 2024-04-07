@@ -287,7 +287,7 @@ bool check_custom_command(CustomCommand cmd, int vehicle_type, std::string &erro
             }
 
             // z command need exist
-            if (isnan(cmd.accelerate[0]) && isnan(cmd.velocity[1]) && isnan(cmd.position[2]))
+            if (isnan(cmd.accelerate[2]) && isnan(cmd.velocity[2]) && isnan(cmd.position[2]))
             {
                 error = Z_NOT_EXSIT;
                 return false;
