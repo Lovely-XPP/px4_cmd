@@ -39,6 +39,7 @@ set(CMAKE_AUTOMOC ON)
 # include dir
 include_directories(
     include
+    include/API
     ${catkin_INCLUDE_DIRS}
     ${OpenCV_INCLUDE_DIRS}
 )
@@ -60,13 +61,13 @@ add_message_files(
 generate_messages(DEPENDENCIES std_msgs)
 
 catkin_package(
-    INCLUDE_DIRS include
+    INCLUDE_DIRS include/API
     LIBRARIES ${PROJECT_NAME}
     CATKIN_DEPENDS message_runtime std_msgs
 )
 
 ################## External cmd API ##################
-add_library(${PROJECT_NAME} src/template/vehicle_external_command.cpp src/template/custom_command.cpp)
+add_library(${PROJECT_NAME} src/API/vehicle_external_command.cpp src/API/custom_command.cpp)
 add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS})
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
 
