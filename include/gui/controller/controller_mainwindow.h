@@ -931,6 +931,7 @@ class ControllerMainWindow : public QDialog
         {
             while (ext_cmd_state && (current_cmd == "External Command"))
             {
+                data[node_id]->ext_cmd_sub_state = true;
                 // basic information
                 cmds[node_id].Mode = data[node_id]->ext_cmd.Mode;
                 cmds[node_id].Move_mode = data[node_id]->ext_cmd.Move_mode;
@@ -948,7 +949,6 @@ class ControllerMainWindow : public QDialog
                     cmd_values[node_id][0] = data[node_id]->hover_pos[0] + data[node_id]->init_x;
                     cmd_values[node_id][1] = data[node_id]->hover_pos[1] + data[node_id]->init_y;
                     cmd_values[node_id][2] = data[node_id]->hover_pos[2] + data[node_id]->init_z;
-                    data[node_id]->ext_cmd_sub_state = true;
                     usleep(20000);
                     continue;
                 }
@@ -994,7 +994,6 @@ class ControllerMainWindow : public QDialog
                             cmds[node_id].custom_cmd[2] = cmds[node_id].custom_cmd[2] - data[node_id]->init_z;
                         }
                     }
-                    data[node_id]->ext_cmd_sub_state = true;
                     usleep(20000);
                     continue;
                 }

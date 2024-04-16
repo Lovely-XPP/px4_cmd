@@ -323,6 +323,7 @@
        <depthUpdateRate>30</depthUpdateRate>
        <colorUpdateRate>30</colorUpdateRate>
        <infraredUpdateRate>30</infraredUpdateRate>
+       <frameName>base_link</frameName>
        <depthTopicName>depth/image_raw</depthTopicName>
        <depthCameraInfoTopicName>depth/camera_info</depthCameraInfoTopicName>
        <colorTopicName>color/image_raw</colorTopicName>
@@ -337,7 +338,7 @@
        <infrared2OpticalframeName>camera_ired2_frame</infrared2OpticalframeName>
        <rangeMinDepth>0.2</rangeMinDepth>
        <rangeMaxDepth>10.0</rangeMaxDepth>
-       <pointCloud>false</pointCloud>
+       <pointCloud>true</pointCloud>
        <pointCloudTopicName>depth/color/points</pointCloudTopicName>
        <pointCloudCutoff>0.25</pointCloudCutoff>
        <pointCloudCutoffMax>9.0</pointCloudCutoffMax>

@@ -40,7 +40,7 @@ class vehicle_command
         ros::Subscriber current_state_sub;
         ros::Subscriber current_extend_state_sub;
         ros::Subscriber ext_cmd_sub;
-        ros::Publisher setpoint_raw_local_pub;
+        ros::Publisher setpoint_raw_pub;
         ros::Publisher ext_cmd_state_pub;
         ros::ServiceClient mode_client;
         ros::ServiceClient arming_client;
@@ -153,7 +153,7 @@ void vehicle_command::start(string node)
     current_state_sub = nh.subscribe<mavros_msgs::State>((topic_header + "state").c_str(), 20, &vehicle_command::state_cb, this);
     ext_cmd_sub = nh.subscribe<px4_cmd::Command>((node_name + "/px4_cmd/external_command").c_str(), 50, &vehicle_command::ext_cmd_cb, this);
     current_extend_state_sub = nh.subscribe<mavros_msgs::ExtendedState>((topic_header + "extended_state").c_str(), 20, &vehicle_command::extend_state_cb, this);
-    setpoint_raw_local_pub = nh.advertise<mavros_msgs::PositionTarget>((topic_header + "setpoint_raw/local").c_str(), 50);
+    setpoint_raw_pub = nh.advertise<mavros_msgs::PositionTarget>((topic_header + "setpoint_raw/local").c_str(), 50);
     ext_cmd_state_pub = nh.advertise<std_msgs::Bool>("/" + node_name + "/px4_cmd/ext_cmd_state", 20);
     mode_client = nh.serviceClient<mavros_msgs::SetMode>((topic_header + "set_mode").c_str());
     arming_client = nh.serviceClient<mavros_msgs::CommandBool>((topic_header + "cmd/arming").c_str());
@@ -276,7 +276,7 @@ void vehicle_command::ros_thread_fun()
         {
             ext_cmd_pub_state = false;
         }
-        setpoint_raw_local_pub.publish(pos_setpoint);
+        setpoint_raw_pub.publish(pos_setpoint);
         ext_cmd_state_msg.data = ext_cmd_sub_state;
         ext_cmd_state_pub.publish(ext_cmd_state_msg);
         usleep(floor(1000000 * update_time));
@@ -296,6 +296,9 @@ void vehicle_command::controller_cmd_cb(const px4_cmd::Command::ConstPtr &msg)
     // custom command
     while (state_mode == mavros_msgs::State::MODE_PX4_OFFBOARD && msg->Move_mode == px4_cmd::Command::Custom_Command)
     {
+        // set hover to false
+        hover = false;
+        
         // convert origin message to custom command
         px4_msg_to_custom_command(controller_cmd, cmd);
 
@@ -473,24 +476,24 @@ void vehicle_command::controller_cmd_cb(const px4_cmd::Command::ConstPtr &msg)
         if (current_custom_mode != cmd.mode)
         {
             current_custom_mode = cmd.mode;
-            setpoint_raw_local_pub.shutdown();
+            setpoint_raw_pub.shutdown();
             switch (cmd.mode)
             {
                 case CommandMode::TargetLocal:
                 {
-                    setpoint_raw_local_pub = nh.advertise<mavros_msgs::PositionTarget>((topic_header + "setpoint_raw/local").c_str(), 50);
+                    setpoint_raw_pub = nh.advertise<mavros_msgs::PositionTarget>((topic_header + "setpoint_raw/local").c_str(), 50);
                     break;
                 }
 
                 case CommandMode::TargetGlobal:
                 {
-                    setpoint_raw_local_pub = nh.advertise<mavros_msgs::GlobalPositionTarget>((topic_header + "setpoint_raw/global").c_str(), 50);
+                    setpoint_raw_pub = nh.advertise<mavros_msgs::GlobalPositionTarget>((topic_header + "setpoint_raw/global").c_str(), 50);
                     break;
                 }
 
                 case CommandMode::TargetAttitude:
                 {
-                    setpoint_raw_local_pub = nh.advertise<mavros_msgs::AttitudeTarget>((topic_header + "setpoint_raw/attitude").c_str(), 50);
+                    setpoint_raw_pub = nh.advertise<mavros_msgs::AttitudeTarget>((topic_header + "setpoint_raw/attitude").c_str(), 50);
                     break;
                 }
             }
@@ -501,19 +504,19 @@ void vehicle_command::controller_cmd_cb(const px4_cmd::Command::ConstPtr &msg)
         {
             case CommandMode::TargetLocal:
             {
-                setpoint_raw_local_pub.publish(pos_setpoint);
+                setpoint_raw_pub.publish(pos_setpoint);
                 break;
             }
 
             case CommandMode::TargetGlobal:
             {
-                setpoint_raw_local_pub.publish(pos_setpoint_global);
+                setpoint_raw_pub.publish(pos_setpoint_global);
                 break;
             }
 
             case CommandMode::TargetAttitude:
             {
-                setpoint_raw_local_pub.publish(attitude_setpoint);
+                setpoint_raw_pub.publish(attitude_setpoint);
                 break;
             }
         }
@@ -526,8 +529,8 @@ void vehicle_command::controller_cmd_cb(const px4_cmd::Command::ConstPtr &msg)
     // non-custom command mode be local mode
     if (current_custom_mode != CommandMode::TargetLocal)
     {
-        setpoint_raw_local_pub.shutdown();
-        setpoint_raw_local_pub = nh.advertise<mavros_msgs::PositionTarget>((topic_header + "setpoint_raw/local").c_str(), 50);
+        setpoint_raw_pub.shutdown();
+        setpoint_raw_pub = nh.advertise<mavros_msgs::PositionTarget>((topic_header + "setpoint_raw/local").c_str(), 50);
     }
     current_custom_mode = CommandMode::TargetLocal;
 
