@@ -944,8 +944,10 @@ class ControllerMainWindow : public QDialog
                 }
 
                 // hover command
-                if (cmds[node_id].Mode == px4_cmd::Command::Hover)
+                if (cmds[node_id].Mode == px4_cmd::Command::Hover || cmds[node_id].Mode == px4_cmd::Command::Loiter)
                 {
+                    cmds[node_id].Move_mode = px4_cmd::Command::XYZ_POS;
+                    cmds[node_id].Move_frame = px4_cmd::Command::ENU;
                     cmd_values[node_id][0] = data[node_id]->hover_pos[0] + data[node_id]->init_x;
                     cmd_values[node_id][1] = data[node_id]->hover_pos[1] + data[node_id]->init_y;
                     cmd_values[node_id][2] = data[node_id]->hover_pos[2] + data[node_id]->init_z;
@@ -1035,17 +1037,21 @@ class ControllerMainWindow : public QDialog
                 usleep(20000);
             }
             data[node_id]->ext_cmd_sub_state = false;
-            if (!ext_cmd_state)
+            if (data[node_id]->vehicle_type == px4_cmd::Command::FixWing)
             {
-                if (data[node_id]->vehicle_type == px4_cmd::Command::FixWing)
-                {
-                    cmds[node_id].Mode = px4_cmd::Command::Loiter;
-                }
-                else
-                {
-                    cmds[node_id].Mode = px4_cmd::Command::Hover;
-                }
+                cmds[node_id].Mode = px4_cmd::Command::Loiter;
+                cmds[node_id].Move_mode = px4_cmd::Command::XYZ_POS;
+                cmds[node_id].Move_frame = px4_cmd::Command::ENU;
             }
+            else
+            {
+                cmds[node_id].Mode = px4_cmd::Command::Hover;
+                cmds[node_id].Move_mode = px4_cmd::Command::XYZ_POS;
+                cmds[node_id].Move_frame = px4_cmd::Command::ENU;
+            }
+            cmd_values[node_id][0] = data[node_id]->hover_pos[0] + data[node_id]->init_x;
+            cmd_values[node_id][1] = data[node_id]->hover_pos[1] + data[node_id]->init_y;
+            cmd_values[node_id][2] = data[node_id]->hover_pos[2] + data[node_id]->init_z;
             manual_button->setEnabled(true);
             external_button->setEnabled(true);
             trajectory_button->setEnabled(true);
@@ -1069,6 +1075,11 @@ class ControllerMainWindow : public QDialog
                     continue;
                 }
                 cmds[i].Mode = px4_cmd::Command::Hover;
+                cmds[i].Move_mode = px4_cmd::Command::XYZ_POS;
+                cmds[i].Move_frame = px4_cmd::Command::ENU;
+                cmd_values[i][0] = data[i]->hover_pos[0] + data[i]->init_x;
+                cmd_values[i][1] = data[i]->hover_pos[1] + data[i]->init_y;
+                cmd_values[i][2] = data[i]->hover_pos[2] + data[i]->init_z;
             }
         }
 
@@ -1378,6 +1389,20 @@ class ControllerMainWindow : public QDialog
             if (current_cmd == "External Command" && !ext_cmd_state)
             {
                 current_cmd = "Hover";
+                for (size_t node_id = 0; node_id < cmds.size(); node_id++)
+                {
+                    if (data[node_id]->vehicle_type == px4_cmd::Command::FixWing)
+                    {
+                        cmds[node_id].Mode = px4_cmd::Command::Loiter;
+                    }
+                    else
+                    {
+                        cmds[node_id].Mode = px4_cmd::Command::Hover;
+                    }
+                    cmd_values[node_id][0] = data[node_id]->hover_pos[0] + data[node_id]->init_x;
+                    cmd_values[node_id][1] = data[node_id]->hover_pos[1] + data[node_id]->init_y;
+                    cmd_values[node_id][2] = data[node_id]->hover_pos[2] + data[node_id]->init_z;
+                }
                 signal_button_1->click();
             }
 
@@ -1385,7 +1410,7 @@ class ControllerMainWindow : public QDialog
             // update cmd mode info
             if (current_mode == mavros_msgs::State::MODE_PX4_OFFBOARD)
             {
-                if (current_cmd == "Take Off")
+                if (current_cmd == "Take Off" || current_cmd == "Hover")
                 {
                     table_headers_ext_cmd[4] = "CMD 1  [x]";
                     table_headers_ext_cmd[5] = "CMD 2  [y]";

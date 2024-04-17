@@ -294,7 +294,7 @@ void vehicle_command::controller_cmd_cb(const px4_cmd::Command::ConstPtr &msg)
     cmd_mutex.lock();
 
     // custom command
-    while (state_mode == mavros_msgs::State::MODE_PX4_OFFBOARD && msg->Move_mode == px4_cmd::Command::Custom_Command)
+    while (state_mode == mavros_msgs::State::MODE_PX4_OFFBOARD && msg->Mode == px4_cmd::Command::Move && msg->Move_mode == px4_cmd::Command::Custom_Command)
     {
         // set hover to false
         hover = false;
