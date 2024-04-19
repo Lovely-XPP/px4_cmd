@@ -39,7 +39,7 @@ class ControllerLoadWindow : public QDialog
 
     private:
         // settings
-        string version = "V2.0.0 alpha";
+        string version = "V2.0.0";
         bool thread_stop = false;
 
         //Widgets

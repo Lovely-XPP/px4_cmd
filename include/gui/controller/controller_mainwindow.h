@@ -100,7 +100,7 @@ class ControllerMainWindow : public QDialog
 
     private:
         // settings
-        string version = "V2.0.0 alpha";
+        string version = "V2.0.0";
         QString current_cmd = "None";
         double update_time = 0.3;
 
