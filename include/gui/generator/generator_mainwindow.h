@@ -53,7 +53,7 @@ class GeneratorMainWindow : public QDialog
 
     private:
         // settings
-        string version = "V1.1.12";
+        string version = "V2.0.0";
         vector<string> topic_types = {"{Vehicle Type}_{ID}", "uav_{ID}"};
         vector<string> vehicle_types = {"iris", "typhoon_h480", "plane"};
         vector<string> sensor_types = {"None", "Lidar", "Depth Camera", "RGB Camera", "Stereo Camera", "Realsense Camera"};
