@@ -6,3 +6,5 @@ build
 /.vscode
 /.idea
 /models
+*.sdf
+/scripts/model_gen.py

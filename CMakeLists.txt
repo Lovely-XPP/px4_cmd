@@ -4,20 +4,22 @@
 cmake_minimum_required(VERSION 3.10)
 
 # project name version languages
-project(px4_cmd VERSION 1.0.3 LANGUAGES CXX)
+project(px4_cmd VERSION 2.0.0 LANGUAGES CXX)
 
 # set C++ standard
-set(CMAKE_CXX_FLAGS "-std=c++11")
+set(CXX_STANDARD 11)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
+set(BUILD_SHARED_LIBS OFF)
 
 # find package
 # opencv
-find_package(OpenCV REQUIRED)
+find_package(OpenCV 4 REQUIRED)
 # catkin package
 find_package(catkin REQUIRED COMPONENTS
     cv_bridge
     roscpp
     rospy
+    roslib
     std_msgs
     mavros_msgs
     geometry_msgs
@@ -29,6 +31,7 @@ find_package(Boost REQUIRED COMPONENTS system)
 # include dir
 include_directories(
     include
+    include/API
     ${catkin_INCLUDE_DIRS}
     ${OpenCV_INCLUDE_DIRS}
 )
@@ -45,10 +48,15 @@ add_message_files(
 generate_messages(DEPENDENCIES std_msgs)
 
 catkin_package(
-    INCLUDE_DIRS include
+    INCLUDE_DIRS include/API
     LIBRARIES ${PROJECT_NAME}
     CATKIN_DEPENDS message_runtime std_msgs
 )
+
+################## External cmd API ##################
+add_library(${PROJECT_NAME} src/API/vehicle_external_command.cpp src/API/custom_command.cpp)
+add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS})
+target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
 
 ###################  Exec  ###################
 ## Hover ##
@@ -64,7 +72,7 @@ target_link_libraries(set_cmd ${catkin_LIBRARIES} ${OpenCV_LIBS})
 # send_command
 add_executable(send_cmd src/main/send_command.cpp)
 add_dependencies(send_cmd ${${PROJECT_NAME}_EXPORTED_TARGETS})
-target_link_libraries(send_cmd ${catkin_LIBRARIES})
+target_link_libraries(send_cmd ${catkin_LIBRARIES} ${PROJECT_NAME})
 
 ## Fix wing ##
 # set_command
