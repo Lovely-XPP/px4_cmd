@@ -119,6 +119,9 @@ void judge_esc_thread_func();
 /*     主函数      */
 int main(int argc, char **argv)
 {
+    // 声明载具
+    cmd.Vehicle = px4_cmd::Command::FixWing;
+    
     // 节点初始化
     ros::init(argc, argv, "set_command");
     ros::NodeHandle nh;
@@ -142,7 +145,7 @@ int main(int argc, char **argv)
     }
 
     // 外部命令默认话题名，支持通过命令行参数输入
-    std::string topic_name = "/px4_cmd/external_command";
+    std::string topic_name = node_name + "/px4_cmd/external_command";
     bool get_topic = nh.getParam("cmd_topic", topic_name);
 
     // 订阅
@@ -150,8 +153,8 @@ int main(int argc, char **argv)
     cmd_sub = nh.subscribe<px4_cmd::Command>(topic_name, 20, external_cmd_cb);
 
     // 广播初始化
-    cmd_pub = nh.advertise<px4_cmd::Command>("/px4_cmd/control_command", 10);
-    ext_cmd_state_pub = nh.advertise<std_msgs::Bool>("/px4_cmd/ext_cmd_state", 20);
+    cmd_pub = nh.advertise<px4_cmd::Command>(node_name + "/px4_cmd/control_command", 10);
+    ext_cmd_state_pub = nh.advertise<std_msgs::Bool>(node_name + "/px4_cmd/ext_cmd_state", 20);
 
     // 命令信息
     desire_cmd_value[0] = 0.0;
@@ -164,6 +167,7 @@ int main(int argc, char **argv)
     cmd.desire_cmd[1] = desire_cmd_value[1];
     cmd.desire_cmd[2] = desire_cmd_value[2];
     cmd.yaw_cmd = yaw_value;
+    cmd.header.frame_id = 1;
 
     // 开启广播线程
     sleep(1);
@@ -298,12 +302,10 @@ int main(int argc, char **argv)
                     }
                 }
                     
-
                 // 修改命令
                 cmd.Mode = switch_cmd;
                 cmd.Move_frame = switch_frame;
                 cmd.Move_mode = switch_cmd_mode;
-
 
                 // 更改具体指令
                 if (switch_cmd_mode == px4_cmd::Command::XYZ_REL_POS)
@@ -517,17 +519,96 @@ int main(int argc, char **argv)
                         ext_exit = false;
                         break;
                     }
-                    cmd.Mode = external_cmd.Mode;
-                    cmd.Move_frame = external_cmd.Move_frame;
-                    cmd.Move_mode = external_cmd.Move_mode;
-                    cmd.desire_cmd[0] = external_cmd.desire_cmd[0];
-                    cmd.desire_cmd[1] = external_cmd.desire_cmd[1];
-                    cmd.desire_cmd[2] = external_cmd.desire_cmd[2];
-                    cmd.yaw_cmd = external_cmd.yaw_cmd;
+                    if (external_cmd.Move_mode == px4_cmd::Command::Custom_Command)
+                    {
+                        cmd.Mode = external_cmd.Mode;
+                        cmd.Move_frame = external_cmd.Move_frame;
+                        cmd.Move_mode = external_cmd.Move_mode;
+                        for (size_t i = 0; i < 20; i++)
+                        {
+                            cmd.custom_cmd[i] = external_cmd.custom_cmd[i];
+                        }
+                    }
+                    else
+                    {
+                        cmd.Mode = external_cmd.Mode;
+                        cmd.Move_frame = external_cmd.Move_frame;
+                        cmd.Move_mode = external_cmd.Move_mode;
+                        cmd.desire_cmd[0] = external_cmd.desire_cmd[0];
+                        cmd.desire_cmd[1] = external_cmd.desire_cmd[1];
+                        cmd.desire_cmd[2] = external_cmd.desire_cmd[2];
+                        cmd.yaw_cmd = external_cmd.yaw_cmd;
+                    }
                     sys_res = system("clear");
                     print_title("PX4 External Command", null_string);
                     cout << "Exit: Press [ESC]" << endl;
                     cout << "Time: " << fixed << setprecision(2) << external_cmd.ext_time << "/" << external_cmd.ext_total_time << endl;
+                    // custom command output info
+                    if (external_cmd.Move_mode == px4_cmd::Command::Custom_Command)
+                    {
+                        int id = 0;
+                        std::cout << "Custom Command: " << std::endl;
+                        // position
+                        std::cout << "[Position Local]: ";
+                        for (size_t i = 0; i < 3; i++)
+                        {
+                            std::cout << cmd.custom_cmd[i + id] << " ";
+                        }
+                        std::cout << std::endl;
+
+                        // velocity
+                        id += 3;
+                        std::cout << "[Velocity]: ";
+                        for (size_t i = 0; i < 3; i++)
+                        {
+                            std::cout << cmd.custom_cmd[i + id] << " ";
+                        }
+                        std::cout << std::endl;
+
+                        // accelerate
+                        id += 3;
+                        std::cout << "[accelerate]: ";
+                        for (size_t i = 0; i < 3; i++)
+                        {
+                            std::cout << cmd.custom_cmd[i + id] << " ";
+                        }
+                        std::cout << std::endl;
+
+                        // Force flag
+                        id += 3;
+                        std::cout << "[Force Flag]: " << (bool)cmd.custom_cmd[id] << std::endl;
+
+                        // Yaw
+                        id += 1;
+                        std::cout << "[Yaw]: " << cmd.custom_cmd[id] << std::endl;
+
+                        // Yaw rate
+                        id += 1;
+                        std::cout << "[Yaw Rate]: " << cmd.custom_cmd[id] << std::endl;
+
+                        // Attitude
+                        id += 1;
+                        std::cout << "[Attitude (quaternion)]: ";
+                        for (size_t i = 0; i < 4; i++)
+                        {
+                            std::cout << cmd.custom_cmd[i + id] << " ";
+                        }
+                        std::cout << std::endl;
+
+                        // Attidute Rate
+                        id += 4;
+                        std::cout << "[Attitude Rate]: ";
+                        for (size_t i = 0; i < 3; i++)
+                        {
+                            std::cout << cmd.custom_cmd[i + id] << " ";
+                        }
+                        std::cout << std::endl;
+
+                        // Thrust
+                        id += 3;
+                        std::cout << "[Thrust]: " << cmd.custom_cmd[id] << std::endl;
+                        continue;
+                    }
                     print_current_cmd(cmd, "", false);
                 }
                 break;

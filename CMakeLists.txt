@@ -32,6 +32,7 @@ find_package(Boost REQUIRED COMPONENTS system)
 include_directories(
     include
     include/API
+    include/API
     ${catkin_INCLUDE_DIRS}
     ${OpenCV_INCLUDE_DIRS}
 )
@@ -58,6 +59,11 @@ add_library(${PROJECT_NAME} src/API/vehicle_external_command.cpp src/API/custom_
 add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS})
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
 
+################## External cmd API ##################
+add_library(${PROJECT_NAME} src/API/vehicle_external_command.cpp src/API/custom_command.cpp)
+add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS})
+target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
+
 ###################  Exec  ###################
 ## Hover ##
 # set_mode
@@ -72,6 +78,7 @@ target_link_libraries(set_cmd ${catkin_LIBRARIES} ${OpenCV_LIBS})
 # send_command
 add_executable(send_cmd src/main/send_command.cpp)
 add_dependencies(send_cmd ${${PROJECT_NAME}_EXPORTED_TARGETS})
+target_link_libraries(send_cmd ${catkin_LIBRARIES} ${PROJECT_NAME})
 target_link_libraries(send_cmd ${catkin_LIBRARIES} ${PROJECT_NAME})
 
 ## Fix wing ##
