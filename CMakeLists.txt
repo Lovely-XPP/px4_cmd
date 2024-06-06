@@ -7,7 +7,7 @@ cmake_minimum_required(VERSION 3.10)
 project(px4_cmd VERSION 2.0.0 LANGUAGES CXX)
 
 # set C++ standard
-set(CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 set(BUILD_SHARED_LIBS OFF)
 
