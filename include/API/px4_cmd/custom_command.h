@@ -51,7 +51,7 @@ struct CustomCommand
         NAN,
         NAN
     };
-    // accelerate set point
+    // accelerate setpoint
     double accelerate[3] = {
         NAN,
         NAN,

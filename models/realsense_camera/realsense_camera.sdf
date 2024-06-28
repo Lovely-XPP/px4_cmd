@@ -251,7 +251,7 @@
             </inertial>
             <sensor name="depth" type="depth">
                 <camera name="depth">
-                    <horizontal_fov>1.571</horizontal_fov>
+                    <horizontal_fov>1.211</horizontal_fov>
                     <image>
                         <width>640</width>
                         <height>480</height>
@@ -317,7 +317,7 @@
             <depthUpdateRate>30</depthUpdateRate>
             <colorUpdateRate>30</colorUpdateRate>
             <infraredUpdateRate>30</infraredUpdateRate>
-            <frameName>camera_link</frameName>
+            <frameName>base_link</frameName>
             <depthTopicName>depth/image_raw</depthTopicName>
             <depthCameraInfoTopicName>depth/camera_info</depthCameraInfoTopicName>
             <colorTopicName>color/image_raw</colorTopicName>
@@ -336,6 +336,7 @@
             <pointCloudTopicName>depth/color/points</pointCloudTopicName>
             <pointCloudCutoff>0.25</pointCloudCutoff>
             <pointCloudCutoffMax>9.0</pointCloudCutoffMax>
+            <robotNamespace/>
         </plugin>
     </model>
 </sdf>

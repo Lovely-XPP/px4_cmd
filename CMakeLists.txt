@@ -10,7 +10,6 @@ project(px4_cmd VERSION 2.0.0 LANGUAGES CXX)
 # set(CMAKE_BUILD_TYPE Release)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
-set(BUILD_SHARED_LIBS OFF)
 
 # find package
 # opencv
@@ -70,6 +69,8 @@ catkin_package(
 add_library(${PROJECT_NAME} src/API/vehicle_external_command.cpp src/API/custom_command.cpp)
 add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS})
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
+
+###################  Examples  ###################
 
 ###################  Exec  ###################
 ## Hover ##

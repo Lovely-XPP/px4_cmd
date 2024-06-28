@@ -192,7 +192,7 @@ void custom_command_to_px4_msg(const CustomCommand &cmd, px4_cmd::Command &msg)
     external_cmd.custom_cmd[id] = cmd.thrust;
     // end transform
 
-    // update command
+    // update message command
     msg = external_cmd;
 }
 
@@ -269,7 +269,7 @@ bool check_custom_command(CustomCommand cmd, int vehicle_type, std::string &erro
                 return true;
             }
 
-            // x - y pair need pair
+            // x - y command need pair
             if (isnan(cmd.accelerate[0]) ^ isnan(cmd.accelerate[1]))
             {
                 error = XY_NOT_PAIR;

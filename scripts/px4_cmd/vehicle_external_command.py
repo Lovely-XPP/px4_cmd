@@ -8,6 +8,7 @@ import threading
 from typing import overload, List
 from tf.transformations import euler_from_quaternion
 from px4_cmd.msg import Command
+from custom_command import *
 from geometry_msgs.msg import PoseStamped
 from geometry_msgs.msg import TwistStamped
 
@@ -35,6 +36,7 @@ class vehicle_external_command:
         :param node: node name for vehicle, defined in topic name: /{node}/mavros/....
         '''
         node_name = node
+        # start external command thread
         topic_header = "/" + node_name + "/mavros/"
         self.external_cmd.Mode = Command.Move
         self.external_cmd.Move_frame = Command.ENU
@@ -54,6 +56,18 @@ class vehicle_external_command:
         progress_1.start()
         progress_2 = threading.Thread(target=self.ros_pub_thread)
         progress_2.start()
+
+    @overload
+    def start(self) -> None:
+        # get node name
+        node_name: str = ""
+        topics = rospy.get_published_topics()
+        for topic in topics:
+            if "/mavros" in topic:
+                node_name = topic
+                break
+        # start external command thread
+        self.start(node_name)
 
     def ros_sub_thread(self):
         '''
