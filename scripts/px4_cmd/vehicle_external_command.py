@@ -28,6 +28,9 @@ class vehicle_external_command:
         self.attitude: List[float] = [0.0, 0.0, 0.0]
         self.velocity: List[float] = [0.0, 0.0, 0.0]
         self.angle_rate: List[float] = [0.0, 0.0, 0.0]
+        self.pos_cb_mutex = threading.Lock()
+        self.vel_cb_mutex = threading.Lock()
+        self.change_cmd_mutex = threading.Lock()
         pass
 
     def start(self, node: str) -> None:
@@ -87,6 +90,7 @@ class vehicle_external_command:
         '''
         position and pose subscriber callback function
         '''
+        self.pos_cb_mutex.acquire()
         self.position[0] = msg.pose.position.x + self.init_x
         self.position[1] = msg.pose.position.y + self.init_y
         self.position[2] = msg.pose.position.z + self.init_z
@@ -94,17 +98,20 @@ class vehicle_external_command:
         self.attitude[0] = P + self.init_P
         self.attitude[1] = R + self.init_R
         self.attitude[2] = Y + self.init_Y
+        self.pos_cb_mutex.release()
 
     def vel_cb(self, msg: TwistStamped):
         '''
         velocity and angle rate subscriber callback function
         '''
+        self.vel_cb_mutex.acquire()
         self.velocity[0] = msg.twist.linear.x
         self.velocity[1] = msg.twist.linear.y
         self.velocity[2] = msg.twist.linear.z
         self.angle_rate[0] = msg.twist.angular.x
         self.angle_rate[1] = msg.twist.angular.y
         self.angle_rate[2] = msg.twist.angular.z
+        self.vel_cb_mutex.release()
 
     @overload
     def set_position(self, x: float, y: float, z: float, frame: int = Command.ENU):
@@ -115,12 +122,14 @@ class vehicle_external_command:
         :param z: desire position in z axis
         :param frame: position in which frame, px4_cmd::Command::ENU / px4_cmd::Command::BODY
         '''
+        self.change_cmd_mutex.acquire()
         self.external_cmd.Mode = Command.Move
         self.external_cmd.Move_frame = frame
         self.external_cmd.Move_mode = Command.XYZ_POS
         self.external_cmd.desire_cmd[0] = x
         self.external_cmd.desire_cmd[1] = y
         self.external_cmd.desire_cmd[2] = z
+        self.change_cmd_mutex.release()
 
     @overload
     def set_position(self, x: float, y: float, z: float, yaw: float, frame: int = Command.ENU):
@@ -132,6 +141,7 @@ class vehicle_external_command:
         :param yaw_cmd: desire yaw command
         :param frame: position in which frame, px4_cmd::Command::ENU / px4_cmd::Command::BODY
         '''
+        self.change_cmd_mutex.acquire()
         self.external_cmd.Mode = Command.Move
         self.external_cmd.Move_frame = frame
         self.external_cmd.Move_mode = Command.XYZ_POS
@@ -139,6 +149,7 @@ class vehicle_external_command:
         self.external_cmd.desire_cmd[1] = y
         self.external_cmd.desire_cmd[2] = z
         self.external_cmd.yaw_cmd = yaw
+        self.change_cmd_mutex.release()
 
     @overload
     def set_velocity(self, vx: float, vy: float, vz: float, frame: int = Command.ENU):
@@ -149,12 +160,14 @@ class vehicle_external_command:
         :param vz: desire velocity in z axis
         :param frame: velocity in which frame, px4_cmd::Command::ENU / px4_cmd::Command::BODY
         '''
+        self.change_cmd_mutex.acquire()
         self.external_cmd.Mode = Command.Move
         self.external_cmd.Move_frame = frame
         self.external_cmd.Move_mode = Command.XYZ_VEL
         self.external_cmd.desire_cmd[0] = vx
         self.external_cmd.desire_cmd[1] = vy
         self.external_cmd.desire_cmd[2] = vz
+        self.change_cmd_mutex.release()
     
     @overload 
     def set_velocity(self, vx: float, vy: float, vz: float, yaw: float, frame: int = Command.ENU):
@@ -166,6 +179,7 @@ class vehicle_external_command:
         :param yaw_cmd: desire yaw command
         :param frame: velocity in which frame, px4_cmd::Command::ENU / px4_cmd::Command::BODY
         '''
+        self.change_cmd_mutex.acquire()
         self.external_cmd.Mode = Command.Move
         self.external_cmd.Move_frame = frame
         self.external_cmd.Move_mode = Command.XYZ_VEL
@@ -173,6 +187,7 @@ class vehicle_external_command:
         self.external_cmd.desire_cmd[1] = vy
         self.external_cmd.desire_cmd[2] = vz
         self.external_cmd.yaw_cmd = yaw
+        self.change_cmd_mutex.release()
 
     @overload
     def set_velocity_with_height(self, vx: float, vy: float, z: float, frame: int = Command.ENU):
@@ -183,12 +198,14 @@ class vehicle_external_command:
         :param z: desire height
         :param frame: velocity in which frame, px4_cmd::Command::ENU / px4_cmd::Command::BODY
         '''
+        self.change_cmd_mutex.acquire()
         self.external_cmd.Mode = Command.Move
         self.external_cmd.Move_frame = frame
         self.external_cmd.Move_mode = Command.XY_VEL_Z_POS
         self.external_cmd.desire_cmd[0] = vx
         self.external_cmd.desire_cmd[1] = vy
         self.external_cmd.desire_cmd[2] = z
+        self.change_cmd_mutex.release()
 
     @overload
     def set_velocity_with_height(self, vx: float, vy: float, z: float, yaw: float, frame: int = Command.ENU):
@@ -200,6 +217,7 @@ class vehicle_external_command:
         :param yaw_cmd: desire yaw command
         :param frame: velocity in which frame, px4_cmd::Command::ENU / px4_cmd::Command::BODY
         '''
+        self.change_cmd_mutex.acquire()
         self.external_cmd.Mode = Command.Move
         self.external_cmd.Move_frame = frame
         self.external_cmd.Move_mode = Command.XY_VEL_Z_POS
@@ -207,15 +225,27 @@ class vehicle_external_command:
         self.external_cmd.desire_cmd[1] = vy
         self.external_cmd.desire_cmd[2] = z
         self.external_cmd.yaw_cmd = yaw
+        self.change_cmd_mutex.release()
+    
+    def set_custom_command(self, cmd: CustomCommand) -> None:
+        '''
+        setting custom command
+        :param cmd: custom command
+        '''
+        self.change_cmd_mutex.acquire()
+        self.external_cmd = custom_command_to_px4_msg(cmd)
+        self.change_cmd_mutex.release()
 
     @overload
     def set_hover(self) -> None:
         '''
         setting vehicle to hover mode
         '''
+        self.change_cmd_mutex.acquire()
         self.external_cmd.Mode = Command.Hover
         self.external_cmd.Move_frame = Command.ENU
         self.external_cmd.Move_mode = Command.XY_VEL_Z_POS
+        self.change_cmd_mutex.release()
 
     @overload
     def set_hover(self, yaw: float) -> None:
@@ -223,7 +253,9 @@ class vehicle_external_command:
         setting vehicle to hover mode
         :param yaw_cmd: desire yaw command
         '''
+        self.change_cmd_mutex.acquire()
         self.external_cmd.Mode = Command.Hover
         self.external_cmd.Move_frame = Command.ENU
         self.external_cmd.Move_mode = Command.XY_VEL_Z_POS
         self.external_cmd.yaw_cmd = yaw
+        self.change_cmd_mutex.release()

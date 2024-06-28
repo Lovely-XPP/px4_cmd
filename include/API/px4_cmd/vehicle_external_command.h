@@ -71,37 +71,6 @@ class vehicle_external_command
         /// @brief main thread function
         void ros_thread_fun();
 
-    public:
-        /// @brief update time for API
-        double update_time = 0.02;
-        /// @brief if reciving external command
-        bool ext_cmd_state = false;
-        /// @brief set external command total time
-        double total_time = -1;
-        /// @brief initial position in x axis, m
-        double init_x = 0;
-        /// @brief initial position in y axis, m
-        double init_y = 0;
-        /// @brief initial position in z axis, m
-        double init_z = 0;
-        /// @brief vehicle position [x y z], m
-        double position[3];
-        /// @brief vehicle attitude [roll pitch yaw], rad
-        double attitude[3];
-        /// @brief vehicle velocity [vx vy vz], m/s
-        double velocity[3];
-        /// @brief vehicle angle rate [x, y, z], rad/s
-        double angle_rate[3];
-        /// @brief vehicle quaternion
-        tf::Quaternion quaternion;
-
-        /// @brief start API node
-        /// @param node node name for vehicle, defined in topic name: /{node}/mavros/....
-        void start(string node);
-
-        /// @brief start API node - for single vehicle simualtion
-        void start();
-
         /// @brief setting position command in 3 axis for vehicle - thread function
         /// @param x desire position in x axis, m
         /// @param y desire position in y axis, m
@@ -157,6 +126,37 @@ class vehicle_external_command
         /// @brief setting vehicle to hover mode  - thread function
         /// @param yaw_cmd desire yaw command, rad
         void set_hover_thread_func(double yaw);
+
+    public:
+        /// @brief update time for API
+        double update_time = 0.02;
+        /// @brief if reciving external command
+        bool ext_cmd_state = false;
+        /// @brief set external command total time
+        double total_time = -1;
+        /// @brief initial position in x axis, m
+        double init_x = 0;
+        /// @brief initial position in y axis, m
+        double init_y = 0;
+        /// @brief initial position in z axis, m
+        double init_z = 0;
+        /// @brief vehicle position [x y z], m
+        double position[3];
+        /// @brief vehicle attitude [roll pitch yaw], rad
+        double attitude[3];
+        /// @brief vehicle velocity [vx vy vz], m/s
+        double velocity[3];
+        /// @brief vehicle angle rate [x, y, z], rad/s
+        double angle_rate[3];
+        /// @brief vehicle quaternion
+        tf::Quaternion quaternion;
+
+        /// @brief start API node
+        /// @param node node name for vehicle, defined in topic name: /{node}/mavros/....
+        void start(string node);
+
+        /// @brief start API node - for single vehicle simualtion
+        void start();
 
         /// @brief setting position command in 3 axis for vehicle
         /// @param x desire position in x axis, m
