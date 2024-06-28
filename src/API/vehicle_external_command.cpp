@@ -1,7 +1,7 @@
 // Copyright (c) 2023 易鹏 中山大学航空航天学院
 // Copyright (c) 2023 Peng Yi, Sun Yat-Sen University, School of Aeronautics and Astronautics
 
-#include <px4_cmd/vehicle_external_command.hpp>
+#include <px4_cmd/vehicle_external_command.h>
 
 #define PI 3.14159265358979323846
 using namespace std;

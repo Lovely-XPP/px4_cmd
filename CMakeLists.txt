@@ -71,6 +71,9 @@ add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS})
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
 
 ###################  Examples  ###################
+add_executable(${PROJECT_NAME}_example examples/API/external_cmd.cpp)
+add_dependencies(${PROJECT_NAME}_example ${${PROJECT_NAME}_EXPORTED_TARGETS})
+target_link_libraries(${PROJECT_NAME}_example ${catkin_LIBRARIES} ${PROJECT_NAME} Qt5::Widgets)
 
 ###################  Exec  ###################
 ## Hover ##
