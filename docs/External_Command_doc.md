@@ -34,58 +34,17 @@ find_package(catkin REQUIRED COMPONENTS
 // introduce px4_cmd message
 #include <px4_cmd/Command.h>
 
-// simulation / hardware for single vehicle 
-#include <px4_cmd/vehicle_external_command.hpp>
+// simulation / hardware for single or multiple vehicle(s)
+#include <px4_cmd/vehicle_external_command.h>
 
 // init class
 vehicle_external_command ext_cmd();
 
 // start 
 ext_cmd.start();
-
-// set poistion 
-// x: position in x axis
-// y: position in y axis
-// z: position in z axis
-// yaw (optional): command for yaw
-// frame: 
-// Global Frame: px4_cmd::Command::ENU 
-//  Body  Frame: px4_cmd::Command::BODY
-ext_cmd.set_position(x, y, z, frame);
-ext_cmd.set_position(x, y, z, yaw, frame);
-
-// set velocity
-// vx: velocity in x axis
-// vy: velocity in y axis
-// vz: velocity in z axis
-// yaw (optional): command for yaw
-// frame: 
-// Global Frame: px4_cmd::Command::ENU 
-//  Body  Frame: px4_cmd::Command::BODY
-ext_cmd.set_velocity(vx, vy, vz, frame);
-ext_cmd.set_velocity(vx, vy, vz, yaw, frame);
-
-// set velocity with height
-// vx: velocity in x axis
-// vy: velocity in y axis
-// z:  position in z axis
-// yaw (optional): command for yaw
-// frame (this mode only support Global Frame): 
-// Global Frame: px4_cmd::Command::ENU 
-ext_cmd.set_velocity_with_height(x, y, z, frame);
-ext_cmd.set_velocity_with_height(x, y, z, yaw, frame);
-
-// shutdown
-ext_cmd.shutdown();
-
-
-// simulation for muti-vehicles (this mode can not use in hardware)
-#include <px4_cmd/vehicle_external_command.hpp>
-// init class - node_name in rostopic: /{node_name}/mavros/****
-vehicle_external_command ext_cmd(node_name);
-
-// start 
-ext_cmd.start();
+// if multiple vehicle, need to input node name
+// topic name: /${node_name}/mavros/xxxxx
+ext_cmd.start(node_name);
 
 // set poistion 
 // x: position in x axis
@@ -136,7 +95,10 @@ from px4_cmd.single_vehicle_external_command import single_vehicle_external_comm
 ext_cmd = vehicle_external_command()
 
 # start 
-ext_cmd.start();
+ext_cmd.start()
+# if multiple vehicle, need to input node name
+# topic name: /${node_name}/mavros/xxxxx
+ext_cmd.start(node_name)
 
 ''' set poistion 
 x: position in x axis
@@ -147,8 +109,8 @@ frame:
  Global Frame: px4_cmd::Command::ENU 
   Body  Frame: px4_cmd::Command::BODY
 '''
-ext_cmd.set_position(x, y, z, frame);
-ext_cmd.set_position(x, y, z, yaw, frame);
+ext_cmd.set_position(x, y, z, frame)
+ext_cmd.set_position(x, y, z, yaw, frame)
 
 ''' set velocity
 vx: velocity in x axis
@@ -170,58 +132,11 @@ yaw (optional): command for yaw
 frame (this mode only support Global Frame): 
  Global Frame: px4_cmd::Command::ENU 
 '''
-ext_cmd.set_velocity_with_height(x, y, z, frame);
-ext_cmd.set_velocity_with_height(x, y, z, yaw, frame);
+ext_cmd.set_velocity_with_height(x, y, z, frame)
+ext_cmd.set_velocity_with_height(x, y, z, yaw, frame)
 
 # shutdown
-ext_cmd.shutdown();
-
-
-# simulation for muti-vehicles (this mode can not use in hardware)
-from px4_cmd.vehicle_external_command import vehicle_external_command
-# init class - node_name in rostopic: /{node_name}/mavros/****
-ext_cmd = vehicle_external_command(node_name);
-
-# start 
-ext_cmd.start();
-
-''' set poistion 
-x: position in x axis
-y: position in y axis
-z: position in z axis
-yaw (optional): command for yaw
-frame: 
- Global Frame: px4_cmd::Command::ENU 
-  Body  Frame: px4_cmd::Command::BODY
-'''
-ext_cmd.set_position(x, y, z, frame);
-ext_cmd.set_position(x, y, z, yaw, frame);
-
-''' set velocity
-vx: velocity in x axis
-vy: velocity in y axis
-vz: velocity in z axis
-yaw (optional): command for yaw
-frame: 
- Global Frame: px4_cmd::Command::ENU 
-  Body  Frame: px4_cmd::Command::BODY
-'''
-ext_cmd.set_velocity(vx, vy, vz, frame);
-ext_cmd.set_velocity(vx, vy, vz, yaw, frame);
-
-''' set velocity with height
-vx: velocity in x axis
-vy: velocity in y axis
-z:  position in z axis
-yaw (optional): command for yaw
-frame (this mode only support Global Frame): 
- Global Frame: px4_cmd::Command::ENU 
-'''
-ext_cmd.set_velocity_with_height(x, y, z, frame);
-ext_cmd.set_velocity_with_height(x, y, z, yaw, frame);
-
-# shutdown
-ext_cmd.shutdown();
+ext_cmd.shutdown()
 ```
 
 ## Examples
@@ -234,4 +149,4 @@ Code: examples/vehicle_sim.cpp
 
 #### python
 
-Code: examples/single_vehicle_sim.py
+Code: examples/vehicle_sim.py
