@@ -35,10 +35,10 @@ find_package(catkin REQUIRED COMPONENTS
 #include <px4_cmd/Command.h>
 
 // simulation / hardware for single vehicle 
-#include <px4_cmd/single_vehicle_external_command.hpp>
+#include <px4_cmd/vehicle_external_command.hpp>
 
 // init class
-single_vehicle_external_command ext_cmd();
+vehicle_external_command ext_cmd();
 
 // start 
 ext_cmd.start();
@@ -133,7 +133,7 @@ from px4_cmd.msg import Command
 from px4_cmd.single_vehicle_external_command import single_vehicle_external_command
 
 # init class
-ext_cmd = single_vehicle_external_command()
+ext_cmd = vehicle_external_command()
 
 # start 
 ext_cmd.start();
@@ -226,21 +226,11 @@ ext_cmd.shutdown();
 
 ## Examples
 
-### Single Vehicle Simulation
+### Single & Muti-Vehicle Simualtion
 
 #### C++
 
-Code: examples/single_vehicle_sim.cpp
-
-#### python
-
-Code: examples/single_vehicle_sim.py
-
-### Muti-Vehicle Simualtion
-
-#### C++
-
-Code: examples/single_vehicle_sim.cpp
+Code: examples/vehicle_sim.cpp
 
 #### python
 
