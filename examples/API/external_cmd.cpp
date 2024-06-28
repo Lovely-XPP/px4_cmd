@@ -1,7 +1,5 @@
 #include <ros/ros.h>
-#include <QVector>
-#include <QString>
-#include <QStringList>
+#include <vector>
 #include <math.h>
 
 #include <px4_cmd/Command.h>
@@ -10,38 +8,25 @@
 
 using namespace std;
 
-string detect_env();
-bool detect_px4();
+void detect_px4();
 
 // global var
-QStringList nodes;
-QVector<vehicle_external_command *> uav;
+vector<string> nodes;
+vector<vehicle_external_command *> uav;
 
 int main(int argc, char *argv[])
 {
-    // detect env
-    string err = detect_env();
-    if (err != "")
-    {
-        Error(err.c_str());
-        exit(0);
-    }
-
     // init ros node
     ros::init(argc, argv, "External_Command_Center");
 
     // detect px4 running to get nodes for starting external command module
-    while (!ros::ok() || !detect_px4())
-    {
-        Warning("Not Detected PX4 Running! Waiting for PX4 running ...");
-        sleep(1);
-    }
+    detect_px4();
 
     // init all agents uav
     for (auto item = nodes.begin(); item != nodes.end(); item++)
     {
         vehicle_external_command *vec = new vehicle_external_command();
-        vec->start((*item).toStdString());
+        vec->start(*item);
         uav.push_back(vec);
     }
     Info(("External Command Start! Vehicle Count: " + to_string(nodes.size())).c_str());
@@ -84,60 +69,27 @@ int main(int argc, char *argv[])
     return 0;
 }
 
-// detect environment
-string detect_env()
-{
-    string error_msg = "";
-    string error_header = "This Programme requires ROS enviroment and PX4 installation and px4_cmd ROS Package.\n";
-    string res = "";
-    get_cmd_output("which rospack", res);
-    strip(res, "\n");
-    if (res.length() == 0)
-    {
-        error_msg = error_header + "Please Check ROS Installation & rospack command.";
-        return error_msg;
-    }
-    res.clear();
-    get_cmd_output("rospack list-names", res);
-    strip(res, "\n");
-    if (res.find("px4") == res.npos)
-    {
-        error_msg = error_header + "Please Check PX4 ROS Package Installation.";
-        return error_msg;
-    }
-    if (res.find("mavlink_sitl_gazebo") == res.npos)
-    {
-        error_msg = error_header + "Please Check mavlink_sitl_gazebo ROS Package Installation.";
-        return error_msg;
-    }
-    if (res.find("px4_cmd") == res.npos)
-    {
-        error_msg = error_header + "Please Check px4_cmd ROS Package Installation.\nGithub: https://github.com/Lovely-XPP/PX4_cmd/";
-        return error_msg;
-    }
-    return error_msg;
-}
-
-bool detect_px4()
+void detect_px4()
 {
     string tmp;
-    QString node;
-    QStringList nodes_tmp;
-    get_cmd_output("rosnode list | grep 'mavros'", tmp);
-    node = tmp.c_str();
-    nodes_tmp = node.split("/mavros\n");
-    for (auto item = nodes_tmp.begin(); item != nodes_tmp.end(); item++)
+    ros::V_string ros_nodes;
+    ros::master::getNodes(ros_nodes);
+    for (auto ros_node : ros_nodes)
     {
-        (*item).remove(0, 1);
-    }
-    if (tmp.size() > 0)
-    {
-        if (nodes.size() == 0)
+        tmp = ros_node;
+        if (tmp.find("/mavros") == std::string::npos)
         {
-            nodes_tmp.removeLast();
-            nodes = nodes_tmp;
+            continue;
         }
-        return true;
+        tmp.erase(tmp.find("/mavros"), 7);
+        if (tmp.size() > 0)
+        {
+            tmp.erase(0, 1);
+        }
+        nodes.emplace_back(tmp);
     }
-    return false;
+    if (nodes.size() <= 0)
+    {
+        throw std::runtime_error("[Error] Can not detect PX4 Running!");
+    }
 }

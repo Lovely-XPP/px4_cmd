@@ -25,7 +25,6 @@ if __name__ == "__main__":
     uav = []
     
     for i in range(len(nodes)):
-        
         uav.append(vehicle_external_command())
         uav[i].start(nodes[i])
     
