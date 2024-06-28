@@ -4,7 +4,7 @@
 cmake_minimum_required(VERSION 3.10)
 
 # project name version languages
-project(px4_cmd VERSION 2.0.0 LANGUAGES CXX)
+project(px4_cmd VERSION 2.1.0 LANGUAGES CXX)
 
 # set C++ standard
 # set(CMAKE_BUILD_TYPE Release)
