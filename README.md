@@ -9,7 +9,7 @@ PX4 command sent via terminal and Qt (based on mavlink), providing simple API to
 - [Qt](./docs/Qt_doc.md)
 
 ## To Do
-Complete Docs
+- [ ] Complete Docs
 
 
 ## Installation
@@ -19,7 +19,7 @@ mkdir -p ~/px4_ws/src
 cd ~/px4_ws/src
 catkin_init_workspace
 # Clone this Repo
-git clone https://github.com/Lovely-XPP/PX4_cmd.git
+git clone https://github.com/Lovely-XPP/px4_cmd.git
 # make
 cd ..
 catkin_make install
