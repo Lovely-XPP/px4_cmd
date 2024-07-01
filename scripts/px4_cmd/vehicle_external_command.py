@@ -33,7 +33,7 @@ class vehicle_external_command:
         self.change_cmd_mutex = threading.Lock()
         pass
 
-    def start(self, node: Optional[str]) -> None:
+    def start(self, node: Optional[str] = None) -> None:
         """start API node
 
         Args:
@@ -44,8 +44,8 @@ class vehicle_external_command:
             node_name: str = ""
             topics = rospy.get_published_topics()
             for topic in topics:
-                if "/mavros" in topic:
-                    node_name = topic
+                if "/mavros" in topic[0]:
+                    node_name = topic[0].split("/mavros")[0].strip('/').strip()
                     break
         # start external command thread
         topic_header = "/" + node_name + "/mavros/"
