@@ -5,10 +5,10 @@
 import time
 import rospy
 import threading
-from typing import overload, List
+from typing import List
 from tf.transformations import euler_from_quaternion
 from px4_cmd.msg import Command
-from custom_command import *
+from px4_cmd.custom_command import *
 from geometry_msgs.msg import PoseStamped
 from geometry_msgs.msg import TwistStamped
 
@@ -33,12 +33,20 @@ class vehicle_external_command:
         self.change_cmd_mutex = threading.Lock()
         pass
 
-    def start(self, node: str) -> None:
-        '''
-        start API node
-        :param node: node name for vehicle, defined in topic name: /{node}/mavros/....
-        '''
+    def start(self, node: str | None) -> None:
+        """start API node
+
+        Args:
+            node (str | None): node name for vehicle, defined in topic name: /{node}/mavros/.... if None means single vehicle simulation
+        """        
         node_name = node
+        if node_name == None:
+            node_name: str = ""
+            topics = rospy.get_published_topics()
+            for topic in topics:
+                if "/mavros" in topic:
+                    node_name = topic
+                    break
         # start external command thread
         topic_header = "/" + node_name + "/mavros/"
         self.external_cmd.Mode = Command.Move
@@ -60,36 +68,24 @@ class vehicle_external_command:
         progress_2 = threading.Thread(target=self.ros_pub_thread)
         progress_2.start()
 
-    @overload
-    def start(self) -> None:
-        # get node name
-        node_name: str = ""
-        topics = rospy.get_published_topics()
-        for topic in topics:
-            if "/mavros" in topic:
-                node_name = topic
-                break
-        # start external command thread
-        self.start(node_name)
-
     def ros_sub_thread(self):
-        '''
+        """
         subscribe thread function
-        '''
+        """
         rospy.spin()
 
     def ros_pub_thread(self):
-        '''
+        """
         publish thread function
-        '''
+        """
         while not rospy.is_shutdown():
             self.ext_cmd_pub.publish(self.external_cmd)
             time.sleep(self.update_time)
 
     def pos_cb(self, msg: PoseStamped):
-        '''
+        """
         position and pose subscriber callback function
-        '''
+        """
         self.pos_cb_mutex.acquire()
         self.position[0] = msg.pose.position.x + self.init_x
         self.position[1] = msg.pose.position.y + self.init_y
@@ -101,9 +97,9 @@ class vehicle_external_command:
         self.pos_cb_mutex.release()
 
     def vel_cb(self, msg: TwistStamped):
-        '''
+        """
         velocity and angle rate subscriber callback function
-        '''
+        """
         self.vel_cb_mutex.acquire()
         self.velocity[0] = msg.twist.linear.x
         self.velocity[1] = msg.twist.linear.y
@@ -113,15 +109,16 @@ class vehicle_external_command:
         self.angle_rate[2] = msg.twist.angular.z
         self.vel_cb_mutex.release()
 
-    @overload
-    def set_position(self, x: float, y: float, z: float, frame: int = Command.ENU):
-        '''
-        setting position command in 3 axis for vehicle
-        :param x: desire position in x axis
-        :param y: desire position in y axis
-        :param z: desire position in z axis
-        :param frame: position in which frame, px4_cmd::Command::ENU / px4_cmd::Command::BODY
-        '''
+    def set_position(self, x: float, y: float, z: float, yaw: float | None = None, frame: int = Command.ENU):
+        """setting position command in 3 axis for vehicle
+
+        Args:
+            x (float): desire position in x axis
+            y (float): desire position in y axis
+            z (float): desire position in z axis
+            yaw (float | None, optional): desire yaw command. Defaults to None.
+            frame (int, optional): position in which frame, px4_cmd.Command.ENU / px4_cmd.Command.BODY. Defaults to Command.ENU.
+        """
         self.change_cmd_mutex.acquire()
         self.external_cmd.Mode = Command.Move
         self.external_cmd.Move_frame = frame
@@ -129,56 +126,20 @@ class vehicle_external_command:
         self.external_cmd.desire_cmd[0] = x
         self.external_cmd.desire_cmd[1] = y
         self.external_cmd.desire_cmd[2] = z
-        self.change_cmd_mutex.release()
-
-    @overload
-    def set_position(self, x: float, y: float, z: float, yaw: float, frame: int = Command.ENU):
-        '''
-        setting position command in 3 axis for vehicle
-        :param x: desire position in x axis
-        :param y: desire position in y axis
-        :param z: desire position in z axis
-        :param yaw_cmd: desire yaw command
-        :param frame: position in which frame, px4_cmd::Command::ENU / px4_cmd::Command::BODY
-        '''
-        self.change_cmd_mutex.acquire()
-        self.external_cmd.Mode = Command.Move
-        self.external_cmd.Move_frame = frame
-        self.external_cmd.Move_mode = Command.XYZ_POS
-        self.external_cmd.desire_cmd[0] = x
-        self.external_cmd.desire_cmd[1] = y
-        self.external_cmd.desire_cmd[2] = z
-        self.external_cmd.yaw_cmd = yaw
-        self.change_cmd_mutex.release()
-
-    @overload
-    def set_velocity(self, vx: float, vy: float, vz: float, frame: int = Command.ENU):
-        '''
-        setting velocity command in 3 axis for vehicle
-        :param vx: desire velocity in x axis
-        :param vy: desire velocity in y axis
-        :param vz: desire velocity in z axis
-        :param frame: velocity in which frame, px4_cmd::Command::ENU / px4_cmd::Command::BODY
-        '''
-        self.change_cmd_mutex.acquire()
-        self.external_cmd.Mode = Command.Move
-        self.external_cmd.Move_frame = frame
-        self.external_cmd.Move_mode = Command.XYZ_VEL
-        self.external_cmd.desire_cmd[0] = vx
-        self.external_cmd.desire_cmd[1] = vy
-        self.external_cmd.desire_cmd[2] = vz
+        if yaw != None:
+            self.external_cmd.yaw_cmd = yaw
         self.change_cmd_mutex.release()
     
-    @overload 
-    def set_velocity(self, vx: float, vy: float, vz: float, yaw: float, frame: int = Command.ENU):
-        '''
-        setting velocity command in 3 axis for vehicle
-        :param vx: desire velocity in x axis
-        :param vy: desire velocity in y axis
-        :param vz: desire velocity in z axis
-        :param yaw_cmd: desire yaw command
-        :param frame: velocity in which frame, px4_cmd::Command::ENU / px4_cmd::Command::BODY
-        '''
+    def set_velocity(self, vx: float, vy: float, vz: float, yaw: float | None = None, frame: int = Command.ENU):
+        """setting velocity command in 3 axis for vehicle
+
+        Args:
+            vx (float): desire velocity in x axis
+            vy (float): desire velocity in y axis
+            vz (float): desire velocity in z axis
+            yaw (float | None, optional): desire yaw command. Defaults to None.
+            frame (int, optional): velocity in which frame, px4_cmd::Command::ENU / px4_cmd::Command::BODY. Defaults to Command.ENU.
+        """
         self.change_cmd_mutex.acquire()
         self.external_cmd.Mode = Command.Move
         self.external_cmd.Move_frame = frame
@@ -186,18 +147,20 @@ class vehicle_external_command:
         self.external_cmd.desire_cmd[0] = vx
         self.external_cmd.desire_cmd[1] = vy
         self.external_cmd.desire_cmd[2] = vz
-        self.external_cmd.yaw_cmd = yaw
+        if yaw != None:
+            self.external_cmd.yaw_cmd = yaw
         self.change_cmd_mutex.release()
 
-    @overload
-    def set_velocity_with_height(self, vx: float, vy: float, z: float, frame: int = Command.ENU):
-        '''
-        setting velocity command in 2 axis with height command for vehicle
-        :param vx: desire velocity in x axis
-        :param vy: desire velocity in y axis
-        :param z: desire height
-        :param frame: velocity in which frame, px4_cmd::Command::ENU / px4_cmd::Command::BODY
-        '''
+    def set_velocity_with_height(self, vx: float, vy: float, z: float, yaw: float | None = None, frame: int = Command.ENU):
+        """setting velocity command in 2 axis with height command for vehicle
+
+        Args:
+            vx (float): desire velocity in x axis
+            vy (float): desire velocity in y axis
+            z (float): desire height
+            yaw (float | None, optional): desire yaw command. Defaults to None.
+            frame (int, optional): velocity in which frame, px4_cmd::Command::ENU / px4_cmd::Command::BODY. Defaults to Command.ENU.
+        """
         self.change_cmd_mutex.acquire()
         self.external_cmd.Mode = Command.Move
         self.external_cmd.Move_frame = frame
@@ -205,57 +168,30 @@ class vehicle_external_command:
         self.external_cmd.desire_cmd[0] = vx
         self.external_cmd.desire_cmd[1] = vy
         self.external_cmd.desire_cmd[2] = z
-        self.change_cmd_mutex.release()
-
-    @overload
-    def set_velocity_with_height(self, vx: float, vy: float, z: float, yaw: float, frame: int = Command.ENU):
-        '''
-        setting velocity command in 2 axis with height command for vehicle
-        :param vx: desire velocity in x axis
-        :param vy: desire velocity in y axis
-        :param z: desire height
-        :param yaw_cmd: desire yaw command
-        :param frame: velocity in which frame, px4_cmd::Command::ENU / px4_cmd::Command::BODY
-        '''
-        self.change_cmd_mutex.acquire()
-        self.external_cmd.Mode = Command.Move
-        self.external_cmd.Move_frame = frame
-        self.external_cmd.Move_mode = Command.XY_VEL_Z_POS
-        self.external_cmd.desire_cmd[0] = vx
-        self.external_cmd.desire_cmd[1] = vy
-        self.external_cmd.desire_cmd[2] = z
-        self.external_cmd.yaw_cmd = yaw
+        if yaw != None:
+            self.external_cmd.yaw_cmd = yaw
         self.change_cmd_mutex.release()
     
     def set_custom_command(self, cmd: CustomCommand) -> None:
-        '''
-        setting custom command
-        :param cmd: custom command
-        '''
+        """setting custom command
+
+        Args:
+            cmd (CustomCommand): custom command struct
+        """        
         self.change_cmd_mutex.acquire()
         self.external_cmd = custom_command_to_px4_msg(cmd)
         self.change_cmd_mutex.release()
 
-    @overload
-    def set_hover(self) -> None:
-        '''
-        setting vehicle to hover mode
-        '''
-        self.change_cmd_mutex.acquire()
-        self.external_cmd.Mode = Command.Hover
-        self.external_cmd.Move_frame = Command.ENU
-        self.external_cmd.Move_mode = Command.XY_VEL_Z_POS
-        self.change_cmd_mutex.release()
+    def set_hover(self, yaw: float | None = None) -> None:
+        """setting vehicle to hover mode
 
-    @overload
-    def set_hover(self, yaw: float) -> None:
-        '''
-        setting vehicle to hover mode
-        :param yaw_cmd: desire yaw command
-        '''
+        Args:
+            yaw (float | None, optional): desire yaw command. Defaults to None.
+        """
         self.change_cmd_mutex.acquire()
         self.external_cmd.Mode = Command.Hover
         self.external_cmd.Move_frame = Command.ENU
         self.external_cmd.Move_mode = Command.XY_VEL_Z_POS
-        self.external_cmd.yaw_cmd = yaw
+        if yaw != None:
+            self.external_cmd.yaw_cmd = yaw
         self.change_cmd_mutex.release()
