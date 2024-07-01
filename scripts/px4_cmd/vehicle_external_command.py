@@ -28,6 +28,7 @@ class vehicle_external_command:
         self.attitude: List[float] = [0.0, 0.0, 0.0]
         self.velocity: List[float] = [0.0, 0.0, 0.0]
         self.angle_rate: List[float] = [0.0, 0.0, 0.0]
+        self.quaternion: List[float] = [0.0, 0.0, 0.0, 0.0]
         self.pos_cb_mutex = threading.Lock()
         self.vel_cb_mutex = threading.Lock()
         self.change_cmd_mutex = threading.Lock()
@@ -90,7 +91,8 @@ class vehicle_external_command:
         self.position[0] = msg.pose.position.x + self.init_x
         self.position[1] = msg.pose.position.y + self.init_y
         self.position[2] = msg.pose.position.z + self.init_z
-        (R, P, Y) = euler_from_quaternion([msg.pose.orientation.x, msg.pose.orientation.y, msg.pose.orientation.z, msg.pose.orientation.w])
+        self.quaternion = [msg.pose.orientation.x, msg.pose.orientation.y, msg.pose.orientation.z, msg.pose.orientation.w]
+        (R, P, Y) = euler_from_quaternion(self.quaternion)
         self.attitude[0] = P + self.init_P
         self.attitude[1] = R + self.init_R
         self.attitude[2] = Y + self.init_Y

@@ -40,11 +40,32 @@ find_package(catkin REQUIRED COMPONENTS
 // init class
 vehicle_external_command ext_cmd();
 
-// start 
-ext_cmd.start();
+// start node
 // if multiple vehicle, need to input node name
 // topic name: /${node_name}/mavros/xxxxx
+// if single vehicle, no need to input node name
+ext_cmd.start();
 ext_cmd.start(node_name);
+
+// get information for uav
+// Example to get initial position for uav
+ext_cmd->init_x;
+ext_cmd->init_y;
+ext_cmd->init_z;
+
+// Example to get position (m) / attitude (deg) / velocity (m/s) / angle_rate (deg/s) for uavs
+ext_cmd->position[0]; // get x position of uav
+ext_cmd->velocity[1]; // get y velocity of uav
+ext_cmd->angle_rate[1]; // get x angle rate of uav
+ext_cmd->attitude[0]; // get x attitude (Row) of uav
+ext_cmd->attitude[1]; // get y attitude (Pitch) of uav
+ext_cmd->attitude[2]; // get z attitude (Yaw) of uav
+ext_cmd->quaternion; // get quaternion of uav (tf::Quaternion)
+// get element of quaternion
+ext_cmd->quaternion.x();
+ext_cmd->quaternion.y();
+ext_cmd->quaternion.z();
+ext_cmd->quaternion.w();
 
 // set poistion 
 // x: position in x axis
@@ -110,12 +131,28 @@ from px4_cmd.vehicle_external_command import vehicle_external_command
 # init class
 ext_cmd = vehicle_external_command()
 
-# start 
-ext_cmd.start()
+# start node
 # if multiple vehicle, need to input node name
 # topic name: /${node_name}/mavros/xxxxx
 # if single vehicle, no need to input node name
+ext_cmd.start()
 ext_cmd.start(node_name)
+
+# get information for uav
+# Example to get initial position for uav
+ext_cmd.init_x
+ext_cmd.init_y
+ext_cmd.init_z
+
+# Example to get position (m) / attitude (deg) / velocity (m/s) / angle_rate (deg/s) for uavs
+ext_cmd.position[0] # get x position of uav
+ext_cmd.velocity[1] # get y velocity of uav
+ext_cmd.angle_rate[1] # get x angle rate of uav
+ext_cmd.attitude[0] # get x attitude (Row) of uav
+ext_cmd.attitude[1] # get y attitude (Pitch) of uav
+ext_cmd.attitude[2] # get z attitude (Yaw) of uav
+ext_cmd.quaternion # get quaternion of uav (quaternion format: [x, y, z, w])
+
 
 ''' set poistion 
 x: position in x axis

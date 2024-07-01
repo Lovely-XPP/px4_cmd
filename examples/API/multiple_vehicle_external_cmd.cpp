@@ -3,7 +3,6 @@
 #include <math.h>
 
 #include <px4_cmd/Command.h>
-#include <print_utility/printf_utility.h>
 #include <px4_cmd/vehicle_external_command.h>
 
 using namespace std;
@@ -29,7 +28,7 @@ int main(int argc, char *argv[])
         vec->start(*item);
         uav.push_back(vec);
     }
-    Info(("External Command Start! Vehicle Count: " + to_string(nodes.size()) + ".").c_str());
+    std::cout << (("[Info] External Command Start! Vehicle Count: " + to_string(nodes.size()) + ".")) << std::endl;
     
     /************************ Edit  Here ************************/
     double t = 0;
@@ -44,6 +43,7 @@ int main(int argc, char *argv[])
     }
     return 0;
 
+    /*
     // Example to get initial position for uavs
     uav[0]->init_x;
     uav[0]->init_y;
@@ -56,6 +56,12 @@ int main(int argc, char *argv[])
     uav[0]->attitude[0]; // get x attitude (Row) of uav 0
     uav[0]->attitude[1]; // get y attitude (Pitch) of uav 0
     uav[0]->attitude[2]; // get z attitude (Yaw) of uav 0
+    uav->quaternion; // get quaternion of uav (tf::Quaternion)
+    // get element of quaternion
+    uav->quaternion.x();
+    uav->quaternion.y();
+    uav->quaternion.z();
+    uav->quaternion.w();
 
     // Example to set desite position / velocity / velocity with height for uavs
     // set desired position to [1, 1, 1] of uav 0, use Body frame (it is recommanded for using global frame: px4_cmd::Command::ENU)
@@ -63,10 +69,9 @@ int main(int argc, char *argv[])
 
     // set desired velocity to [1, 1, 1] of uav 0, use global ENU frame
     uav[0]->set_velocity(1, 1, 1, px4_cmd::Command::ENU);
-    // set desired velocity with height to [1, 1, 1] of uav 0, use global ENU frame 
+    // set desired velocity with height to [1, 1, 1] of uav 0, use global ENU frame
     uav[0]->set_velocity_with_height(1, 1, 1, px4_cmd::Command::ENU);
-
-    return 0;
+    */
 }
 
 void detect_px4()
