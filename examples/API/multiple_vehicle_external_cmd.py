@@ -1,9 +1,10 @@
 import rospy
+from typing import List
 from px4_cmd.msg import Command
 from px4_cmd.vehicle_external_command import vehicle_external_command
 import os, time, math
 
-def detect_px4() -> "list[str]":
+def detect_px4() -> List[str]:
     tmp = os.popen("rosnode list | grep 'mavros'")
     nodes_tmp = tmp.read().split("/mavros\n")
     if len(nodes_tmp) > 0:

@@ -34,8 +34,8 @@ enum FixWingPositionMode : unsigned long
 struct CustomCommand
 {
     // command mode: local / global / attitude
-    CommandMode mode;                
-    // FixWing only support position setpoint in local & global mode, and need speicify position mode
+    CommandMode mode;
+    // FixWing only support position setpoint in local & global mode, and need specify position mode
     FixWingPositionMode fw_mode;     
     // frame id in px4_cmd message
     int frame_id;                    

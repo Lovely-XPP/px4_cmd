@@ -3,7 +3,7 @@
 # Copyright (c) 2023 Peng Yi, Sun Yat-Sen University, School of Aeronautics and Astronautics
 
 from enum import Enum
-from typing import List
+from typing import List, Optional
 from px4_cmd.msg import Command
 from numpy import NaN, isnan
 
@@ -29,7 +29,7 @@ class CustomCommand:
     def __init__(self):
         # command mode: local / global / attitude
         self.mode: CommandMode = CommandMode.TargetLocal
-        # FixWing only support position setpoint in local & global mode, and need speicify position mode
+        # FixWing only support position setpoint in local & global mode, and need specify position mode
         self.fw_mode: FixWingPositionMode = FixWingPositionMode
         # frame id in px4_cmd message
         self.frame_id: int = 0 
@@ -200,7 +200,7 @@ def custom_command_to_px4_msg(cmd: CustomCommand) -> Command:
     return external_cmd
 
 
-def check_custom_command(cmd: CustomCommand, vehicle_type: int = Command.Multicopter) -> (str | None):
+def check_custom_command(cmd: CustomCommand, vehicle_type: int = Command.Multicopter) -> Optional[str]:
     """check custom command if correct
 
     Args:

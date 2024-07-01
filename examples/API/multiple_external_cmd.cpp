@@ -29,7 +29,7 @@ int main(int argc, char *argv[])
         vec->start(*item);
         uav.push_back(vec);
     }
-    Info(("External Command Start! Vehicle Count: " + to_string(nodes.size())).c_str());
+    Info(("External Command Start! Vehicle Count: " + to_string(nodes.size()) + ".").c_str());
     
     /************************ Edit  Here ************************/
     double t = 0;

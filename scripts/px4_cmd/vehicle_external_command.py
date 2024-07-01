@@ -5,7 +5,7 @@
 import time
 import rospy
 import threading
-from typing import List
+from typing import List, Optional
 from tf.transformations import euler_from_quaternion
 from px4_cmd.msg import Command
 from px4_cmd.custom_command import *
@@ -33,7 +33,7 @@ class vehicle_external_command:
         self.change_cmd_mutex = threading.Lock()
         pass
 
-    def start(self, node: str | None) -> None:
+    def start(self, node: Optional[str]) -> None:
         """start API node
 
         Args:
@@ -109,7 +109,7 @@ class vehicle_external_command:
         self.angle_rate[2] = msg.twist.angular.z
         self.vel_cb_mutex.release()
 
-    def set_position(self, x: float, y: float, z: float, yaw: float | None = None, frame: int = Command.ENU):
+    def set_position(self, x: float, y: float, z: float, yaw: Optional[float] = None, frame: int = Command.ENU):
         """setting position command in 3 axis for vehicle
 
         Args:
@@ -130,7 +130,7 @@ class vehicle_external_command:
             self.external_cmd.yaw_cmd = yaw
         self.change_cmd_mutex.release()
     
-    def set_velocity(self, vx: float, vy: float, vz: float, yaw: float | None = None, frame: int = Command.ENU):
+    def set_velocity(self, vx: float, vy: float, vz: float, yaw: Optional[float] = None, frame: int = Command.ENU):
         """setting velocity command in 3 axis for vehicle
 
         Args:
@@ -151,7 +151,7 @@ class vehicle_external_command:
             self.external_cmd.yaw_cmd = yaw
         self.change_cmd_mutex.release()
 
-    def set_velocity_with_height(self, vx: float, vy: float, z: float, yaw: float | None = None, frame: int = Command.ENU):
+    def set_velocity_with_height(self, vx: float, vy: float, z: float, yaw: Optional[float] = None, frame: int = Command.ENU):
         """setting velocity command in 2 axis with height command for vehicle
 
         Args:
@@ -182,7 +182,7 @@ class vehicle_external_command:
         self.external_cmd = custom_command_to_px4_msg(cmd)
         self.change_cmd_mutex.release()
 
-    def set_hover(self, yaw: float | None = None) -> None:
+    def set_hover(self, yaw: Optional[float] = None) -> None:
         """setting vehicle to hover mode
 
         Args:
