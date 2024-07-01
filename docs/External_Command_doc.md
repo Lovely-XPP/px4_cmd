@@ -319,18 +319,22 @@ class CustomCommand:
 
 #### C++
 
-Code: examples/single_vehicle_external_cmd.cpp
+Code: examples/single_external_cmd.cpp
+
+Exe: CMake target: px4_cmd_example_single
 
 #### python
 
-Code: examples/single_vehicle_external_cmd.py
+Code & Exe: examples/single_external_cmd.py
 
 ### Multiple Vehicles Simualtion
 
 #### C++
 
-Code: examples/multiple_vehicle_external_cmd.cpp
+Code: examples/multiple_external_cmd.cpp
+
+Exe: CMake target: px4_cmd_example_multiple
 
 #### python
 
-Code: examples/multiple_vehicle_external_cmd.py
+Code & Exe: examples/multiple_external_cmd.py

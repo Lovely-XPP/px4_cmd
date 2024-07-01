@@ -73,12 +73,10 @@ target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
 ###################  Examples  ###################
 # single vehicle simulation example
 add_executable(${PROJECT_NAME}_example_single examples/API/single_external_cmd.cpp)
-add_dependencies(${PROJECT_NAME}_example_single ${${PROJECT_NAME}_EXPORTED_TARGETS})
 target_link_libraries(${PROJECT_NAME}_example_single ${catkin_LIBRARIES} ${PROJECT_NAME})
 
 # multiple vehicles simulation example
 add_executable(${PROJECT_NAME}_example_multiple examples/API/multiple_external_cmd.cpp)
-add_dependencies(${PROJECT_NAME}_example_multiple ${${PROJECT_NAME}_EXPORTED_TARGETS})
 target_link_libraries(${PROJECT_NAME}_example_multiple ${catkin_LIBRARIES} ${PROJECT_NAME})
 
 ###################  Exec  ###################

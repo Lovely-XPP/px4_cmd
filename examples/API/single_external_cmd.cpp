@@ -54,4 +54,4 @@ int main(int argc, char *argv[])
     // set desired velocity with height to [1, 1, 1] of uav 0, use global ENU frame
     uav->set_velocity_with_height(1, 1, 1, px4_cmd::Command::ENU);
     */
-}
+};
