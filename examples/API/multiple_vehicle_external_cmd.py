@@ -23,7 +23,7 @@ if __name__ == "__main__":
         time.sleep(1)
 
     # init all agent
-    uav = []
+    uav :List[vehicle_external_command] = []
     
     for i in range(len(nodes)):
         uav.append(vehicle_external_command())

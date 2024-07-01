@@ -123,8 +123,8 @@ y: position in y axis
 z: position in z axis
 yaw (optional): command for yaw
 frame: 
- Global Frame: px4_cmd::Command::ENU 
-  Body  Frame: px4_cmd::Command::BODY
+ Global Frame: px4_cmd.Command.ENU 
+  Body  Frame: px4_cmd.Command.BODY
 '''
 ext_cmd.set_position(x, y, z, yaw, frame)
 
@@ -134,7 +134,7 @@ Args:
     vy (float): desire velocity in y axis
     vz (float): desire velocity in z axis
     yaw (float | None, optional): desire yaw command. Defaults to None.
-    frame (int, optional): velocity in which frame, px4_cmd::Command::ENU / px4_cmd::Command::BODY. Defaults to Command.ENU.
+    frame (int, optional): velocity in which frame, px4_cmd.Command.ENU / px4_cmd.Command.BODY. Defaults to Command.ENU.
 """
 ext_cmd.set_velocity(vx, vy, vz, yaw, frame)
 
@@ -145,7 +145,7 @@ Args:
     vy (float): desire velocity in y axis
     z (float): desire height
     yaw (float | None, optional): desire yaw command. Defaults to None.
-    frame (int, optional): velocity in which frame, px4_cmd::Command::ENU / px4_cmd::Command::BODY. Defaults to Command.ENU.
+    frame (int, optional): velocity in which frame, px4_cmd.Command.ENU / px4_cmd.Command.BODY. Defaults to Command.ENU.
 """
 ext_cmd.set_velocity_with_height(x, y, z, yaw, frame)
 

@@ -138,7 +138,7 @@ class vehicle_external_command:
             vy (float): desire velocity in y axis
             vz (float): desire velocity in z axis
             yaw (float | None, optional): desire yaw command. Defaults to None.
-            frame (int, optional): velocity in which frame, px4_cmd::Command::ENU / px4_cmd::Command::BODY. Defaults to Command.ENU.
+            frame (int, optional): velocity in which frame, px4_cmd.Command.ENU / px4_cmd.Command.BODY. Defaults to Command.ENU.
         """
         self.change_cmd_mutex.acquire()
         self.external_cmd.Mode = Command.Move
@@ -159,7 +159,7 @@ class vehicle_external_command:
             vy (float): desire velocity in y axis
             z (float): desire height
             yaw (float | None, optional): desire yaw command. Defaults to None.
-            frame (int, optional): velocity in which frame, px4_cmd::Command::ENU / px4_cmd::Command::BODY. Defaults to Command.ENU.
+            frame (int, optional): velocity in which frame, px4_cmd.Command.ENU / px4_cmd.Command.BODY. Defaults to Command.ENU.
         """
         self.change_cmd_mutex.acquire()
         self.external_cmd.Mode = Command.Move
