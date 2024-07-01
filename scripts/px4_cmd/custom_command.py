@@ -53,17 +53,20 @@ class CustomCommand:
         self.thrust: float = NaN
 
 def reset_custom_command() -> CustomCommand:
-    '''
+    """
     reset custom command to default value (NAN), everytime generate custom command need this operate
-    '''
+    """
     return CustomCommand()
 
 def px4_msg_to_custom_command(msg: Command) -> CustomCommand:
-    '''
-    transfer px4 command message to custom command struct
-    :param msg: px4 command message
-    :return: transformed custom command struct
-    '''
+    """transfer px4 command message to custom command struct
+
+    Args:
+        msg (Command): px4 command message
+
+    Returns:
+        CustomCommand: transformed custom command struct
+    """
     # new command
     generate_cmd = CustomCommand()
 
@@ -125,11 +128,14 @@ def px4_msg_to_custom_command(msg: Command) -> CustomCommand:
 
 
 def custom_command_to_px4_msg(cmd: CustomCommand) -> Command:
-    '''
-    transfrom custom command struct to px4 command message
-    :param msg: custom command struct 
-    :return: transformed px4 command message
-    '''
+    """transfrom custom command struct to px4 command message
+
+    Args:
+        cmd (CustomCommand): custom command struct 
+
+    Returns:
+        Command: transformed px4 command message
+    """
     # new command
     external_cmd = Command()
 
@@ -194,13 +200,16 @@ def custom_command_to_px4_msg(cmd: CustomCommand) -> Command:
     return external_cmd
 
 
-def check_custom_command(cmd: CustomCommand, vehicle_type: int) -> str | None:
-    '''
-    check custom command if correct
-    :param: cmd custom command struct
-    :param: vehicle_type Vehicle type in px4_cmd message : Multicopter / FixWing
-    :return error inforamtion string, if empty return None
-    '''
+def check_custom_command(cmd: CustomCommand, vehicle_type: int = Command.Multicopter) -> (str | None):
+    """check custom command if correct
+
+    Args:
+        cmd (CustomCommand): custom command struct
+        vehicle_type (int, optional): Vehicle type in px4_cmd message : Command.Multicopter / Command.FixWing. Defaults to Command.Multicopter.
+
+    Returns:
+        str | None: error inforamtion string, if no error return None
+    """
     # init error str
     error = None
     MODE_ERROR = "[Error] Custom Command Mode Error!"
